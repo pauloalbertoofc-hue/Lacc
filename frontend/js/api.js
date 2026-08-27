@@ -229,6 +229,55 @@ const api = {
             body: JSON.stringify({ email, password })
         });
     },
+    register(data) {
+        return this.request('/auth/register', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+    verifyEmail(token) {
+        return this.request('/auth/verify-email', {
+            method: 'POST',
+            body: JSON.stringify({ token })
+        });
+    },
+    forgotPassword(email) {
+        return this.request('/auth/forgot-password', {
+            method: 'POST',
+            body: JSON.stringify({ email })
+        });
+    },
+    resetPassword(data) {
+        return this.request('/auth/reset-password', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+    getInviteInfo(token) {
+        return this.request(`/auth/invite/${token}`);
+    },
+    acceptInvite(data) {
+        return this.request('/auth/accept-invite', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+    updateProfile(data) {
+        return this.request('/auth/profile', {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    },
+    changePassword(currentPassword, newPassword, confirmPassword) {
+        return this.request('/auth/change-password', {
+            method: 'POST',
+            body: JSON.stringify({
+                current_password: currentPassword,
+                new_password: newPassword,
+                confirm_password: confirmPassword
+            })
+        });
+    },
     getMe() {
         return this.request('/auth/me');
     },
@@ -242,6 +291,47 @@ const api = {
     },
     getAdminUsers() {
         return this.request('/admin/users');
+    },
+    getAdminMembers(params = {}) {
+        const q = new URLSearchParams();
+        if (params.q) q.append('q', params.q);
+        if (params.status) q.append('status_filter', params.status);
+        if (params.role) q.append('role_filter', params.role);
+        return this.request(`/admin/members?${q.toString()}`);
+    },
+    updateMemberStatus(id, status, reason = null) {
+        return this.request(`/admin/members/${id}/status`, {
+            method: 'PUT',
+            body: JSON.stringify({ status, reason })
+        });
+    },
+    getAccessRequests() {
+        return this.request('/admin/requests');
+    },
+    approveAccessRequest(id) {
+        return this.request(`/admin/requests/${id}/approve`, {
+            method: 'POST'
+        });
+    },
+    rejectAccessRequest(id, reason) {
+        return this.request(`/admin/requests/${id}/reject`, {
+            method: 'POST',
+            body: JSON.stringify({ reason })
+        });
+    },
+    createInvite(data) {
+        return this.request('/admin/invites', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+    getInvites() {
+        return this.request('/admin/invites');
+    },
+    revokeInvite(id) {
+        return this.request(`/admin/invites/${id}`, {
+            method: 'DELETE'
+        });
     },
     updateUserRoles(userId, roleIds) {
         return this.request(`/admin/users/${userId}/roles`, {

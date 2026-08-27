@@ -100,19 +100,51 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
 
     with get_db() as conn:
         user = conn.execute(
-            "SELECT id, name, email, role, status, is_active, mfa_enabled FROM members WHERE id = ?",
+            "SELECT id, name, email, role, status, is_active, mfa_enabled, email_verified FROM members WHERE id = ?",
             (member_id,)
         ).fetchone()
 
         if not user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuário não encontrado.")
-        if not user["is_active"] or user["status"] != "Ativo":
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Conta inativa ou suspensa.")
+        if not user["is_active"]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Esta conta está desativada no sistema.")
+
+        # Validação explícita de status da conta
+        user_status = (user["status"] or "").lower()
+        if user_status == "pending":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Sua solicitação de acesso está aguardando aprovação da administração da LACC."
+            )
+        elif user_status == "suspended":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Sua conta está suspensa temporariamente. Entre em contato com a diretoria."
+            )
+        elif user_status in ("inactive", "inativo"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Seu vínculo institucional com a LACC foi encerrado."
+            )
+        elif user_status == "rejected":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Sua solicitação de acesso não foi homologada pela administração."
+            )
+        elif user_status not in ("active", "ativo"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, 
+                detail="Conta não autorizada para acesso neste momento."
+            )
 
         user_dict = dict(user)
         user_dict["permissions"] = list(get_user_permissions(user["id"]))
         user_dict["roles"] = get_user_roles(user["id"])
-        user_dict["is_admin"] = "admin:access" in user_dict["permissions"] or any(r["slug"] == "superadmin" for r in user_dict["roles"])
+        role_slugs = [r["slug"] for r in user_dict["roles"]]
+        user_dict["is_admin"] = "admin:access" in user_dict["permissions"] or any(
+            r in ("superadmin", "super_admin", "admin", "presidencia") for r in role_slugs
+        )
+        user_dict["is_superadmin"] = any(r in ("superadmin", "super_admin") for r in role_slugs) and user_dict["email"] == "paulo.alberto.ofc@gmail.com"
         return user_dict
 
 def require_permission(permission_slug: str):
@@ -124,7 +156,7 @@ def require_permission(permission_slug: str):
         roles = [r["slug"] for r in current_user.get("roles", [])]
         
         # Superadministrador possui passe livre irrestrito
-        if "superadmin" in roles or "*" in perms:
+        if "superadmin" in roles or "super_admin" in roles or "*" in perms:
             return current_user
 
         if permission_slug not in perms:
@@ -135,12 +167,35 @@ def require_permission(permission_slug: str):
         return current_user
     return permission_checker
 
+def require_role(allowed_roles: List[str]):
+    """Dependência para exigir papéis específicos do usuário."""
+    def role_checker(current_user: dict = Depends(get_current_user)):
+        roles = [r["slug"] for r in current_user.get("roles", [])]
+        if any(r in ("superadmin", "super_admin") for r in roles):
+            return current_user
+        if not any(r in allowed_roles for r in roles):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Acesso negado: Função insuficiente para executar esta ação."
+            )
+        return current_user
+    return role_checker
+
 def require_admin(current_user: dict = Depends(get_current_user)):
     """Dependência para exigir qualquer permissão administrativa ou superadmin."""
     if not current_user.get("is_admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado: Este recurso é restrito à administração da plataforma."
+        )
+    return current_user
+
+def require_superadmin(current_user: dict = Depends(get_current_user)):
+    """Dependência exclusiva para operações que só o Superadministrador titular pode executar."""
+    if not current_user.get("is_superadmin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado: Apenas o Superadministrador titular (Paulo Alberto) possui autorização para esta ação."
         )
     return current_user
 

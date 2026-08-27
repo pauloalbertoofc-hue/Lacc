@@ -4,3 +4,4 @@ __pycache__/
 cloudflared.exe
 *.log
 *_backup.db
+*.bak

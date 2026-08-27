@@ -108,4 +108,58 @@ class ChangePinRequest(BaseModel):
     current_pin: str
     new_pin: str
 
+class RegisterRequest(BaseModel):
+    name: str
+    email: str
+    course: Optional[str] = "Direito"
+    semester: Optional[str] = "1º Período"
+    registration_number: Optional[str] = None
+    password: str
+    password_confirm: str
+
+class AccessRequestAction(BaseModel):
+    reason: Optional[str] = None
+
+class VerifyEmailRequest(BaseModel):
+    token: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+    confirm_password: str
+
+class CreateInviteRequest(BaseModel):
+    email: str
+    name: Optional[str] = None
+    role_id: Optional[int] = None
+    expires_days: Optional[int] = 7
+
+class AcceptInviteRequest(BaseModel):
+    token: str
+    name: Optional[str] = None
+    course: Optional[str] = "Direito"
+    semester: Optional[str] = "1º Período"
+    registration_number: Optional[str] = None
+    password: str
+    confirm_password: str
+
+class MemberProfileUpdate(BaseModel):
+    phone: Optional[str] = None
+    course: Optional[str] = None
+    semester: Optional[str] = None
+    notes: Optional[str] = None
+
+class MemberPasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_password: str
+
+class MemberStatusUpdate(BaseModel):
+    status: str
+    reason: Optional[str] = None
+
+
 

@@ -2,11 +2,10 @@ import os
 import uuid
 import csv
 import io
-import time
 from datetime import datetime
 from typing import Optional, List
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, Response, Request, Depends, status
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, Response, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, StreamingResponse
@@ -18,8 +17,7 @@ from backend.models import (
     AttendanceCheckin, AttendanceBulkUpdate,
     TaskCreate, TaskUpdate,
     MaterialCreate, FinanceCreate,
-    SettingsUpdate, LoginRequest, UserRolesUpdate,
-    VerifyPinRequest, ChangePinRequest
+    SettingsUpdate, LoginRequest, UserRolesUpdate
 )
 from backend.seed_data import seed
 from backend.migrations import run_migrations
@@ -30,6 +28,8 @@ from backend.auth import (
 )
 from backend.cms_router import router as cms_router
 from backend.content_router import router as content_router
+from backend.auth_router import router as auth_router
+from backend.admin_users_router import router as admin_users_router
 
 app = FastAPI(title="LigaHub - Gestão de Liga Acadêmica", version="1.0.0")
 
@@ -42,9 +42,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Integrar Roteadores do CMS e Conteúdo Estruturado
+# Desativar cache do navegador para desenvolvimento e atualizações imediatas
+@app.middleware("http")
+async def disable_browser_cache(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+# Integrar Roteadores Modulares
 app.include_router(cms_router)
 app.include_router(content_router)
+app.include_router(auth_router)
+app.include_router(admin_users_router)
 
 # Inicializar banco, migrações de segurança e dados de exemplo ao iniciar
 @app.on_event("startup")
@@ -627,9 +638,35 @@ def auth_login(data: LoginRequest, request: Request):
             log_audit_event(None, "FAILED_LOGIN", f"email:{data.email}", client_ip, {"reason": "User not found"}, conn=conn)
             raise HTTPException(status_code=401, detail="E-mail ou senha incorretos.")
 
-        if not member["is_active"] or member["status"] != "Ativo":
+        if not member["is_active"]:
             log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "User inactive"}, conn=conn)
-            raise HTTPException(status_code=403, detail="Esta conta está inativa ou suspensa. Contate a diretoria.")
+            raise HTTPException(status_code=403, detail="Esta conta está desativada no sistema. Contate a diretoria.")
+
+        user_status = (member["status"] or "").lower()
+        if user_status == "pending":
+            log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "Registration pending"}, conn=conn)
+            raise HTTPException(
+                status_code=403,
+                detail="Sua solicitação de cadastro está aguardando aprovação da administração da LACC."
+            )
+        elif user_status == "suspended":
+            log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "Account suspended"}, conn=conn)
+            raise HTTPException(
+                status_code=403,
+                detail="Sua conta está suspensa temporariamente. Entre em contato com a diretoria."
+            )
+        elif user_status in ("inactive", "inativo"):
+            log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "Account inactive"}, conn=conn)
+            raise HTTPException(
+                status_code=403,
+                detail="Seu vínculo institucional com a LACC foi encerrado."
+            )
+        elif user_status == "rejected":
+            log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "Request rejected"}, conn=conn)
+            raise HTTPException(
+                status_code=403,
+                detail="Sua solicitação de acesso não foi homologada pela administração da LACC."
+            )
 
         # Validação segura da senha
         if not verify_password(data.password, member["password_hash"]):
@@ -640,7 +677,9 @@ def auth_login(data: LoginRequest, request: Request):
         token = create_access_token({"sub": str(member["id"]), "email": member["email"]})
         perms = list(get_user_permissions(member["id"]))
         roles = get_user_roles(member["id"])
-        is_admin = "admin:access" in perms or any(r["slug"] == "superadmin" for r in roles)
+        role_slugs = [r["slug"] for r in roles]
+        is_admin = "admin:access" in perms or any(r in ("superadmin", "super_admin", "admin", "presidencia") for r in role_slugs)
+        is_superadmin = any(r in ("superadmin", "super_admin") for r in role_slugs) and member["email"] == "paulo.alberto.ofc@gmail.com"
 
         log_audit_event(member["id"], "LOGIN", f"member:{member['id']}", client_ip, {"success": True}, conn=conn)
 
@@ -668,152 +707,7 @@ def auth_me(current_user: dict = Depends(get_current_user)):
 @app.get("/api/admin/check")
 def admin_check(current_user: dict = Depends(require_admin)):
     """Valida se o usuário tem privilégio administrativo para abrir o painel."""
-    is_master = current_user["email"] == "paulo.alberto.ofc@gmail.com"
-    return {
-        "status": "authorized",
-        "user": current_user,
-        "is_master": is_master,
-        "requires_pin": is_master
-    }
-
-# Rate Limiting para o Cofre de PIN de 8 Dígitos (Anti-Força Bruta)
-pin_failed_attempts = {} # key: str -> {"count": int, "blocked_until": float}
-
-@app.post("/api/admin/verify-pin")
-def admin_verify_pin(
-    req: VerifyPinRequest,
-    request: Request,
-    current_user: dict = Depends(get_current_user)
-):
-    """Valida o PIN numérico de 8 dígitos do Superadministrador com rate limiting."""
-    client_ip = request.client.host if request.client else "unknown"
-    now = time.time()
-    throttle_key = f"{client_ip}_{current_user['id']}"
-
-    # Verificar bloqueio temporário por excesso de tentativas
-    state = pin_failed_attempts.get(throttle_key, {"count": 0, "blocked_until": 0})
-    if state["blocked_until"] > now:
-        remaining = int(state["blocked_until"] - now)
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"Cofre bloqueado por excesso de tentativas incorretas. Tente novamente em {remaining} segundos."
-        )
-
-    # Validar formato: estritamente 8 dígitos numéricos
-    clean_pin = req.pin.strip() if req.pin else ""
-    if len(clean_pin) != 8 or not clean_pin.isdigit():
-        raise HTTPException(
-            status_code=400,
-            detail="O PIN de segurança deve conter exatamente 8 dígitos numéricos."
-        )
-
-    with get_db() as conn:
-        paulo = conn.execute(
-            "SELECT id, master_pin_hash, password_hash FROM members WHERE email = 'paulo.alberto.ofc@gmail.com'"
-        ).fetchone()
-
-        if not paulo:
-            raise HTTPException(status_code=500, detail="Conta do Superadministrador não encontrada.")
-
-        pin_hash = paulo["master_pin_hash"] or paulo["password_hash"]
-        is_valid = verify_password(clean_pin, pin_hash)
-
-        if not is_valid:
-            state["count"] += 1
-            if state["count"] >= 5:
-                state["blocked_until"] = now + 900 # 15 minutos de bloqueio
-                state["count"] = 0
-                pin_failed_attempts[throttle_key] = state
-
-                log_audit_event(
-                    user_id=current_user["id"],
-                    action="SUPERADMIN_PIN_LOCKED",
-                    target_entity="vault",
-                    details={"reason": "5 falhas consecutivas de PIN", "blocked_seconds": 900},
-                    ip_address=client_ip,
-                    conn=conn
-                )
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail="Limite de tentativas excedido! O cofre foi bloqueado por 15 minutos para sua proteção."
-                )
-
-            pin_failed_attempts[throttle_key] = state
-            remaining_attempts = 5 - state["count"]
-
-            log_audit_event(
-                user_id=current_user["id"],
-                action="SUPERADMIN_PIN_FAILED",
-                target_entity="vault",
-                details={"remaining_attempts": remaining_attempts},
-                ip_address=client_ip,
-                conn=conn
-            )
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"PIN numérico incorreto. Tentativas restantes antes do bloqueio: {remaining_attempts}."
-            )
-
-        # PIN correto: limpar histórico de tentativas do IP
-        pin_failed_attempts[throttle_key] = {"count": 0, "blocked_until": 0}
-
-        log_audit_event(
-            user_id=current_user["id"],
-            action="SUPERADMIN_PIN_SUCCESS",
-            target_entity="vault",
-            details={"message": "Cofre do Superadministrador destravado com sucesso"},
-            ip_address=client_ip,
-            conn=conn
-        )
-        return {"success": True, "message": "Acesso ao Superadmin liberado com sucesso!"}
-
-@app.post("/api/admin/change-pin")
-def admin_change_pin(
-    req: ChangePinRequest,
-    request: Request,
-    current_user: dict = Depends(require_permission("roles:manage"))
-):
-    """Permite ao Superadministrador alterar seu PIN e senha de 8 dígitos."""
-    if current_user["email"] != "paulo.alberto.ofc@gmail.com":
-        raise HTTPException(
-            status_code=403, 
-            detail="Acesso negado: Apenas o Superadministrador titular pode alterar o PIN Mestre."
-        )
-
-    clean_new = req.new_pin.strip() if req.new_pin else ""
-    if len(clean_new) != 8 or not clean_new.isdigit():
-        raise HTTPException(
-            status_code=400,
-            detail="O novo PIN deve conter exatamente 8 dígitos numéricos."
-        )
-
-    with get_db() as conn:
-        paulo = conn.execute(
-            "SELECT id, master_pin_hash, password_hash FROM members WHERE email = 'paulo.alberto.ofc@gmail.com'"
-        ).fetchone()
-
-        pin_hash = paulo["master_pin_hash"] or paulo["password_hash"]
-        if not verify_password(req.current_pin.strip(), pin_hash):
-            raise HTTPException(status_code=400, detail="O PIN atual informado está incorreto.")
-
-        new_hash = hash_password(clean_new)
-        conn.execute("""
-            UPDATE members 
-            SET password_hash = ?, master_pin_hash = ? 
-            WHERE id = ?
-        """, (new_hash, new_hash, paulo["id"]))
-        conn.commit()
-
-        client_ip = request.client.host if request.client else "unknown"
-        log_audit_event(
-            user_id=current_user["id"],
-            action="CHANGE_SUPERADMIN_PIN",
-            target_entity="vault",
-            details={"message": "PIN e senha de 8 dígitos atualizados pelo Superadmin"},
-            ip_address=client_ip,
-            conn=conn
-        )
-        return {"success": True, "message": "Novo PIN de 8 dígitos salvo com sucesso!"}
+    return {"status": "authorized", "user": current_user}
 
 @app.get("/api/admin/overview")
 def admin_overview(current_user: dict = Depends(require_admin)):
@@ -883,13 +777,6 @@ def admin_update_user_roles(
         # Proteção contra lockout do último Superadministrador
         superadmin_role = conn.execute("SELECT id FROM roles WHERE slug = 'superadmin'").fetchone()
         if superadmin_role:
-            # Trava Mestre: Apenas Paulo Alberto pode conceder ou estender o papel de Superadministrador
-            if superadmin_role["id"] in data.role_ids and current_user["email"] != "paulo.alberto.ofc@gmail.com":
-                raise HTTPException(
-                    status_code=403,
-                    detail="Acesso negado: Apenas o Superadministrador titular (Paulo Alberto) pode conceder privilégios de Superadministrador."
-                )
-
             target_roles = [r["role_id"] for r in conn.execute("SELECT role_id FROM member_roles WHERE member_id = ?", (user_id,)).fetchall()]
             is_currently_superadmin = superadmin_role["id"] in target_roles
             will_remain_superadmin = superadmin_role["id"] in data.role_ids

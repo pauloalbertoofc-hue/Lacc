@@ -134,7 +134,11 @@
                             </span>
                             <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
                         </button>
-                        <p class="text-[11px] text-slate-400 text-center">Acesse a tela de login da diretoria e ligantes</p>
+                        <button onclick="toggleLandingDrawer(); openRegisterModal();" class="w-full py-2.5 px-4 rounded-xl bg-slate-800/90 hover:bg-slate-800 text-amber-300 font-semibold text-xs border border-amber-500/30 transition flex items-center justify-center gap-2">
+                            <i data-lucide="user-plus" class="w-4 h-4 text-amber-400"></i>
+                            <span>Solicitar Cadastro (Novo Membro)</span>
+                        </button>
+                        <p class="text-[11px] text-slate-400 text-center">Cadastros novos passarão por aprovação institucional</p>
                     </div>
                 </div>
 
@@ -344,7 +348,12 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">Senha de Acesso</label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-300">Senha de Acesso</label>
+                        <button type="button" onclick="openForgotPasswordModal()" class="text-[11px] text-emerald-400 hover:text-emerald-300 hover:underline">
+                            Esqueci minha senha
+                        </button>
+                    </div>
                     <div class="relative">
                         <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
                         <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
@@ -352,20 +361,303 @@
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2">
+                    <button type="submit" id="btn-login-submit" class="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2">
                         <i data-lucide="log-in" class="w-4 h-4"></i>
-                        <span>Entrar no Dashboard</span>
+                        <span>Entrar na Área de Membros</span>
                     </button>
                 </div>
 
-                <!-- Botão de Acesso Rápido para a Diretoria / Demonstração -->
-                <div class="pt-3 border-t border-slate-800 text-center space-y-2">
-                    <button type="button" onclick="quickLoginDemo()" class="w-full py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700/60 transition flex items-center justify-center gap-2">
-                        <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400"></i>
-                        <span>Acesso Rápido de Membro (1 clique)</span>
+                <!-- Divisor Visual -->
+                <div class="relative my-4">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-800"></div></div>
+                    <div class="relative flex justify-center text-xs uppercase"><span class="bg-slate-900 px-3 text-slate-400 font-mono text-[10px] tracking-wider font-semibold">Novo na Liga?</span></div>
+                </div>
+
+                <!-- Botão de Solicitação de Cadastro em Destaque -->
+                <div>
+                    <button type="button" onclick="openRegisterModal()" id="btn-open-register" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-600/20 to-amber-500/20 hover:from-amber-600/30 hover:to-amber-500/30 text-amber-300 hover:text-amber-200 text-xs font-bold border border-amber-500/50 hover:border-amber-400 shadow-md shadow-amber-500/10 transition flex items-center justify-center gap-2">
+                        <i data-lucide="user-plus" class="w-4 h-4 text-amber-400"></i>
+                        <span>Solicitar Cadastro (Criar Nova Conta)</span>
                     </button>
+                    <p class="text-[11px] text-slate-400 text-center mt-2 leading-relaxed">
+                        Crie seu login e senha. Seu cadastro será enviado para a aprovação da administração e liberado após a homologação.
+                    </p>
+                </div>
+
+                <div class="pt-2 text-center">
                     <button type="button" onclick="closeModal('modal-login')" class="text-xs text-slate-500 hover:text-slate-300 transition">
                         Voltar para a página inicial
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= 2.1 MODAL DE SOLICITAÇÃO DE CADASTRO ================= -->
+    <div id="modal-register" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl animate-fade-in text-white relative max-h-[92vh] overflow-y-auto">
+            <button onclick="closeModal('modal-register')" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="text-center space-y-2 mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mx-auto flex items-center justify-center">
+                    <i data-lucide="user-plus" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white">Solicitar Cadastro</h3>
+                <p class="text-xs text-slate-400">Preencha seus dados acadêmicos para análise da administração da LACC</p>
+            </div>
+
+            <!-- Aviso Institucional de Aprovação -->
+            <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 mb-5 flex items-start gap-3">
+                <i data-lucide="info" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+                <p class="text-xs text-amber-200/90 leading-relaxed">
+                    <strong>Atenção:</strong> O cadastro não libera o acesso imediatamente. Sua solicitação ficará pendente até a homologação formal pela diretoria da Liga.
+                </p>
+            </div>
+
+            <form id="form-register" onsubmit="submitRegister(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Nome Completo *</label>
+                    <input type="text" id="reg-name" required placeholder="Ex: Lucas Gabriel Oliveira" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">E-mail Acadêmico / Principal *</label>
+                        <input type="email" id="reg-email" required placeholder="seu.email@faculdade.edu.br" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Matrícula (Opcional)</label>
+                        <input type="text" id="reg-number" placeholder="Ex: 2026100982" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Curso de Graduação *</label>
+                        <select id="reg-course" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="Direito" selected>Direito</option>
+                            <option value="Medicina">Medicina</option>
+                            <option value="Psicologia">Psicologia</option>
+                            <option value="Ciências Sociais">Ciências Sociais</option>
+                            <option value="Biomedicina">Biomedicina</option>
+                            <option value="Outro">Outro Curso</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Período / Semestre *</label>
+                        <select id="reg-semester" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="1º Período">1º Período</option>
+                            <option value="2º Período">2º Período</option>
+                            <option value="3º Período">3º Período</option>
+                            <option value="4º Período">4º Período</option>
+                            <option value="5º Período">5º Período</option>
+                            <option value="6º Período">6º Período</option>
+                            <option value="7º Período">7º Período</option>
+                            <option value="8º Período">8º Período</option>
+                            <option value="9º Período">9º Período</option>
+                            <option value="10º Período">10º Período</option>
+                            <option value="Pós-Graduação / Egresso">Pós-Graduação / Egresso</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Senha (Mín. 8 caracteres) *</label>
+                        <input type="password" id="reg-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Confirmar Senha *</label>
+                        <input type="password" id="reg-confirm-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="btn-register-submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                        <span>Enviar Solicitação de Cadastro</span>
+                    </button>
+                </div>
+
+                <div class="pt-3 border-t border-slate-800 text-center">
+                    <button type="button" onclick="closeModal('modal-register'); openModal('modal-login');" class="text-xs text-slate-400 hover:text-emerald-400 transition">
+                        Já possui conta aprovada? <strong class="underline">Fazer login</strong>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= 2.2 MODAL DE CONFIRMAÇÃO DE CADASTRO PENDENTE ================= -->
+    <div id="modal-pending-notice" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 md:p-8 shadow-2xl animate-fade-in text-white text-center space-y-4">
+            <div class="w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 mx-auto flex items-center justify-center">
+                <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-white">Cadastro Recebido!</h3>
+                <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                    Sua solicitação de acesso à Área de Membros está aguardando aprovação da administração da <strong>LACC</strong>.
+                </p>
+            </div>
+            <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 text-left text-xs text-slate-300 space-y-1.5">
+                <div class="flex items-center gap-2 text-emerald-400 font-semibold">
+                    <i data-lucide="mail-check" class="w-4 h-4"></i>
+                    <span>Próximas etapas:</span>
+                </div>
+                <p>1. Verifique sua caixa de entrada e confirme seu e-mail.</p>
+                <p>2. A diretoria avaliará seu pedido no painel de solicitações.</p>
+                <p>3. Assim que homologado, você poderá entrar diretamente com sua senha.</p>
+            </div>
+            <button onclick="closeModal('modal-pending-notice')" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md transition">
+                Entendido / Concluir
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= 2.3 MODAL DE ESQUECI MINHA SENHA ================= -->
+    <div id="modal-forgot-password" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 md:p-8 shadow-2xl animate-fade-in text-white relative">
+            <button onclick="closeModal('modal-forgot-password')" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="text-center space-y-2 mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 mx-auto flex items-center justify-center">
+                    <i data-lucide="key-round" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white">Recuperação de Senha</h3>
+                <p class="text-xs text-slate-400">Informe seu e-mail para receber as instruções de redefinição</p>
+            </div>
+
+            <form id="form-forgot-password" onsubmit="submitForgotPassword(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">E-mail Cadastrado</label>
+                    <div class="relative">
+                        <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="email" id="forgot-email" required placeholder="seu.email@faculdade.edu.br" class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="btn-forgot-submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                        <span>Enviar Link de Redefinição</span>
+                    </button>
+                </div>
+
+                <div class="pt-3 border-t border-slate-800 text-center">
+                    <button type="button" onclick="closeModal('modal-forgot-password'); openModal('modal-login');" class="text-xs text-slate-400 hover:text-white transition">
+                        Lembrou sua senha? <strong class="text-emerald-400 underline">Voltar ao login</strong>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= 2.4 MODAL DE REDEFINIÇÃO DE SENHA (RESET TOKEN) ================= -->
+    <div id="modal-reset-password" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 md:p-8 shadow-2xl animate-fade-in text-white relative">
+            <div class="text-center space-y-2 mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mx-auto flex items-center justify-center">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white">Definir Nova Senha</h3>
+                <p class="text-xs text-slate-400">Digite sua nova senha de acesso à plataforma LACC</p>
+            </div>
+
+            <form id="form-reset-password" onsubmit="submitResetPassword(event)" class="space-y-4">
+                <input type="hidden" id="reset-token-field">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Nova Senha (Mín. 8 caracteres) *</label>
+                    <input type="password" id="reset-new-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Confirmar Nova Senha *</label>
+                    <input type="password" id="reset-confirm-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="btn-reset-submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Salvar Nova Senha</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= 2.5 MODAL DE ACEITE DE CONVITE OFICIAL ================= -->
+    <div id="modal-accept-invite" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl animate-fade-in text-white relative max-h-[92vh] overflow-y-auto">
+            <div class="text-center space-y-2 mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-amber-500/15 text-amber-400 border border-amber-500/30 mx-auto flex items-center justify-center">
+                    <i data-lucide="award" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white">Convite Oficial de Admissão</h3>
+                <p class="text-xs text-slate-400" id="invite-greeting">Você foi convidado(a) para a Liga Acadêmica de Ciências Criminais</p>
+            </div>
+
+            <div class="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 mb-4 flex items-center gap-2">
+                <i data-lucide="badge-check" class="w-4 h-4 shrink-0 text-emerald-400"></i>
+                <span>Acesso pré-aprovado pela diretoria. Sua conta será ativada imediatamente!</span>
+            </div>
+
+            <form id="form-accept-invite" onsubmit="submitAcceptInvite(event)" class="space-y-4">
+                <input type="hidden" id="invite-token-field">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">E-mail Convidado</label>
+                    <input type="email" id="invite-email" readonly class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/50 border border-slate-700 text-sm text-slate-400 focus:outline-none cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Seu Nome Completo *</label>
+                    <input type="text" id="invite-name" required placeholder="Seu nome completo" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Curso *</label>
+                        <select id="invite-course" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="Direito" selected>Direito</option>
+                            <option value="Medicina">Medicina</option>
+                            <option value="Psicologia">Psicologia</option>
+                            <option value="Ciências Sociais">Ciências Sociais</option>
+                            <option value="Outro">Outro Curso</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Período *</label>
+                        <select id="invite-semester" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="1º Período">1º Período</option>
+                            <option value="2º Período">2º Período</option>
+                            <option value="3º Período">3º Período</option>
+                            <option value="4º Período">4º Período</option>
+                            <option value="5º Período">5º Período</option>
+                            <option value="6º Período">6º Período</option>
+                            <option value="7º Período">7º Período</option>
+                            <option value="8º Período">8º Período</option>
+                            <option value="9º Período">9º Período</option>
+                            <option value="10º Período">10º Período</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Criar Senha (Mín. 8 caracteres) *</label>
+                        <input type="password" id="invite-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Confirmar Senha *</label>
+                        <input type="password" id="invite-confirm-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="btn-invite-submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        <span>Ativar Conta e Entrar no Dashboard</span>
                     </button>
                 </div>
             </form>
@@ -421,6 +713,10 @@
                 <button onclick="navigateTo('settings')" data-nav="settings" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
                     <i data-lucide="settings" class="w-5 h-5"></i>
                     <span>Configurações</span>
+                </button>
+                <button onclick="navigateTo('profile')" data-nav="profile" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i data-lucide="user-check" class="w-5 h-5"></i>
+                    <span>Meu Perfil & Senha</span>
                 </button>
                 <div class="pt-3 mt-2 border-t border-slate-800/80">
                     <button onclick="openShareModal()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30">
@@ -987,6 +1283,99 @@
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </section>
+
+                <!-- 8. Seção Meu Perfil & Segurança -->
+                <section id="view-profile" class="view-section p-4 md:p-8 space-y-6 max-w-4xl hidden">
+                    <div>
+                        <h2 class="text-xl md:text-2xl font-extrabold text-slate-800">Meu Perfil & Segurança</h2>
+                        <p class="text-xs text-slate-500 mt-1">Consulte seus dados institucionais e mantenha sua senha atualizada</p>
+                    </div>
+
+                    <!-- Card de Identidade Acadêmica -->
+                    <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-6 md:p-8 border border-slate-800 text-white shadow-xl relative overflow-hidden">
+                        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-black text-2xl" id="profile-avatar-letter">
+                                    M
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2.5">
+                                        <h3 class="text-lg md:text-xl font-bold text-white" id="profile-card-name">Carregando...</h3>
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" id="profile-badge-status">Ativo</span>
+                                    </div>
+                                    <p class="text-xs text-slate-300 mt-0.5" id="profile-card-email">...</p>
+                                    <div class="flex flex-wrap gap-2 mt-2">
+                                        <span class="text-[11px] text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20 font-medium" id="profile-card-role">Membro Ligante</span>
+                                        <span class="text-[11px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-lg border border-slate-700 font-mono" id="profile-card-reg">Matrícula: Não informada</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Formulário de Dados Cadastrais -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+                            <div class="flex items-center gap-2 pb-3 border-b border-slate-100">
+                                <i data-lucide="user-pen" class="w-4 h-4 text-brand-600"></i>
+                                <h3 class="font-bold text-sm text-slate-800">Dados Pessoais Permitidos</h3>
+                            </div>
+                            <form id="form-my-profile" onsubmit="submitMyProfile(event)" class="space-y-3.5">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">WhatsApp / Telefone</label>
+                                    <input type="text" id="my-profile-phone" placeholder="Ex: 11999998888" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Curso</label>
+                                        <input type="text" id="my-profile-course" placeholder="Ex: Direito" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">Período / Semestre</label>
+                                        <input type="text" id="my-profile-semester" placeholder="Ex: 5º Período" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Observações / Bio Breve</label>
+                                    <textarea id="my-profile-notes" rows="2" placeholder="Áreas de interesse forense ou notas acadêmicas..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+                                </div>
+                                <div class="pt-2">
+                                    <button type="submit" id="btn-save-profile" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold shadow-md shadow-brand-600/20 transition">
+                                        Salvar Dados Pessoais
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Formulário de Alteração de Senha -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+                            <div class="flex items-center gap-2 pb-3 border-b border-slate-100">
+                                <i data-lucide="lock-keyhole" class="w-4 h-4 text-emerald-600"></i>
+                                <h3 class="font-bold text-sm text-slate-800">Alterar Senha Pessoal</h3>
+                            </div>
+                            <form id="form-my-password" onsubmit="submitMyPassword(event)" class="space-y-3.5">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Senha Atual *</label>
+                                    <input type="password" id="my-pass-current" required placeholder="••••••••" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nova Senha (Mín. 8 caracteres) *</label>
+                                    <input type="password" id="my-pass-new" required placeholder="••••••••" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Confirmar Nova Senha *</label>
+                                    <input type="password" id="my-pass-confirm" required placeholder="••••••••" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                </div>
+                                <div class="pt-2">
+                                    <button type="submit" id="btn-save-password" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md shadow-emerald-600/20 transition">
+                                        Atualizar Senha
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </section>
 

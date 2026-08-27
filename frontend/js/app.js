@@ -40,6 +40,7 @@ function checkAuthState() {
     }
 
     // Tratamento de redirecionamentos da rota /admin
+    // Tratamento de parâmetros de URL
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('login') === 'admin') {
         openLoginModal();
@@ -49,6 +50,36 @@ function checkAuthState() {
         openLoginModal();
         showToast('Sua sessão expirou. Faça login novamente.', 'warning');
         window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (urlParams.has('verify_email')) {
+        const token = urlParams.get('verify_email');
+        window.history.replaceState({}, document.title, window.location.pathname);
+        api.verifyEmail(token).then(res => {
+            showToast(res.message || 'E-mail confirmado com sucesso!', 'success');
+        }).catch(err => {
+            showToast(err.message || 'Falha ao confirmar e-mail.', 'error');
+        });
+    } else if (urlParams.has('reset_token')) {
+        const token = urlParams.get('reset_token');
+        window.history.replaceState({}, document.title, window.location.pathname);
+        const tokenField = document.getElementById('reset-token-field');
+        if (tokenField) tokenField.value = token;
+        openModal('modal-reset-password');
+    } else if (urlParams.has('invite')) {
+        const token = urlParams.get('invite');
+        window.history.replaceState({}, document.title, window.location.pathname);
+        api.getInviteInfo(token).then(info => {
+            const tokenField = document.getElementById('invite-token-field');
+            const emailField = document.getElementById('invite-email');
+            const nameField = document.getElementById('invite-name');
+            const greeting = document.getElementById('invite-greeting');
+            if (tokenField) tokenField.value = token;
+            if (emailField) emailField.value = info.email || '';
+            if (nameField && info.name) nameField.value = info.name;
+            if (greeting && info.name) greeting.innerText = `Olá, ${info.name}! Complete sua matrícula institucional`;
+            openModal('modal-accept-invite');
+        }).catch(err => {
+            showToast(err.message || 'Convite inválido ou expirado.', 'error');
+        });
     }
 }
 
@@ -91,9 +122,19 @@ async function submitLogin(e) {
         showToast('Por favor, informe seu e-mail.', 'error');
         return;
     }
+    if (!password) {
+        showToast('Por favor, informe sua senha de acesso.', 'error');
+        return;
+    }
+
+    const submitBtn = document.getElementById('btn-login-submit');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span class="animate-spin mr-2">⏳</span> Entrando...`;
+    }
 
     try {
-        const res = await api.login(email, password || 'lacc2026!');
+        const res = await api.login(email, password);
         localStorage.setItem('lacc_token', res.access_token);
         localStorage.setItem('lacc_user', JSON.stringify(res.user));
         localStorage.setItem('lacc_auth', 'true');
@@ -102,26 +143,337 @@ async function submitLogin(e) {
         updateAdminVisibility();
         closeModal('modal-login');
         goToDashboard();
-        showToast(`Bem-vindo, ${res.user.name}!`);
+        showToast(`Bem-vindo(a), ${res.user.name}!`);
     } catch (err) {
         showToast(err.message || 'Falha na autenticação.', 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i><span>Entrar no Dashboard</span>`;
+            initIcons();
+        }
     }
 }
 
-async function quickLoginDemo() {
+// ----------------------------------------------------
+// CADASTRO DE USUÁRIO (STATUS = PENDING)
+// ----------------------------------------------------
+function openRegisterModal() {
+    closeModal('modal-login');
+    openModal('modal-register');
+}
+
+async function submitRegister(e) {
+    e.preventDefault();
+    const name = document.getElementById('reg-name')?.value.trim();
+    const email = document.getElementById('reg-email')?.value.trim();
+    const regNumber = document.getElementById('reg-number')?.value.trim();
+    const course = document.getElementById('reg-course')?.value;
+    const semester = document.getElementById('reg-semester')?.value;
+    const password = document.getElementById('reg-password')?.value;
+    const confirmPassword = document.getElementById('reg-confirm-password')?.value;
+
+    if (!name || !email || !password || !confirmPassword) {
+        showToast('Preencha todos os campos obrigatórios (*).', 'error');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showToast('As senhas digitadas não conferem.', 'error');
+        return;
+    }
+
+    if (password.length < 8) {
+        showToast('A senha deve conter no mínimo 8 caracteres.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-register-submit');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-spin mr-2">⏳</span> Enviando...`;
+    }
+
     try {
-        const res = await api.login('paulo.alberto.ofc@gmail.com', 'lacc2026!');
+        const res = await api.register({
+            name,
+            email,
+            course,
+            semester,
+            registration_number: regNumber || null,
+            password,
+            password_confirm: confirmPassword
+        });
+
+        closeModal('modal-register');
+        openModal('modal-pending-notice');
+        showToast(res.message || 'Solicitação enviada com sucesso!');
+        document.getElementById('form-register')?.reset();
+    } catch (err) {
+        showToast(err.message || 'Erro ao enviar cadastro.', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i><span>Enviar Solicitação de Cadastro</span>`;
+            initIcons();
+        }
+    }
+}
+
+// ----------------------------------------------------
+// RECUPERAÇÃO DE SENHA
+// ----------------------------------------------------
+function openForgotPasswordModal() {
+    closeModal('modal-login');
+    openModal('modal-forgot-password');
+}
+
+async function submitForgotPassword(e) {
+    e.preventDefault();
+    const email = document.getElementById('forgot-email')?.value.trim();
+    if (!email) {
+        showToast('Informe o seu e-mail cadastrado.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-forgot-submit');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-spin mr-2">⏳</span> Enviando...`;
+    }
+
+    try {
+        const res = await api.forgotPassword(email);
+        closeModal('modal-forgot-password');
+        showToast(res.message || 'Instruções enviadas para seu e-mail!', 'info');
+        document.getElementById('form-forgot-password')?.reset();
+    } catch (err) {
+        showToast(err.message || 'Erro ao processar solicitação.', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i><span>Enviar Link de Redefinição</span>`;
+            initIcons();
+        }
+    }
+}
+
+async function submitResetPassword(e) {
+    e.preventDefault();
+    const token = document.getElementById('reset-token-field')?.value.trim();
+    const newPassword = document.getElementById('reset-new-password')?.value;
+    const confirmPassword = document.getElementById('reset-confirm-password')?.value;
+
+    if (!newPassword || !confirmPassword) {
+        showToast('Preencha os campos de nova senha.', 'error');
+        return;
+    }
+    if (newPassword !== confirmPassword) {
+        showToast('A confirmação não confere com a nova senha.', 'error');
+        return;
+    }
+    if (newPassword.length < 8) {
+        showToast('A nova senha deve possuir no mínimo 8 caracteres.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-reset-submit');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-spin mr-2">⏳</span> Salvando...`;
+    }
+
+    try {
+        const res = await api.resetPassword({
+            token,
+            new_password: newPassword,
+            confirm_password: confirmPassword
+        });
+        closeModal('modal-reset-password');
+        openModal('modal-login');
+        showToast(res.message || 'Senha redefinida com sucesso! Faça login agora.');
+        document.getElementById('form-reset-password')?.reset();
+    } catch (err) {
+        showToast(err.message || 'Falha ao redefinir senha.', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Salvar Nova Senha</span>`;
+            initIcons();
+        }
+    }
+}
+
+// ----------------------------------------------------
+// CONVITE DIRETO (ACEITE DE CONVITE)
+// ----------------------------------------------------
+async function submitAcceptInvite(e) {
+    e.preventDefault();
+    const token = document.getElementById('invite-token-field')?.value.trim();
+    const name = document.getElementById('invite-name')?.value.trim();
+    const course = document.getElementById('invite-course')?.value;
+    const semester = document.getElementById('invite-semester')?.value;
+    const password = document.getElementById('invite-password')?.value;
+    const confirmPassword = document.getElementById('invite-confirm-password')?.value;
+
+    if (!name || !password || !confirmPassword) {
+        showToast('Preencha os dados obrigatórios.', 'error');
+        return;
+    }
+    if (password !== confirmPassword) {
+        showToast('A confirmação não confere com a senha.', 'error');
+        return;
+    }
+    if (password.length < 8) {
+        showToast('A senha deve conter no mínimo 8 caracteres.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-invite-submit');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-spin mr-2">⏳</span> Ativando conta...`;
+    }
+
+    try {
+        const res = await api.acceptInvite({
+            token,
+            name,
+            course,
+            semester,
+            password,
+            confirm_password: confirmPassword
+        });
+
         localStorage.setItem('lacc_token', res.access_token);
         localStorage.setItem('lacc_user', JSON.stringify(res.user));
         localStorage.setItem('lacc_auth', 'true');
         localStorage.setItem('lacc_user_email', res.user.email);
 
+        closeModal('modal-accept-invite');
         updateAdminVisibility();
-        closeModal('modal-login');
         goToDashboard();
-        showToast('Acesso de Superadministrador autenticado!');
+        showToast(res.message || 'Conta ativada com sucesso!');
     } catch (err) {
-        showToast(err.message || 'Erro no login rápido.', 'error');
+        showToast(err.message || 'Erro ao aceitar convite.', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i><span>Ativar Conta e Entrar no Dashboard</span>`;
+            initIcons();
+        }
+    }
+}
+
+// ----------------------------------------------------
+// MEU PERFIL & SENHA DO MEMBRO LOGADO
+// ----------------------------------------------------
+async function loadMyProfile() {
+    try {
+        const me = await api.getMe();
+        const cardName = document.getElementById('profile-card-name');
+        const cardEmail = document.getElementById('profile-card-email');
+        const cardRole = document.getElementById('profile-card-role');
+        const cardReg = document.getElementById('profile-card-reg');
+        const badgeStatus = document.getElementById('profile-badge-status');
+        const avatarLetter = document.getElementById('profile-avatar-letter');
+
+        if (cardName) cardName.innerText = me.name;
+        if (cardEmail) cardEmail.innerText = me.email;
+        if (cardRole) cardRole.innerText = me.role || 'Membro';
+        if (avatarLetter) avatarLetter.innerText = (me.name || 'M')[0].toUpperCase();
+
+        if (cardReg) {
+            cardReg.innerText = me.registration_number ? `Matrícula: ${me.registration_number}` : 'Matrícula: Não informada';
+        }
+
+        if (badgeStatus) {
+            const st = (me.status || 'active').toLowerCase();
+            badgeStatus.innerText = st === 'active' ? 'Ativo' : (st === 'pending' ? 'Pendente' : 'Suspenso');
+            if (st === 'active') {
+                badgeStatus.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+            } else {
+                badgeStatus.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30';
+            }
+        }
+
+        const phoneInput = document.getElementById('my-profile-phone');
+        const courseInput = document.getElementById('my-profile-course');
+        const semInput = document.getElementById('my-profile-semester');
+        const notesInput = document.getElementById('my-profile-notes');
+
+        if (phoneInput) phoneInput.value = me.phone || '';
+        if (courseInput) courseInput.value = me.course || '';
+        if (semInput) semInput.value = me.semester || '';
+        if (notesInput) notesInput.value = me.notes || '';
+    } catch (err) {
+        showToast('Erro ao carregar dados do perfil.', 'error');
+    }
+}
+
+async function submitMyProfile(e) {
+    e.preventDefault();
+    const phone = document.getElementById('my-profile-phone')?.value;
+    const course = document.getElementById('my-profile-course')?.value;
+    const semester = document.getElementById('my-profile-semester')?.value;
+    const notes = document.getElementById('my-profile-notes')?.value;
+
+    const btn = document.getElementById('btn-save-profile');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Salvando...';
+    }
+
+    try {
+        const res = await api.updateProfile({ phone, course, semester, notes });
+        showToast(res.message || 'Dados atualizados com sucesso!');
+        loadMyProfile();
+    } catch (err) {
+        showToast(err.message || 'Erro ao atualizar dados.', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = 'Salvar Dados Pessoais';
+        }
+    }
+}
+
+async function submitMyPassword(e) {
+    e.preventDefault();
+    const currentPass = document.getElementById('my-pass-current')?.value;
+    const newPass = document.getElementById('my-pass-new')?.value;
+    const confirmPass = document.getElementById('my-pass-confirm')?.value;
+
+    if (!currentPass || !newPass || !confirmPass) {
+        showToast('Preencha todos os campos de senha.', 'error');
+        return;
+    }
+    if (newPass !== confirmPass) {
+        showToast('A confirmação não confere com a nova senha.', 'error');
+        return;
+    }
+    if (newPass.length < 8) {
+        showToast('A nova senha deve ter no mínimo 8 caracteres.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-save-password');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Atualizando...';
+    }
+
+    try {
+        const res = await api.changePassword(currentPass, newPass, confirmPass);
+        showToast(res.message || 'Senha alterada com sucesso!');
+        document.getElementById('form-my-password')?.reset();
+    } catch (err) {
+        showToast(err.message || 'Erro ao alterar senha.', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = 'Atualizar Senha';
+        }
     }
 }
 
@@ -470,6 +822,7 @@ function navigateTo(viewId) {
     else if (viewId === 'materials') loadMaterials();
     else if (viewId === 'finances') loadFinances();
     else if (viewId === 'settings') fillSettingsForm();
+    else if (viewId === 'profile') loadMyProfile();
 
     initIcons();
     window.scrollTo({ top: 0, behavior: 'smooth' });

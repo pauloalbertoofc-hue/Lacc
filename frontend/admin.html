@@ -178,9 +178,16 @@
                     <!-- Grupo 4: Governança & Segurança (Operacional!) -->
                     <div class="space-y-1">
                         <span class="text-[10px] font-mono uppercase tracking-wider text-amber-500/80 font-bold px-3 block mb-1">Governança & RBAC</span>
+                        <button onclick="switchAdminTab('requests')" id="tab-btn-requests" class="admin-nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="user-check" class="w-4 h-4 text-emerald-400"></i>
+                                <span>Solicitações de Acesso</span>
+                            </div>
+                            <span id="badge-requests-count" class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 hidden">0</span>
+                        </button>
                         <button onclick="switchAdminTab('users')" id="tab-btn-users" class="admin-nav-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
                             <i data-lucide="users-round" class="w-4 h-4"></i>
-                            <span>Usuários & Funções</span>
+                            <span>Membros & Funções</span>
                         </button>
                         <button onclick="switchAdminTab('audit')" id="tab-btn-audit" class="admin-nav-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
                             <i data-lucide="scroll" class="w-4 h-4"></i>
@@ -311,21 +318,96 @@
                     </div>
                 </section>
 
+                <!-- ================= SEÇÃO: SOLICITAÇÕES DE ACESSO (CADASTROS PENDENTES) ================= -->
+                <section id="section-requests" class="space-y-6 max-w-6xl mx-auto hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                                <i data-lucide="user-check" class="w-5 h-5 text-emerald-400"></i>
+                                Solicitações de Acesso (Candidatos)
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-0.5">
+                                Cadastros aguardando aprovação da administração para liberação do acesso à Área de Membros.
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="loadAccessRequests()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 flex items-center gap-2 border border-slate-700 transition">
+                                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                                <span>Atualizar</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabela de Solicitações Pendentes -->
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs" id="table-requests">
+                                <thead>
+                                    <tr class="bg-slate-900 text-slate-400 border-b border-slate-800 uppercase tracking-wider font-mono text-[10px]">
+                                        <th class="py-3.5 px-4">Candidato</th>
+                                        <th class="py-3.5 px-4">Curso / Semestre</th>
+                                        <th class="py-3.5 px-4">Matrícula</th>
+                                        <th class="py-3.5 px-4">E-mail</th>
+                                        <th class="py-3.5 px-4">Data Solicitação</th>
+                                        <th class="py-3.5 px-4 text-right">Decisão</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="requests-tbody" class="divide-y divide-slate-800/80">
+                                    <!-- Preenchido via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="requests-empty-state" class="p-8 text-center text-slate-400 space-y-2 hidden">
+                            <i data-lucide="inbox" class="w-8 h-8 text-slate-600 mx-auto"></i>
+                            <p class="text-xs font-medium">Nenhuma solicitação de acesso pendente no momento.</p>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- ================= SEÇÃO 2: USUÁRIOS & FUNÇÕES (RBAC) ================= -->
                 <section id="section-users" class="space-y-6 max-w-6xl mx-auto hidden">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <h2 class="text-xl font-bold text-white flex items-center gap-2">
                                 <i data-lucide="users" class="w-5 h-5 text-amber-400"></i>
-                                Gestão de Usuários e Permissões
+                                Gestão de Membros e Governança
                             </h2>
                             <p class="text-xs text-slate-400 mt-0.5">
-                                Administre os membros da LACC e atribua papéis administrativos com validação no backend.
+                                Administre membros, controle o ciclo de vida institucional (ativo, suspenso, encerramento de vínculo) e atribua papéis.
                             </p>
                         </div>
-                        <div class="relative w-full sm:w-64">
+                        <div class="flex items-center gap-2.5">
+                            <button onclick="openInviteModal()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-2">
+                                <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+                                <span>+ Gerar Convite Oficial</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Barra de Filtros e Busca -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-slate-900/60 rounded-2xl border border-slate-800/80">
+                        <div class="relative sm:col-span-1">
                             <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                            <input type="text" id="filter-users-input" onkeyup="filterUsersTable()" placeholder="Buscar por nome ou e-mail..." class="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                            <input type="text" id="filter-users-input" onkeyup="filterMembersGrid()" placeholder="Buscar por nome ou e-mail..." class="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <select id="filter-users-status" onchange="filterMembersGrid()" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                                <option value="">Todos os Status</option>
+                                <option value="active">🟢 Ativo (Em exercício)</option>
+                                <option value="pending">🟡 Pendente de Aprovação</option>
+                                <option value="suspended">🔴 Suspenso Temporariamente</option>
+                                <option value="inactive">⚪ Vínculo Encerrado (Egresso)</option>
+                                <option value="rejected">❌ Solicitação Recusada</option>
+                            </select>
+                        </div>
+                        <div>
+                            <select id="filter-users-role" onchange="filterMembersGrid()" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                                <option value="">Todas as Funções</option>
+                                <option value="super_admin">Superadministrador Master</option>
+                                <option value="admin">Administrador</option>
+                                <option value="director">Diretoria</option>
+                                <option value="member">Membro Ligante</option>
+                            </select>
                         </div>
                     </div>
 
@@ -338,8 +420,8 @@
                                         <th class="py-3 px-4">Membro</th>
                                         <th class="py-3 px-4">E-mail</th>
                                         <th class="py-3 px-4">Cargos / Funções</th>
-                                        <th class="py-3 px-4">Status</th>
-                                        <th class="py-3 px-4 text-right">Ação</th>
+                                        <th class="py-3 px-4">Status da Conta</th>
+                                        <th class="py-3 px-4 text-right">Governança</th>
                                     </tr>
                                 </thead>
                                 <tbody id="users-tbody" class="divide-y divide-slate-800/80">
@@ -435,50 +517,6 @@
                                     <p class="text-xs text-slate-400">Tabelas e colunas no banco já preparadas para chaves TOTP (Google Authenticator / Microsoft Authenticator).</p>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Card: Chave Mestre / PIN de 8 Dígitos -->
-                        <div class="p-6 rounded-2xl bg-slate-900/90 border border-amber-500/30 space-y-4 shadow-lg">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center">
-                                        <i data-lucide="shield-check" class="w-5 h-5"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="text-sm font-bold text-white flex items-center gap-2">
-                                            Chave Mestre de Segurança (PIN Numérico de 8 Dígitos)
-                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30">Ativo</span>
-                                        </h4>
-                                        <p class="text-xs text-slate-400">Proteção mestre contra acesso indevido às configurações do Superadministrador.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <form id="form-change-pin" onsubmit="changeMasterPin(event)" class="pt-2 border-t border-slate-800 space-y-3">
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <div class="space-y-1">
-                                        <label class="block text-[11px] font-semibold text-slate-300">PIN Atual (8 dígitos)</label>
-                                        <input type="password" id="pin-change-current" required maxlength="8" pattern="[0-9]{8}" inputmode="numeric" placeholder="••••••••" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono tracking-widest">
-                                    </div>
-                                    <div class="space-y-1">
-                                        <label class="block text-[11px] font-semibold text-slate-300">Novo PIN (8 dígitos)</label>
-                                        <input type="password" id="pin-change-new" required maxlength="8" pattern="[0-9]{8}" inputmode="numeric" placeholder="••••••••" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono tracking-widest">
-                                    </div>
-                                    <div class="space-y-1">
-                                        <label class="block text-[11px] font-semibold text-slate-300">Confirmar Novo PIN</label>
-                                        <input type="password" id="pin-change-confirm" required maxlength="8" pattern="[0-9]{8}" inputmode="numeric" placeholder="••••••••" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono tracking-widest">
-                                    </div>
-                                </div>
-
-                                <div id="pin-change-msg" class="text-xs p-2.5 rounded-xl hidden"></div>
-
-                                <div class="flex justify-end pt-1">
-                                    <button type="submit" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-2">
-                                        <i data-lucide="check" class="w-4 h-4"></i>
-                                        <span>Atualizar PIN Mestre</span>
-                                    </button>
-                                </div>
-                            </form>
                         </div>
                     </div>
                 </section>
@@ -1061,58 +1099,120 @@
         </div>
     </div>
 
-    <!-- ================= MODAL: COFRE MASTER DE SEGURANÇA (8 DÍGITOS) ================= -->
-    <div id="vault-gate-modal" class="fixed inset-0 z-[100] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-amber-500/40 rounded-3xl max-w-md w-full p-8 shadow-[0_0_60px_rgba(245,158,11,0.2)] space-y-6 animate-fade-in text-white text-center relative overflow-hidden">
-            <!-- Efeito de iluminação dourada -->
-            <div class="absolute -top-20 -left-20 w-44 h-44 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="absolute -bottom-20 -right-20 w-44 h-44 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
-
-            <div class="relative z-10 flex flex-col items-center space-y-3">
-                <div class="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-400 flex items-center justify-center shadow-lg">
-                    <i data-lucide="shield-alert" class="w-8 h-8"></i>
+    <!-- ================= MODAL DE RECUSA DE SOLICITAÇÃO ================= -->
+    <div id="modal-reject-request" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 text-white space-y-4 shadow-2xl animate-fade-in">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div class="flex items-center gap-2.5 text-rose-400">
+                    <i data-lucide="user-x" class="w-5 h-5"></i>
+                    <h3 class="font-bold text-sm text-white">Recusar Solicitação de Acesso</h3>
                 </div>
-                <div>
-                    <h2 class="text-xl font-bold text-white tracking-wide">Cofre do Superadministrador</h2>
-                    <p class="text-xs text-amber-300 font-mono mt-1">Autenticação Mestre Obrigatória (8 Dígitos)</p>
-                </div>
-                <p class="text-xs text-slate-400 max-w-xs leading-relaxed">
-                    Acesso exclusivo ao Administrador Geral. Digite a chave numérica de 8 dígitos para liberar o painel.
-                </p>
+                <button onclick="closeModal('modal-reject-request')" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
             </div>
-
-            <form id="vault-pin-form" onsubmit="submitVaultPin(event)" class="relative z-10 space-y-4">
-                <div class="space-y-1.5">
-                    <input 
-                        type="password" 
-                        id="vault-pin-input" 
-                        maxlength="8" 
-                        pattern="[0-9]{8}" 
-                        inputmode="numeric" 
-                        required 
-                        autocomplete="off"
-                        placeholder="••••••••" 
-                        class="w-full text-center text-2xl tracking-[0.4em] font-mono py-3.5 px-4 rounded-2xl bg-slate-950 border border-amber-500/50 text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition placeholder:text-slate-700"
-                    >
-                    <span class="text-[10px] text-slate-500 font-mono block">Digite os 8 dígitos numéricos da sua chave</span>
+            <p class="text-xs text-slate-300">
+                Você está prestes a indeferir a solicitação de <strong id="reject-candidate-name" class="text-white">...</strong>.
+                Os dados serão arquivados para compliance e auditoria.
+            </p>
+            <form id="form-reject-request" onsubmit="submitRejectRequest(event)" class="space-y-3.5">
+                <input type="hidden" id="reject-request-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Justificativa Institucional *</label>
+                    <textarea id="reject-request-reason" required rows="3" placeholder="Ex: Não preencheu os requisitos do edital de ingresso ou curso divergente..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500"></textarea>
                 </div>
-
-                <div id="vault-error-msg" class="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl hidden"></div>
-
-                <div class="pt-2 flex items-center gap-3">
-                    <button type="button" onclick="adminLogout()" class="w-1/3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">
-                        Sair
-                    </button>
-                    <button type="submit" id="btn-vault-unlock" class="w-2/3 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs shadow-lg transition flex items-center justify-center gap-2">
-                        <i data-lucide="lock-open" class="w-4 h-4"></i>
-                        <span>Desbloquear Painel</span>
-                    </button>
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                    <button type="button" onclick="closeModal('modal-reject-request')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-300">Cancelar</button>
+                    <button type="submit" id="btn-confirm-reject" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition">Confirmar Recusa</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Script de inicialização e controle do painel Admin -->
+    <!-- ================= MODAL DE DETALHES DO CANDIDATO ================= -->
+    <div id="modal-view-request" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 text-white space-y-4 shadow-2xl animate-fade-in">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 class="font-bold text-sm text-white">Ficha de Inscrição do Candidato</h3>
+                <button onclick="closeModal('modal-view-request')" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="space-y-2.5 text-xs text-slate-300 bg-slate-800/60 p-4 rounded-2xl border border-slate-700/60">
+                <div><span class="text-slate-500 block text-[10px] uppercase font-mono">Nome:</span> <strong id="view-req-name" class="text-white text-sm">...</strong></div>
+                <div><span class="text-slate-500 block text-[10px] uppercase font-mono">E-mail:</span> <span id="view-req-email" class="text-emerald-400">...</span></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><span class="text-slate-500 block text-[10px] uppercase font-mono">Curso:</span> <span id="view-req-course" class="text-white">...</span></div>
+                    <div><span class="text-slate-500 block text-[10px] uppercase font-mono">Semestre:</span> <span id="view-req-sem" class="text-white">...</span></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><span class="text-slate-500 block text-[10px] uppercase font-mono">Matrícula:</span> <span id="view-req-reg" class="text-slate-300">...</span></div>
+                    <div><span class="text-slate-500 block text-[10px] uppercase font-mono">E-mail Confirmado:</span> <span id="view-req-verified" class="text-emerald-400 font-semibold">...</span></div>
+                </div>
+                <div><span class="text-slate-500 block text-[10px] uppercase font-mono">Data da Solicitação:</span> <span id="view-req-date" class="text-slate-400 font-mono">...</span></div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button type="button" onclick="closeModal('modal-view-request')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-300">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL DE EMISSÃO DE CONVITE OFICIAL ================= -->
+    <div id="modal-invite" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 text-white space-y-4 shadow-2xl animate-fade-in">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div class="flex items-center gap-2.5 text-amber-400">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                    <h3 class="font-bold text-sm text-white">Gerar Convite Oficial de Admissão</h3>
+                </div>
+                <button onclick="closeModal('modal-invite')" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400">
+                Emita um convite individual com link criptográfico de uso único para candidatos já aprovados em processo seletivo. A conta será ativada como <strong class="text-emerald-400">active</strong> imediatamente.
+            </p>
+            <form id="form-create-invite" onsubmit="submitCreateInvite(event)" class="space-y-3.5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">E-mail do Candidato *</label>
+                    <input type="email" id="invite-c-email" required placeholder="candidato@faculdade.edu.br" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Nome (Opcional)</label>
+                        <input type="text" id="invite-c-name" placeholder="Ex: Juliana Mendes" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Validade do Link</label>
+                        <select id="invite-c-days" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="7" selected>7 dias</option>
+                            <option value="15">15 dias</option>
+                            <option value="30">30 dias</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="invite-result-box" class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs space-y-2 hidden">
+                    <span class="font-bold text-amber-300 block">Link de Convite Gerado:</span>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="generated-invite-url" readonly class="flex-1 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-300 select-all">
+                        <button type="button" onclick="copyGeneratedInviteUrl()" id="btn-copy-invite" class="px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold text-[11px] hover:bg-amber-400 transition">
+                            Copiar
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-slate-400">Envie este link diretamente para o candidato por WhatsApp ou e-mail.</p>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                    <button type="button" onclick="closeModal('modal-invite')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs text-slate-300">Fechar</button>
+                    <button type="submit" id="btn-generate-invite" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-1.5">
+                        <i data-lucide="link" class="w-3.5 h-3.5"></i>
+                        <span>Gerar Convite</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
     <script>
         let currentAdminUser = null;
         let availableRoles = [];
@@ -1151,12 +1251,6 @@
 
                 const data = await response.json();
                 currentAdminUser = data.user;
-
-                // Trava de Segurança Mestre: Se requer PIN e ainda não foi destravado nesta sessão
-                if (data.requires_pin && sessionStorage.getItem('lacc_vault_unlocked') !== 'true') {
-                    showVaultGateModal();
-                }
-
                 initAdminPanel();
 
             } catch (err) {
@@ -1179,6 +1273,7 @@
 
             // Carregar dados iniciais
             loadOverview();
+            loadAccessRequests();
             loadRolesList();
             lucide.createIcons();
         }
@@ -1237,50 +1332,84 @@
             }
         }
 
-        async function loadUsers() {
+        // ==========================================
+        // 1. SOLICITAÇÕES DE ACESSO (CADASTROS PENDENTES)
+        // ==========================================
+        let cachedRequests = [];
+
+        async function loadAccessRequests() {
             const token = localStorage.getItem('lacc_token');
             try {
-                const res = await fetch('/api/admin/users', {
+                const res = await fetch('/api/admin/requests', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                cachedUsers = await res.json();
-                renderUsersTable(cachedUsers);
+                cachedRequests = await res.json();
+                renderRequestsTable(cachedRequests);
+
+                // Atualizar badge no menu
+                const badge = document.getElementById('badge-requests-count');
+                if (badge) {
+                    if (cachedRequests.length > 0) {
+                        badge.innerText = cachedRequests.length;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
             } catch (err) {
-                console.error('Erro ao listar membros:', err);
+                console.error('Erro ao carregar solicitações de acesso:', err);
             }
         }
 
-        function renderUsersTable(users) {
-            const tbody = document.getElementById('users-tbody');
-            if (!users || users.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500">Nenhum membro encontrado.</td></tr>`;
+        function renderRequestsTable(requests) {
+            const tbody = document.getElementById('requests-tbody');
+            const emptyState = document.getElementById('requests-empty-state');
+            if (!tbody) return;
+
+            if (!requests || requests.length === 0) {
+                tbody.innerHTML = '';
+                if (emptyState) emptyState.classList.remove('hidden');
                 return;
             }
 
-            tbody.innerHTML = users.map(u => {
-                const roleBadges = u.roles.map(r => {
-                    const isSuper = r.slug === 'superadmin';
-                    const color = isSuper ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-slate-800 text-slate-300 border-slate-700';
-                    return `<span class="inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${color}">${r.name}</span>`;
-                }).join(' ');
+            if (emptyState) emptyState.classList.add('hidden');
 
-                const statusColor = u.status === 'Ativo' ? 'text-emerald-400 bg-emerald-500/10' : 'text-slate-400 bg-slate-800';
+            tbody.innerHTML = requests.map(r => {
+                const verifiedBadge = r.email_verified 
+                    ? `<span class="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20"><i data-lucide="check" class="w-3 h-3"></i> Confirmado</span>`
+                    : `<span class="inline-flex items-center gap-1 text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20"><i data-lucide="clock" class="w-3 h-3"></i> Não verificado</span>`;
 
                 return `
                     <tr class="hover:bg-slate-800/30 transition">
-                        <td class="py-3 px-4 font-semibold text-white">
-                            ${u.name}
-                            <span class="block text-[10px] text-slate-500 font-normal">${u.course || 'Direito'}</span>
-                        </td>
-                        <td class="py-3 px-4 text-slate-300 font-mono text-[11px]">${u.email}</td>
-                        <td class="py-3 px-4"><div class="flex flex-wrap gap-1">${roleBadges || '<span class="text-slate-500 text-[10px]">Sem função</span>'}</div></td>
                         <td class="py-3 px-4">
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColor}">${u.status}</span>
+                            <span class="font-bold text-white block text-sm">${r.name}</span>
+                            <span class="text-[11px] text-slate-400 font-mono">${r.email}</span>
+                        </td>
+                        <td class="py-3 px-4 text-slate-300">
+                            <span class="font-medium text-slate-200">${r.course || 'Direito'}</span>
+                            <span class="block text-[11px] text-slate-400">${r.semester || '1º Período'}</span>
+                        </td>
+                        <td class="py-3 px-4 font-mono text-[11px] text-slate-400">
+                            ${r.registration_number || '<span class="text-slate-600">Não inf.</span>'}
+                        </td>
+                        <td class="py-3 px-4">
+                            ${verifiedBadge}
+                        </td>
+                        <td class="py-3 px-4 font-mono text-[11px] text-slate-400">
+                            ${r.created_at ? new Date(r.created_at).toLocaleDateString('pt-BR') : '--'}
                         </td>
                         <td class="py-3 px-4 text-right">
-                            <button onclick="openEditRolesModal(${u.id})" class="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold border border-amber-500/25 transition">
-                                Editar Funções
-                            </button>
+                            <div class="flex items-center justify-end gap-1.5">
+                                <button onclick="openViewRequestModal(${r.id})" title="Ver ficha completa" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition">
+                                    <i data-lucide="eye" class="w-3.5 h-3.5 inline mr-1"></i> Ver
+                                </button>
+                                <button onclick="approveAccessRequest(${r.id})" title="Aprovar membro" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-sm transition flex items-center gap-1">
+                                    <i data-lucide="check" class="w-3.5 h-3.5"></i> Aprovar
+                                </button>
+                                <button onclick="openRejectRequestModal(${r.id}, '${r.name}')" title="Recusar solicitação" class="px-2.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold border border-rose-500/25 transition">
+                                    Recusar
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -1289,13 +1418,281 @@
             lucide.createIcons();
         }
 
-        function filterUsersTable() {
-            const term = document.getElementById('filter-users-input').value.toLowerCase();
-            const filtered = cachedUsers.filter(u => 
-                u.name.toLowerCase().includes(term) || 
-                u.email.toLowerCase().includes(term)
-            );
+        async function approveAccessRequest(memberId) {
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch(`/api/admin/requests/${memberId}/approve`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Falha ao aprovar.');
+
+                showToastNotification(data.message || 'Solicitação aprovada com sucesso!', 'success');
+                await loadAccessRequests();
+                await loadUsers();
+                await loadOverview();
+            } catch (err) {
+                showToastNotification(err.message, 'error');
+            }
+        }
+
+        function openRejectRequestModal(memberId, name) {
+            document.getElementById('reject-request-id').value = memberId;
+            document.getElementById('reject-candidate-name').innerText = name;
+            document.getElementById('reject-request-reason').value = '';
+            document.getElementById('modal-reject-request').classList.remove('hidden');
+        }
+
+        async function submitRejectRequest(e) {
+            e.preventDefault();
+            const memberId = document.getElementById('reject-request-id').value;
+            const reason = document.getElementById('reject-request-reason').value.trim();
+            const token = localStorage.getItem('lacc_token');
+
+            try {
+                const res = await fetch(`/api/admin/requests/${memberId}/reject`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ reason })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Falha ao recusar.');
+
+                closeModal('modal-reject-request');
+                showToastNotification(data.message || 'Solicitação recusada e arquivada.', 'info');
+                await loadAccessRequests();
+            } catch (err) {
+                showToastNotification(err.message, 'error');
+            }
+        }
+
+        function openViewRequestModal(memberId) {
+            const req = cachedRequests.find(r => r.id === memberId);
+            if (!req) return;
+
+            document.getElementById('view-req-name').innerText = req.name;
+            document.getElementById('view-req-email').innerText = req.email;
+            document.getElementById('view-req-course').innerText = req.course || 'Direito';
+            document.getElementById('view-req-sem').innerText = req.semester || '1º Período';
+            document.getElementById('view-req-reg').innerText = req.registration_number || 'Não informada';
+            document.getElementById('view-req-verified').innerText = req.email_verified ? 'Sim (Confirmado)' : 'Não confirmado ainda';
+            document.getElementById('view-req-date').innerText = req.created_at ? new Date(req.created_at).toLocaleString('pt-BR') : '--';
+
+            document.getElementById('modal-view-request').classList.remove('hidden');
+        }
+
+        // ==========================================
+        // 2. GESTÃO DE MEMBROS E GOVERNANÇA RBAC
+        // ==========================================
+        async function loadUsers() {
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch('/api/admin/members', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                cachedUsers = await res.json();
+                filterMembersGrid();
+            } catch (err) {
+                console.error('Erro ao listar membros:', err);
+            }
+        }
+
+        function renderUsersTable(users) {
+            const tbody = document.getElementById('users-tbody');
+            if (!tbody) return;
+
+            if (!users || users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500">Nenhum membro encontrado com os filtros selecionados.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = users.map(u => {
+                const roleBadges = (u.roles || []).map(r => {
+                    const isSuper = r.slug === 'superadmin' || r.slug === 'super_admin';
+                    const isAdmin = r.slug === 'admin' || r.slug === 'presidencia';
+                    const color = isSuper 
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' 
+                        : (isAdmin ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' : 'bg-slate-800 text-slate-300 border-slate-700');
+                    return `<span class="inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${color}">${r.name}</span>`;
+                }).join(' ');
+
+                const st = (u.status || 'active').toLowerCase();
+                let statusBadge = '';
+                if (st === 'active' || st === 'ativo') {
+                    statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/25">🟢 Ativo</span>`;
+                } else if (st === 'pending') {
+                    statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/25">🟡 Pendente</span>`;
+                } else if (st === 'suspended') {
+                    statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-300 border border-rose-500/25">🔴 Suspenso</span>`;
+                } else if (st === 'inactive' || st === 'inativo') {
+                    statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">⚪ Vínculo Encerrado</span>`;
+                } else {
+                    statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-900/20 text-rose-400 border border-rose-800/30">❌ ${u.status}</span>`;
+                }
+
+                // Opções de governança de status
+                let statusActions = '';
+                const isPaulo = u.email === 'paulo.alberto.ofc@gmail.com';
+
+                if (!isPaulo) {
+                    if (st === 'active' || st === 'ativo') {
+                        statusActions = `
+                            <button onclick="changeMemberStatus(${u.id}, 'suspended')" title="Suspender acesso temporariamente" class="p-1.5 rounded-lg bg-slate-800 hover:bg-amber-900/30 text-slate-400 hover:text-amber-300 border border-slate-700 transition">
+                                <i data-lucide="user-minus" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="changeMemberStatus(${u.id}, 'inactive')" title="Encerrar vínculo institucional (preserva histórico)" class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/30 text-slate-400 hover:text-rose-300 border border-slate-700 transition">
+                                <i data-lucide="user-x" class="w-3.5 h-3.5"></i>
+                            </button>
+                        `;
+                    } else if (st === 'suspended' || st === 'inactive' || st === 'inativo') {
+                        statusActions = `
+                            <button onclick="changeMemberStatus(${u.id}, 'active')" title="Reativar membro" class="p-1.5 rounded-lg bg-slate-800 hover:bg-emerald-900/30 text-slate-400 hover:text-emerald-300 border border-slate-700 transition">
+                                <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+                            </button>
+                        `;
+                    }
+                }
+
+                return `
+                    <tr class="hover:bg-slate-800/30 transition">
+                        <td class="py-3 px-4 font-semibold text-white">
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-lg bg-slate-800 text-amber-400 border border-slate-700 flex items-center justify-center font-bold text-xs">
+                                    ${(u.name || 'M')[0]}
+                                </div>
+                                <div>
+                                    <span class="block text-white font-bold leading-snug">${u.name}</span>
+                                    <span class="block text-[10px] text-slate-400 font-normal">${u.course || 'Direito'} • ${u.semester || 'Semestre'}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-slate-300 font-mono text-[11px]">${u.email}</td>
+                        <td class="py-3 px-4"><div class="flex flex-wrap gap-1">${roleBadges || '<span class="text-slate-500 text-[10px]">Sem função</span>'}</div></td>
+                        <td class="py-3 px-4">
+                            ${statusBadge}
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                ${statusActions}
+                                <button onclick="openEditRolesModal(${u.id})" class="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold border border-amber-500/25 transition">
+                                    Funções
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function filterMembersGrid() {
+            const term = (document.getElementById('filter-users-input')?.value || '').toLowerCase();
+            const statusFilter = (document.getElementById('filter-users-status')?.value || '').toLowerCase();
+            const roleFilter = (document.getElementById('filter-users-role')?.value || '').toLowerCase();
+
+            const filtered = cachedUsers.filter(u => {
+                const matchTerm = !term || u.name.toLowerCase().includes(term) || u.email.toLowerCase().includes(term);
+                const uStatus = (u.status || 'active').toLowerCase();
+                const matchStatus = !statusFilter || (statusFilter === 'active' && (uStatus === 'active' || uStatus === 'ativo')) || uStatus === statusFilter;
+                
+                const userRoles = (u.roles || []).map(r => r.slug.toLowerCase());
+                const matchRole = !roleFilter || userRoles.includes(roleFilter) || (roleFilter === 'super_admin' && userRoles.includes('superadmin'));
+
+                return matchTerm && matchStatus && matchRole;
+            });
+
             renderUsersTable(filtered);
+        }
+
+        async function changeMemberStatus(memberId, newStatus) {
+            const labels = {
+                active: 'Reativar o acesso deste membro?',
+                suspended: 'Suspender temporariamente este membro? (O login será bloqueado)',
+                inactive: 'Encerrar o vínculo deste membro? (O histórico acadêmico será 100% preservado)'
+            };
+
+            if (!confirm(labels[newStatus] || 'Deseja alterar o status deste membro?')) return;
+
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch(`/api/admin/members/${memberId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Falha ao atualizar status.');
+
+                showToastNotification(data.message || 'Status atualizado com sucesso!', 'success');
+                await loadUsers();
+            } catch (err) {
+                showToastNotification(err.message, 'error');
+            }
+        }
+
+        // ==========================================
+        // 3. CONVITES OFICIAIS DIRETOS
+        // ==========================================
+        function openInviteModal() {
+            document.getElementById('form-create-invite').reset();
+            document.getElementById('invite-result-box').classList.add('hidden');
+            document.getElementById('modal-invite').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        async function submitCreateInvite(e) {
+            e.preventDefault();
+            const email = document.getElementById('invite-c-email').value.trim();
+            const name = document.getElementById('invite-c-name').value.trim() || null;
+            const days = parseInt(document.getElementById('invite-c-days').value) || 7;
+            const token = localStorage.getItem('lacc_token');
+
+            const btn = document.getElementById('btn-generate-invite');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="animate-spin mr-1">⏳</span> Gerando...`;
+
+            try {
+                const res = await fetch('/api/admin/invites', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ email, name, expires_days: days })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Erro ao gerar convite.');
+
+                document.getElementById('generated-invite-url').value = data.invite_url;
+                document.getElementById('invite-result-box').classList.remove('hidden');
+                showToastNotification('Convite oficial gerado com sucesso!', 'success');
+            } catch (err) {
+                showToastNotification(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="link" class="w-3.5 h-3.5"></i><span>Gerar Convite</span>`;
+                lucide.createIcons();
+            }
+        }
+
+        function copyGeneratedInviteUrl() {
+            const input = document.getElementById('generated-invite-url');
+            input.select();
+            navigator.clipboard.writeText(input.value);
+            const btn = document.getElementById('btn-copy-invite');
+            btn.innerText = 'Copiado!';
+            setTimeout(() => { btn.innerText = 'Copiar'; }, 2000);
+            showToastNotification('Link de convite copiado para a área de transferência!', 'success');
         }
 
         function openEditRolesModal(userId) {
@@ -2431,7 +2828,7 @@
 
         function switchAdminTab(tabName) {
             // Ocultar todas as seções
-            ['overview', 'users', 'audit', 'security', 'cms-home', 'cms-areas', 'researches', 'publications'].forEach(tab => {
+            ['overview', 'requests', 'users', 'audit', 'security', 'cms-home', 'cms-areas', 'researches', 'publications'].forEach(tab => {
                 const sec = document.getElementById(`section-${tab}`);
                 const btn = document.getElementById(`tab-btn-${tab}`);
                 if (sec) sec.classList.add('hidden');
@@ -2450,6 +2847,7 @@
                 targetBtn.classList.add('bg-amber-500/15', 'text-amber-300', 'border', 'border-amber-500/30');
             }
 
+            if (tabName === 'requests') loadAccessRequests();
             if (tabName === 'users') loadUsers();
             if (tabName === 'audit') loadAuditLogs();
             if (tabName === 'overview') loadOverview();
@@ -2472,117 +2870,11 @@
             sidebar.classList.toggle('-translate-x-full');
         }
 
-        // ==========================================
-        // CONTROLE DO COFRE MASTER (PIN DE 8 DÍGITOS)
-        // ==========================================
-        function showVaultGateModal() {
-            const modal = document.getElementById('vault-gate-modal');
-            if (modal) {
-                modal.classList.remove('hidden');
-                setTimeout(() => {
-                    const input = document.getElementById('vault-pin-input');
-                    if (input) input.focus();
-                }, 100);
-            }
-        }
-
-        async function submitVaultPin(e) {
-            e.preventDefault();
-            const pin = document.getElementById('vault-pin-input').value.trim();
-            const errDiv = document.getElementById('vault-error-msg');
-            const unlockBtn = document.getElementById('btn-vault-unlock');
-            const token = localStorage.getItem('lacc_token');
-
-            errDiv.classList.add('hidden');
-            unlockBtn.disabled = true;
-            unlockBtn.innerHTML = `<span class="animate-spin mr-1">⏳</span> Verificando...`;
-
-            try {
-                const res = await fetch('/api/admin/verify-pin', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ pin: pin })
-                });
-
-                const data = await res.json();
-                if (!res.ok) {
-                    throw new Error(data.detail || 'PIN incorreto.');
-                }
-
-                sessionStorage.setItem('lacc_vault_unlocked', 'true');
-                document.getElementById('vault-gate-modal').classList.add('hidden');
-                showToastNotification('Cofre destravado com sucesso! Bem-vindo, Administrador Geral.', 'success');
-            } catch (err) {
-                errDiv.innerText = err.message;
-                errDiv.classList.remove('hidden');
-                document.getElementById('vault-pin-input').value = '';
-                document.getElementById('vault-pin-input').focus();
-            } finally {
-                unlockBtn.disabled = false;
-                unlockBtn.innerHTML = `<i data-lucide="lock-open" class="w-4 h-4"></i><span>Desbloquear Painel</span>`;
-                lucide.createIcons();
-            }
-        }
-
-        async function changeMasterPin(e) {
-            e.preventDefault();
-            const currentPin = document.getElementById('pin-change-current').value.trim();
-            const newPin = document.getElementById('pin-change-new').value.trim();
-            const confirmPin = document.getElementById('pin-change-confirm').value.trim();
-            const msgDiv = document.getElementById('pin-change-msg');
-            const token = localStorage.getItem('lacc_token');
-
-            msgDiv.classList.add('hidden');
-
-            if (newPin !== confirmPin) {
-                msgDiv.className = 'text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl';
-                msgDiv.innerText = 'A confirmação do novo PIN não confere.';
-                msgDiv.classList.remove('hidden');
-                return;
-            }
-
-            if (newPin.length !== 8 || !/^\d+$/.test(newPin)) {
-                msgDiv.className = 'text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl';
-                msgDiv.innerText = 'O novo PIN deve conter exatamente 8 dígitos numéricos.';
-                msgDiv.classList.remove('hidden');
-                return;
-            }
-
-            try {
-                const res = await fetch('/api/admin/change-pin', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ current_pin: currentPin, new_pin: newPin })
-                });
-
-                const data = await res.json();
-                if (!res.ok) {
-                    throw new Error(data.detail || 'Erro ao alterar o PIN.');
-                }
-
-                msgDiv.className = 'text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-xl';
-                msgDiv.innerText = 'Chave Mestre de 8 dígitos atualizada com sucesso!';
-                msgDiv.classList.remove('hidden');
-                document.getElementById('form-change-pin').reset();
-            } catch (err) {
-                msgDiv.className = 'text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl';
-                msgDiv.innerText = err.message;
-                msgDiv.classList.remove('hidden');
-            }
-        }
-
         function adminLogout() {
             localStorage.removeItem('lacc_auth');
             localStorage.removeItem('lacc_token');
             localStorage.removeItem('lacc_user');
             localStorage.removeItem('lacc_user_email');
-            sessionStorage.removeItem('lacc_vault_unlocked');
             window.location.href = '/';
         }
     </script>
