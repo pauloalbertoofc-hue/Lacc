@@ -14,9 +14,110 @@ let allMembersCache = [];
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
     await loadSettings();
-    await loadDashboard();
+    checkAuthState();
     initIcons();
 });
+
+function checkAuthState() {
+    const isAuth = localStorage.getItem('lacc_auth') === 'true';
+    const landing = document.getElementById('app-landing');
+    const dashboard = document.getElementById('app-dashboard');
+
+    if (isAuth) {
+        if (landing) landing.classList.add('hidden');
+        if (dashboard) dashboard.classList.remove('hidden');
+        loadDashboard();
+    } else {
+        if (landing) landing.classList.remove('hidden');
+        if (dashboard) dashboard.classList.add('hidden');
+        loadLandingEvents();
+    }
+}
+
+function toggleLandingDrawer() {
+    const drawer = document.getElementById('landing-drawer');
+    if (drawer) {
+        drawer.classList.toggle('hidden');
+        initIcons();
+    }
+}
+
+function openLoginModal() {
+    openModal('modal-login');
+}
+
+async function submitLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value;
+
+    if (!email) {
+        showToast('Por favor, informe seu e-mail.', 'error');
+        return;
+    }
+
+    localStorage.setItem('lacc_auth', 'true');
+    localStorage.setItem('lacc_user_email', email);
+
+    closeModal('modal-login');
+    checkAuthState();
+    showToast('Bem-vindo à Área de Membros da LACC!');
+}
+
+function quickLoginDemo() {
+    localStorage.setItem('lacc_auth', 'true');
+    closeModal('modal-login');
+    checkAuthState();
+    showToast('Acesso de Membro concedido!');
+}
+
+function handleLogout() {
+    localStorage.removeItem('lacc_auth');
+    checkAuthState();
+    showToast('Você saiu da Área de Membros.', 'info');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function loadLandingEvents() {
+    try {
+        const events = await api.getEvents();
+        const container = document.getElementById('landing-events-container');
+        if (!container) return;
+
+        if (!events || events.length === 0) {
+            container.innerHTML = '<div class="p-6 text-center text-slate-500 bg-slate-900/60 rounded-2xl border border-slate-800 text-xs">Nenhum evento cadastrado no momento. Fique atento às nossas redes!</div>';
+            return;
+        }
+
+        container.innerHTML = events.slice(0, 3).map(ev => `
+            <div class="flex items-center justify-between p-4 bg-slate-900/70 hover:bg-slate-900 rounded-2xl border border-slate-800 transition">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex flex-col items-center justify-center font-bold">
+                        <span class="text-sm leading-none">${formatDay(ev.date)}</span>
+                        <span class="text-[10px] uppercase font-semibold mt-0.5">${formatMonthShort(ev.date)}</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white text-sm leading-snug">${ev.title}</h4>
+                        <div class="text-xs text-slate-400 flex items-center gap-2 mt-1">
+                            <span><i data-lucide="clock" class="w-3 h-3 inline"></i> ${ev.time}</span>
+                            <span>•</span>
+                            <span><i data-lucide="map-pin" class="w-3 h-3 inline"></i> ${ev.location || 'Auditório'}</span>
+                            <span>•</span>
+                            <span class="text-emerald-400 font-semibold">${ev.hours}h</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="/checkin.html" class="px-3 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500 hover:text-white text-xs font-semibold transition hidden sm:inline-flex items-center gap-1">
+                    <span>Check-in</span>
+                    <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
+                </a>
+            </div>
+        `).join('');
+
+        initIcons();
+    } catch (err) {
+        console.error('Erro ao carregar eventos da landing:', err);
+    }
+}
 
 function initIcons() {
     if (window.lucide) {
@@ -108,19 +209,45 @@ async function loadSettings() {
         leagueSettings = await api.getSettings();
         
         // Textos
-        const sigla = leagueSettings.league_sigla || 'LIGA';
-        const name = leagueSettings.league_name || 'Liga Acadêmica';
+        const sigla = leagueSettings.league_sigla || 'LACC';
+        const name = leagueSettings.league_name || 'Liga Acadêmica de Ciências Criminais';
+        const uni = leagueSettings.university || 'Faculdade Serra Dourada';
         const year = leagueSettings.management_year || '2026';
 
-        document.getElementById('sidebar-sigla').innerText = sigla;
-        document.getElementById('mobile-sigla').innerText = sigla;
-        document.getElementById('sidebar-league-name').innerText = name;
-        document.getElementById('mobile-league-name').innerText = name;
-        document.getElementById('sidebar-year').innerText = year;
-        document.getElementById('dash-welcome-title').innerText = name;
+        // Dashboard
+        const elSideSigla = document.getElementById('sidebar-sigla');
+        if (elSideSigla) elSideSigla.innerText = sigla;
+        const elMobSigla = document.getElementById('mobile-sigla');
+        if (elMobSigla) elMobSigla.innerText = sigla;
+        const elSideName = document.getElementById('sidebar-league-name');
+        if (elSideName) elSideName.innerText = name;
+        const elMobName = document.getElementById('mobile-league-name');
+        if (elMobName) elMobName.innerText = name;
+        const elSideYear = document.getElementById('sidebar-year');
+        if (elSideYear) elSideYear.innerText = year;
+        const elDashWelcome = document.getElementById('dash-welcome-title');
+        if (elDashWelcome) elDashWelcome.innerText = name;
+
+        // Tela Inicial Pública (Landing Page)
+        const elLandNavTitle = document.getElementById('landing-nav-title');
+        if (elLandNavTitle) elLandNavTitle.innerText = name;
+        const elLandNavSub = document.getElementById('landing-nav-sub');
+        if (elLandNavSub) elLandNavSub.innerText = uni;
+        const elLandMainTitle = document.getElementById('landing-main-title');
+        if (elLandMainTitle) elLandMainTitle.innerText = name;
+        const elLandBadge = document.getElementById('landing-badge-faculdade');
+        if (elLandBadge) elLandBadge.innerText = `${uni} • Gestão ${year}`;
+        const elLandFootName = document.getElementById('landing-footer-name');
+        if (elLandFootName) elLandFootName.innerText = `${name} (${sigla})`;
+        const elLandFootUni = document.getElementById('landing-footer-uni');
+        if (elLandFootUni) elLandFootUni.innerText = uni;
+        const elDrawerCopy = document.getElementById('drawer-year-copy');
+        if (elDrawerCopy) elDrawerCopy.innerText = `© ${year} ${sigla} • ${uni}`;
 
         // Brasão / Logo
         const logoUrl = leagueSettings.league_logo_url;
+        
+        // Elementos Dashboard
         const sidebarImg = document.getElementById('sidebar-logo-img');
         const sidebarSigla = document.getElementById('sidebar-sigla');
         const mobileImg = document.getElementById('mobile-logo-img');
@@ -129,37 +256,51 @@ async function loadSettings() {
         const emptyState = document.getElementById('setting-logo-empty');
         const btnRemove = document.getElementById('btn-remove-logo');
 
+        // Elementos Landing & Login
+        const landNavLogo = document.getElementById('landing-nav-logo');
+        const landNavSigla = document.getElementById('landing-nav-sigla');
+        const landHeroLogo = document.getElementById('landing-hero-logo');
+        const landHeroSigla = document.getElementById('landing-hero-sigla');
+        const loginLogoImg = document.getElementById('login-logo-img');
+        const loginLogoSigla = document.getElementById('login-logo-sigla');
+
+        if (landNavSigla) landNavSigla.innerText = sigla;
+        if (landHeroSigla) landHeroSigla.innerText = sigla;
+        if (loginLogoSigla) loginLogoSigla.innerText = sigla;
+
         if (logoUrl) {
-            // Exibir imagem no menu lateral e mobile
-            if (sidebarImg) {
-                sidebarImg.src = logoUrl;
-                sidebarImg.classList.remove('hidden');
-            }
+            // Exibir imagem no menu lateral e mobile do dashboard
+            if (sidebarImg) { sidebarImg.src = logoUrl; sidebarImg.classList.remove('hidden'); }
             if (sidebarSigla) sidebarSigla.classList.add('hidden');
-
-            if (mobileImg) {
-                mobileImg.src = logoUrl;
-                mobileImg.classList.remove('hidden');
-            }
+            if (mobileImg) { mobileImg.src = logoUrl; mobileImg.classList.remove('hidden'); }
             if (mobileSigla) mobileSigla.classList.add('hidden');
-
-            if (previewImg) {
-                previewImg.src = logoUrl;
-                previewImg.classList.remove('hidden');
-            }
+            if (previewImg) { previewImg.src = logoUrl; previewImg.classList.remove('hidden'); }
             if (emptyState) emptyState.classList.add('hidden');
             if (btnRemove) btnRemove.classList.remove('hidden');
+
+            // Exibir imagem na landing page e modal de login
+            if (landNavLogo) { landNavLogo.src = logoUrl; landNavLogo.classList.remove('hidden'); }
+            if (landNavSigla) landNavSigla.classList.add('hidden');
+            if (landHeroLogo) { landHeroLogo.src = logoUrl; landHeroLogo.classList.remove('hidden'); }
+            if (landHeroSigla) landHeroSigla.classList.add('hidden');
+            if (loginLogoImg) { loginLogoImg.src = logoUrl; loginLogoImg.classList.remove('hidden'); }
+            if (loginLogoSigla) loginLogoSigla.classList.add('hidden');
         } else {
             // Voltar para a sigla de texto
             if (sidebarImg) sidebarImg.classList.add('hidden');
             if (sidebarSigla) sidebarSigla.classList.remove('hidden');
-
             if (mobileImg) mobileImg.classList.add('hidden');
             if (mobileSigla) mobileSigla.classList.remove('hidden');
-
             if (previewImg) previewImg.classList.add('hidden');
             if (emptyState) emptyState.classList.remove('hidden');
             if (btnRemove) btnRemove.classList.add('hidden');
+
+            if (landNavLogo) landNavLogo.classList.add('hidden');
+            if (landNavSigla) landNavSigla.classList.remove('hidden');
+            if (landHeroLogo) landHeroLogo.classList.add('hidden');
+            if (landHeroSigla) landHeroSigla.classList.remove('hidden');
+            if (loginLogoImg) loginLogoImg.classList.add('hidden');
+            if (loginLogoSigla) loginLogoSigla.classList.remove('hidden');
         }
     } catch (err) {
         console.error('Erro ao carregar configurações:', err);

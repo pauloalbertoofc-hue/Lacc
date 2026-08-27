@@ -40,12 +40,260 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
-<body class="h-full flex flex-col antialiased text-slate-800">
+<body class="min-h-full flex flex-col antialiased text-slate-800 bg-slate-950">
 
     <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
 
-    <div class="flex-1 flex overflow-hidden">
+    <!-- ================= 1. TELA INICIAL PÚBLICA (LANDING PAGE) ================= -->
+    <div id="app-landing" class="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-emerald-500 selection:text-white">
+        <!-- Barra de Navegação Pública -->
+        <header class="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-md border-b border-slate-800/80 px-4 md:px-8 py-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700/80 shadow-md flex items-center justify-center overflow-hidden shrink-0" id="landing-nav-logo-box">
+                    <img id="landing-nav-logo" src="" alt="Brasão LACC" class="w-full h-full object-cover hidden">
+                    <span id="landing-nav-sigla" class="font-black text-emerald-400 text-sm tracking-wider">LACC</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-bold text-sm md:text-base text-white leading-tight" id="landing-nav-title">Liga Acadêmica de Ciências Criminais</span>
+                    <span class="text-[11px] text-slate-400 font-medium" id="landing-nav-sub">Faculdade Serra Dourada</span>
+                </div>
+            </div>
+
+            <!-- Botão das Três Barrinhas (Menu Hambúrguer) & Acesso Rápido -->
+            <div class="flex items-center gap-2.5">
+                <button onclick="openLoginModal()" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition">
+                    <i data-lucide="user-check" class="w-4 h-4"></i>
+                    <span>Área de Membros</span>
+                </button>
+                <!-- O Botão das Três Barrinhas Solicitado -->
+                <button onclick="toggleLandingDrawer()" aria-label="Abrir Menu" title="Menu" class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white border border-slate-800 transition flex items-center justify-center hover:border-slate-700 focus:ring-2 focus:ring-emerald-500">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Menu Lateral / Gaveta das Três Barrinhas (Drawer) -->
+        <div id="landing-drawer" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm hidden flex justify-end">
+            <div class="w-full max-w-xs bg-slate-900 h-full border-l border-slate-800 p-6 flex flex-col justify-between shadow-2xl drawer-enter">
+                <div>
+                    <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-base text-white">Menu da Liga</span>
+                            <span class="text-[10px] font-semibold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-800/40">LACC</span>
+                        </div>
+                        <button onclick="toggleLandingDrawer()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <nav class="space-y-1.5 text-sm font-medium">
+                        <a href="#landing-hero" onclick="toggleLandingDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 transition">
+                            <i data-lucide="home" class="w-4 h-4 text-emerald-400"></i>
+                            <span>Página Inicial</span>
+                        </a>
+                        <a href="#landing-about" onclick="toggleLandingDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 transition">
+                            <i data-lucide="scale" class="w-4 h-4 text-blue-400"></i>
+                            <span>Sobre a Liga</span>
+                        </a>
+                        <a href="#landing-events" onclick="toggleLandingDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 transition">
+                            <i data-lucide="calendar" class="w-4 h-4 text-amber-400"></i>
+                            <span>Próximos Encontros</span>
+                        </a>
+                        <a href="/checkin.html" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 transition">
+                            <i data-lucide="qr-code" class="w-4 h-4 text-teal-400"></i>
+                            <span>Check-in de Presença (QR)</span>
+                        </a>
+                    </nav>
+
+                    <!-- Seção Solicitada: Botão Membros que direciona para a tela de login -->
+                    <div class="mt-8 pt-6 border-t border-slate-800 space-y-2.5">
+                        <span class="text-[11px] uppercase tracking-wider font-semibold text-slate-500 block px-2">Acesso Exclusivo</span>
+                        <button onclick="toggleLandingDrawer(); openLoginModal();" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition flex items-center justify-between group">
+                            <span class="flex items-center gap-2.5">
+                                <i data-lucide="users" class="w-5 h-5"></i>
+                                <span>Membros</span>
+                            </span>
+                            <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                        </button>
+                        <p class="text-[11px] text-slate-400 text-center">Acesse a tela de login da diretoria e ligantes</p>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-800 text-[11px] text-slate-500 text-center">
+                    <span id="drawer-year-copy">© 2026 LACC • Faculdade Serra Dourada</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hero Section com o Brasão da Liga -->
+        <main class="flex-1 flex flex-col justify-center items-center text-center px-4 md:px-8 py-16 md:py-24 relative overflow-hidden" id="landing-hero">
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10 max-w-3xl space-y-6">
+                <!-- Brasão Oficial da Liga em Destaque -->
+                <div class="w-28 h-28 md:w-36 md:h-36 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl p-2.5 flex items-center justify-center mx-auto relative group overflow-hidden" id="landing-hero-logo-box">
+                    <img id="landing-hero-logo" src="" alt="Brasão LACC" class="w-full h-full object-contain hidden">
+                    <span id="landing-hero-sigla" class="font-black text-3xl md:text-4xl text-emerald-400 tracking-wider">LACC</span>
+                </div>
+
+                <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                    <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>
+                    <span id="landing-badge-faculdade">Faculdade Serra Dourada • Gestão 2026</span>
+                </div>
+
+                <h1 class="text-3xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight" id="landing-main-title">
+                    Liga Acadêmica de Ciências Criminais
+                </h1>
+
+                <p class="text-base md:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed" id="landing-main-desc">
+                    Espaço de excelência para o aprofundamento científico, debate dogmático e extensão prática do Direito Penal, Processo Penal e Criminologia Crítica.
+                </p>
+
+                <!-- Botões de Ação -->
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                    <button onclick="openLoginModal()" class="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-xl shadow-emerald-500/25 transition flex items-center justify-center gap-2.5 hover:scale-[1.02] active:scale-[0.98]">
+                        <i data-lucide="user-check" class="w-4 h-4"></i>
+                        <span>Acessar Área de Membros</span>
+                    </button>
+                    <a href="#landing-about" class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-sm font-semibold border border-slate-800 transition flex items-center justify-center gap-2">
+                        <span>Conhecer a Liga</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+        </main>
+
+        <!-- Seção Sobre & Pilares -->
+        <section id="landing-about" class="py-16 md:py-20 px-4 md:px-8 border-t border-slate-900 bg-slate-950/60 relative">
+            <div class="max-w-5xl mx-auto space-y-12">
+                <div class="text-center space-y-3">
+                    <span class="text-xs font-bold uppercase tracking-widest text-emerald-400">Pilares Acadêmicos</span>
+                    <h2 class="text-2xl md:text-4xl font-extrabold text-white">Ciências Criminais na Prática</h2>
+                    <p class="text-sm text-slate-400 max-w-xl mx-auto">Desenvolvendo habilidades forenses, rigor técnico e reflexão humanística sobre o sistema penal.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-900/70 p-6 rounded-3xl border border-slate-800/80 hover:border-slate-700 transition space-y-3">
+                        <div class="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                            <i data-lucide="scale" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-white">Dogmática Penal</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">Estudo aprofundado da teoria do crime, tipicidade, culpabilidade e aplicação das penas na jurisprudência dos tribunais superiores.</p>
+                    </div>
+
+                    <div class="bg-slate-900/70 p-6 rounded-3xl border border-slate-800/80 hover:border-slate-700 transition space-y-3">
+                        <div class="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                            <i data-lucide="microscope" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-white">Criminologia Crítica</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">Análise sociológica do crime, política criminal, vitimologia e os impactos institucionais do sistema penal contemporâneo.</p>
+                    </div>
+
+                    <div class="bg-slate-900/70 p-6 rounded-3xl border border-slate-800/80 hover:border-slate-700 transition space-y-3">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                            <i data-lucide="briefcase" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-white">Prática & Extensão</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">Simulação de Tribunal do Júri, oficinas de peças processuais, visitas técnicas e debates abertos com a comunidade jurídica.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção Próximos Encontros -->
+        <section id="landing-events" class="py-16 px-4 md:px-8 border-t border-slate-900 bg-slate-950">
+            <div class="max-w-4xl mx-auto space-y-8">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-widest text-emerald-400">Cronograma</span>
+                        <h2 class="text-2xl md:text-3xl font-extrabold text-white">Próximas Atividades</h2>
+                    </div>
+                    <button onclick="openLoginModal()" class="text-xs text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1">
+                        Acesso de ligantes ao painel completo <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+
+                <div id="landing-events-container" class="space-y-3">
+                    <!-- Eventos renderizados via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Rodapé Público -->
+        <footer class="border-t border-slate-900 bg-slate-950 px-4 md:px-8 py-8 text-center text-xs text-slate-500">
+            <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <span class="font-bold text-slate-400" id="landing-footer-name">Liga Acadêmica de Ciências Criminais (LACC)</span>
+                    <span class="block text-[11px] text-slate-600 mt-0.5" id="landing-footer-uni">Faculdade Serra Dourada</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="openLoginModal()" class="text-emerald-400 hover:underline font-semibold">Área de Membros</button>
+                    <span>•</span>
+                    <a href="/checkin.html" class="hover:underline">Check-in QR</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ================= 2. MODAL DE LOGIN (ÁREA DE MEMBROS) ================= -->
+    <div id="modal-login" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 md:p-8 shadow-2xl animate-fade-in text-white relative">
+            <button onclick="closeModal('modal-login')" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="text-center space-y-3 mb-6">
+                <div class="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700/80 mx-auto flex items-center justify-center overflow-hidden shadow-lg p-1.5" id="login-logo-box">
+                    <img id="login-logo-img" src="" alt="Brasão LACC" class="w-full h-full object-contain hidden">
+                    <span id="login-logo-sigla" class="font-black text-xl text-emerald-400">LACC</span>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Área de Membros</h3>
+                    <p class="text-xs text-slate-400 mt-1">Acesse o painel operacional da Liga Acadêmica</p>
+                </div>
+            </div>
+
+            <form id="form-login" onsubmit="submitLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">E-mail Cadastrado</label>
+                    <div class="relative">
+                        <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="email" id="login-email" required placeholder="seu.email@faculdade.edu.br" class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">Senha de Acesso</label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="password" id="login-password" required placeholder="••••••••" class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition flex items-center justify-center gap-2">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                        <span>Entrar no Dashboard</span>
+                    </button>
+                </div>
+
+                <!-- Botão de Acesso Rápido para a Diretoria / Demonstração -->
+                <div class="pt-3 border-t border-slate-800 text-center space-y-2">
+                    <button type="button" onclick="quickLoginDemo()" class="w-full py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700/60 transition flex items-center justify-center gap-2">
+                        <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400"></i>
+                        <span>Acesso Rápido de Membro (1 clique)</span>
+                    </button>
+                    <button type="button" onclick="closeModal('modal-login')" class="text-xs text-slate-500 hover:text-slate-300 transition">
+                        Voltar para a página inicial
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= 3. DASHBOARD COMPLETO (ÁREA RESTRITA) ================= -->
+    <div id="app-dashboard" class="flex-1 flex overflow-hidden hidden bg-slate-50">
         <!-- Sidebar Desktop -->
         <aside class="hidden lg:flex flex-col w-64 bg-slate-900 text-white border-r border-slate-800 select-none">
             <!-- Header / Logo -->
@@ -102,8 +350,8 @@
                 </div>
             </nav>
 
-            <!-- Sidebar Footer Quick Card -->
-            <div class="p-4 border-t border-slate-800">
+            <!-- Sidebar Footer Quick Card & Logout -->
+            <div class="p-4 border-t border-slate-800 space-y-3">
                 <div class="bg-slate-800/80 rounded-xl p-3 border border-slate-700/60">
                     <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
                         <span>Saldo em Caixa</span>
@@ -115,6 +363,10 @@
                         <span class="text-slate-200 font-semibold" id="sidebar-attendance-avg">0%</span>
                     </div>
                 </div>
+                <button onclick="handleLogout()" class="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-rose-400 hover:bg-slate-800/80 transition border border-slate-800">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                    <span>Sair da Área de Membros</span>
+                </button>
             </div>
         </aside>
 
@@ -134,6 +386,9 @@
                 <div class="flex items-center gap-2">
                     <button onclick="openShareModal()" title="Compartilhar Site" class="p-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition">
                         <i data-lucide="share-2" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="handleLogout()" title="Sair da Área de Membros" class="p-2 rounded-lg bg-slate-100 text-slate-500 hover:text-rose-600 transition">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
                     </button>
                 </div>
             </header>
