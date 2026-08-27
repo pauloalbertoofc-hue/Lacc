@@ -254,3 +254,33 @@ body {
         transition: none !important;
     }
 }
+
+/* Responsividade Mobile para a Rede Interdisciplinar */
+@media (max-width: 767px) {
+    #interdisciplinary-network-stage {
+        height: auto !important;
+        min-height: 460px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+    }
+    #lacc-central-hub {
+        position: relative !important;
+        margin-bottom: 0.5rem;
+    }
+    .dynamic-area-node {
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
+        width: 100%;
+        max-width: 300px;
+    }
+    .lacc-network-svg {
+        display: none !important;
+    }
+}
+

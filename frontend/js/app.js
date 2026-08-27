@@ -108,7 +108,16 @@ async function loadLandingEvents() {
         if (!container) return;
 
         if (!events || events.length === 0) {
-            container.innerHTML = '<div class="p-6 text-center text-slate-500 bg-slate-900/60 rounded-2xl border border-slate-800 text-xs">Nenhum evento cadastrado no momento. Fique atento às nossas redes!</div>';
+            container.innerHTML = `
+                <div class="p-8 text-center bg-slate-900/60 rounded-3xl border border-slate-800/80 text-slate-400 space-y-2">
+                    <div class="w-10 h-10 rounded-2xl bg-slate-800/80 text-amber-400/80 mx-auto flex items-center justify-center border border-slate-700/50">
+                        <i data-lucide="calendar" class="w-5 h-5"></i>
+                    </div>
+                    <p class="text-sm font-semibold text-slate-300">Nenhuma atividade pública cadastrada no momento.</p>
+                    <p class="text-xs text-slate-500 max-w-md mx-auto">Acompanhe nossas comunicações institucionais e canais oficiais para os próximos simpósios, debates e grupos de estudo.</p>
+                </div>
+            `;
+            initIcons();
             return;
         }
 
@@ -156,94 +165,51 @@ function initHeroParallax() {
     if (prefersReducedMotion) return;
 
     const hero = document.getElementById('landing-hero');
-    const crestWrapper = document.getElementById('hero-parallax-crest-wrapper');
     const crestImg = document.getElementById('hero-parallax-crest-img');
-    const foreground = document.getElementById('hero-foreground-content');
-
-    if (!hero || !crestWrapper) return;
+    if (!hero || !crestImg) return;
     heroParallaxInitialized = true;
 
     // Detectar se o dispositivo possui cursor fino (desktop com mouse)
     const hasFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (!hasFinePointer) return;
 
     let targetMouseX = 0;
     let targetMouseY = 0;
     let currentMouseX = 0;
     let currentMouseY = 0;
 
-    let targetScrollY = window.scrollY || 0;
-    let currentScrollY = window.scrollY || 0;
-
     // Interação sutil com o cursor (Desktop apenas)
-    if (hasFinePointer) {
-        hero.addEventListener('mousemove', (e) => {
-            const rect = hero.getBoundingClientRect();
-            // Ignora se o hero não estiver visível na janela
-            if (rect.bottom < 0 || rect.top > window.innerHeight) return;
+    hero.addEventListener('mousemove', (e) => {
+        const rect = hero.getBoundingClientRect();
+        if (rect.bottom < 0 || rect.top > window.innerHeight) return;
 
-            // Posição normalizada de -1 a 1 em relação ao centro do hero
-            const normX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-            const normY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+        // Posição normalizada de -1 a 1 em relação ao centro do hero
+        const normX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+        const normY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
 
-            // Deslocamento sutil oposto ao cursor (máximo 16px horizontal, 12px vertical)
-            targetMouseX = -normX * 16;
-            targetMouseY = -normY * 12;
-        }, { passive: true });
-
-        hero.addEventListener('mouseleave', () => {
-            // Retorna suavemente ao centro
-            targetMouseX = 0;
-            targetMouseY = 0;
-        });
-    }
-
-    // Acompanhamento contínuo e passivo do scroll
-    window.addEventListener('scroll', () => {
-        targetScrollY = window.scrollY || window.pageYOffset || 0;
+        // Deslocamento suave e discreto (máximo 12px horizontal, 8px vertical)
+        targetMouseX = -normX * 12;
+        targetMouseY = -normY * 8;
     }, { passive: true });
 
-    // Loop de renderização fluida com LERP (Linear Interpolation) via requestAnimationFrame
-    function renderParallax() {
-        // Interpolação suave para mouse e scroll
-        currentMouseX += (targetMouseX - currentMouseX) * 0.07;
-        currentMouseY += (targetMouseY - currentMouseY) * 0.07;
-        currentScrollY += (targetScrollY - currentScrollY) * 0.09;
+    hero.addEventListener('mouseleave', () => {
+        targetMouseX = 0;
+        targetMouseY = 0;
+    });
 
-        const heroHeight = hero.offsetHeight || 650;
+    // Loop de amortecimento fluido via requestAnimationFrame
+    function renderMouseParallax() {
+        currentMouseX += (targetMouseX - currentMouseX) * 0.08;
+        currentMouseY += (targetMouseY - currentMouseY) * 0.08;
 
-        // Executar transformações apenas enquanto a seção estiver dentro/próxima da tela
-        if (currentScrollY <= heroHeight + 150) {
-            // 1. Brasão Parallax de Fundo
-            // Deslocamento lento (~0.20x) + aumento sutil de escala (até 1.05x)
-            const crestScrollY = currentScrollY * 0.20;
-            const crestScale = 1 + Math.min(currentScrollY * 0.00025, 0.05);
-
-            // Opacidade decresce progressivamente com a saída da tela
-            const scrollFactor = Math.min(1, Math.max(0, currentScrollY / heroHeight));
-            const crestOpacity = Math.max(0.03, 0.16 * (1 - scrollFactor * 0.75));
-
-            const posX = currentMouseX.toFixed(2);
-            const posY = (crestScrollY + currentMouseY).toFixed(2);
-
-            crestWrapper.style.transform = `translate3d(${posX}px, ${posY}px, 0) scale(${crestScale.toFixed(4)})`;
-            if (crestImg) {
-                crestImg.style.opacity = crestOpacity.toFixed(3);
-            }
-
-            // 2. Conteúdo em Primeiro Plano (Texto e Botões)
-            // Deslocamento em velocidade diferente (~0.40x) para criar profundidade tangível
-            if (foreground) {
-                const fgScrollY = currentScrollY * 0.40;
-                const fgOpacity = Math.max(0, 1 - scrollFactor * 1.3);
-                foreground.style.transform = `translate3d(0, ${fgScrollY.toFixed(2)}px, 0)`;
-                foreground.style.opacity = fgOpacity.toFixed(3);
-            }
+        if (crestImg) {
+            crestImg.style.transform = `translate3d(${currentMouseX.toFixed(2)}px, ${currentMouseY.toFixed(2)}px, 0)`;
         }
 
-        requestAnimationFrame(renderParallax);
+        requestAnimationFrame(renderMouseParallax);
     }
 
-    requestAnimationFrame(renderParallax);
+    requestAnimationFrame(renderMouseParallax);
 }
 
 function initIcons() {

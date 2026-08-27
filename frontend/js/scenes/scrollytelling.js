@@ -1,76 +1,75 @@
 /**
- * LACC - Scrollytelling: Cena 1 (Hero) & Cena 2 (Rede Interdisciplinar)
- * Arquitetura desacoplada, data-driven e acessível
+ * LACC - Scrollytelling Refinado: Narrativa de Scroll, Transição Hero → Hub e Rede Interdisciplinar
+ * Motion design sutil, ritmo institucional, momento de contemplação e scrollspy
  */
 
 (function () {
     'use strict';
 
-    // Inicializa quando o DOM estiver pronto
     document.addEventListener('DOMContentLoaded', () => {
-        // Aguarda carregar dados e bibliotecas
         setTimeout(() => {
-            initScrollyExperience();
-        }, 100);
+            initScrollytellingExperience();
+        }, 120);
     });
 
-    function initScrollyExperience() {
-        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function initScrollytellingExperience() {
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         
-        // Renderiza nós dinâmicos da Cena 2
+        // 1. Renderizar os nós e linhas da rede
         renderInterdisciplinaryNetwork();
 
-        // Se o usuário solicitou redução de movimento, mantém layout estático sem pinning
-        if (reducedMotion) {
-            setupStaticAccessibleLayout();
+        // 2. Inicializar Scrollspy da barra de navegação e drawer
+        initScrollspy();
+
+        // 3. Suporte a cliques diretos em âncoras da navbar
+        initSmoothAnchors();
+
+        // 4. Se o usuário solicitou redução de movimento, aplicar layout estático
+        if (prefersReducedMotion) {
+            setupReducedMotionLayout();
             return;
         }
 
-        // Se o GSAP e ScrollTrigger estiverem disponíveis
+        // 5. Se GSAP e ScrollTrigger estiverem disponíveis, orquestrar a timeline
         if (window.gsap && window.ScrollTrigger) {
             gsap.registerPlugin(ScrollTrigger);
-            setupHeroTransition();
-            setupInterdisciplinaryScrolly();
+            setupHeroParallaxAndMorph();
+            setupInterdisciplinaryTimeline();
+            setupConventionalSectionsEntrance();
         } else {
-            // Fallback elegante com IntersectionObserver nativo caso a CDN demore
-            setupNativeScrollFallback();
+            setupFallbackLayout();
         }
     }
 
     /**
-     * Renderiza os 6 nós interdisciplinares e as linhas SVG baseados em LACC_DATA
+     * Renderização Data-Driven da Rede Interdisciplinar (Desktop e Mobile)
      */
     function renderInterdisciplinaryNetwork() {
-        const networkContainer = document.getElementById('interdisciplinary-network-stage');
+        const stage = document.getElementById('interdisciplinary-network-stage');
         const svgCanvas = document.getElementById('interdisciplinary-svg-canvas');
-        if (!networkContainer || !window.LACC_DATA) return;
+        if (!stage || !window.LACC_DATA) return;
 
         const areas = window.LACC_DATA.interdisciplinaryAreas || [];
         const isDesktop = window.innerWidth >= 768;
 
-        // Limpa nós existentes
-        networkContainer.querySelectorAll('.dynamic-area-node').forEach(el => el.remove());
+        // Limpar nós existentes
+        stage.querySelectorAll('.dynamic-area-node').forEach(el => el.remove());
         if (svgCanvas) svgCanvas.innerHTML = '';
 
         if (svgCanvas) {
-            // Adiciona definição do gradiente dourado
             svgCanvas.innerHTML = `
                 <defs>
                     <linearGradient id="goldenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#fef3c7" stop-opacity="0.9" />
-                        <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.75" />
+                        <stop offset="0%" stop-color="#fef3c7" stop-opacity="0.95" />
+                        <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.8" />
                         <stop offset="100%" stop-color="#b45309" stop-opacity="0.4" />
                     </linearGradient>
-                    <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.8" />
-                        <stop offset="100%" stop-color="#f59e0b" stop-opacity="0" />
-                    </radialGradient>
                 </defs>
             `;
         }
 
-        areas.forEach((area, index) => {
-            // 1. Criar linha SVG do centro (50%, 50%) até as coordenadas da área (no desktop)
+        areas.forEach((area) => {
+            // Linha SVG conectando o centro à coordenada do nó
             if (svgCanvas && isDesktop) {
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 line.setAttribute('x1', '50%');
@@ -79,22 +78,33 @@
                 line.setAttribute('y2', `${area.y}%`);
                 line.setAttribute('class', `lacc-network-line line-${area.id}`);
                 line.setAttribute('id', `line-${area.id}`);
-                
-                // Configuração para efeito de desenho de traço (stroke-dash)
                 line.style.strokeDasharray = '400';
                 line.style.strokeDashoffset = '400';
                 svgCanvas.appendChild(line);
             }
 
-            // 2. Criar card interativo do nó da área
+            // Card / Nó da disciplina
             const nodeEl = document.createElement('div');
             nodeEl.className = `dynamic-area-node lacc-area-node absolute z-20 group`;
             nodeEl.setAttribute('id', `node-${area.id}`);
             nodeEl.setAttribute('tabindex', '0');
             nodeEl.setAttribute('role', 'button');
-            nodeEl.setAttribute('aria-label', `${area.title} - ${area.specialty}. ${area.desc}`);
+            nodeEl.setAttribute('aria-label', `${area.title} - ${area.specialty}: ${area.desc}`);
 
-            // Posicionamento absoluto no desktop ou fluxo relativo responsivo no mobile
+            // Previne navegação indesejada ao clicar
+            nodeEl.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Em telas touch, alterna o popover informativo
+                if (window.innerWidth < 768) {
+                    const pop = nodeEl.querySelector('.lacc-node-popover');
+                    if (pop) {
+                        pop.classList.toggle('opacity-100');
+                        pop.classList.toggle('pointer-events-auto');
+                    }
+                }
+            });
+
+            // Posicionamento no desktop vs mobile
             if (isDesktop) {
                 nodeEl.style.left = `${area.x}%`;
                 nodeEl.style.top = `${area.y}%`;
@@ -104,8 +114,8 @@
             const tagsHtml = area.tags.map(t => `<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">${t}</span>`).join(' ');
 
             nodeEl.innerHTML = `
-                <!-- Conector / Ponto Dourado -->
-                <div class="flex items-center gap-2.5 bg-slate-900/90 hover:bg-slate-800/95 border border-slate-800 hover:border-amber-500/60 backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-xl transition">
+                <!-- Conector e Ponto Dourado -->
+                <div class="flex items-center gap-2.5 bg-slate-900/90 hover:bg-slate-800/95 border border-slate-800 hover:border-amber-500/60 backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-xl transition-all select-none">
                     <div class="w-3.5 h-3.5 rounded-full lacc-node-core shrink-0"></div>
                     <div class="text-left">
                         <div class="flex items-center gap-1.5">
@@ -116,8 +126,8 @@
                     </div>
                 </div>
 
-                <!-- Popover / Descrição Detalhada em Hover no Desktop -->
-                <div class="lacc-node-popover absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-3.5 bg-slate-900/95 border border-amber-500/40 rounded-2xl shadow-2xl backdrop-blur-lg opacity-0 pointer-events-none transition z-30">
+                <!-- Popover de Inspeção Intelectual no Desktop -->
+                <div class="lacc-node-popover absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-3.5 bg-slate-900/95 border border-amber-500/40 rounded-2xl shadow-2xl backdrop-blur-lg opacity-0 pointer-events-none transition-all z-30">
                     <div class="text-xs font-bold text-amber-300 flex items-center gap-1.5 mb-1">
                         <i data-lucide="${area.icon}" class="w-3.5 h-3.5 text-amber-400"></i>
                         <span>${area.title} na LACC</span>
@@ -130,117 +140,239 @@
                 </div>
             `;
 
-            networkContainer.appendChild(nodeEl);
+            stage.appendChild(nodeEl);
         });
 
-        // Reinicializa ícones Lucide nos novos nós
         if (window.lucide) {
             window.lucide.createIcons();
         }
     }
 
     /**
-     * Transição suave da Cena 1 (Hero):
-     * O título desvanece suavemente ao scroll enquanto o brasão permanece
+     * Transição Hero → Núcleo LACC
+     * Cria a ilusão contínua do Brasão do Hero convergindo para o núcleo central da rede
      */
-    function setupHeroTransition() {
-        const heroText = document.getElementById('hero-foreground-content');
-        if (!heroText) return;
+    function setupHeroParallaxAndMorph() {
+        const hero = document.getElementById('landing-hero');
+        const heroFg = document.getElementById('hero-foreground-content');
+        const heroCrest = document.getElementById('hero-parallax-crest-wrapper');
+        const heroCrestImg = document.getElementById('hero-parallax-crest-img');
+        if (!hero || !heroFg || !heroCrest) return;
 
-        gsap.to(heroText, {
+        // Animação dos textos e botões do Hero esmaecendo ao início do scroll
+        gsap.to(heroFg, {
             scrollTrigger: {
-                trigger: '#landing-hero',
+                trigger: hero,
                 start: 'top top',
-                end: 'bottom 40%',
-                scrub: true
+                end: 'bottom 45%',
+                scrub: 0.8
             },
             opacity: 0,
-            y: -50,
+            y: -55,
             ease: 'power1.out'
+        });
+
+        // O Brasão do hero se desloca sutilmente com profundidade e reduz para alinhar ao hub
+        gsap.to(heroCrest, {
+            scrollTrigger: {
+                trigger: hero,
+                start: 'top top',
+                end: 'bottom top',
+                scrub: 1
+            },
+            y: 80,
+            scale: 0.85,
+            opacity: 0.35,
+            ease: 'power1.inOut'
         });
     }
 
     /**
-     * Scrollytelling da Cena 2: A Interdisciplinaridade
-     * Pinning suave que orquestra as linhas e nós conforme o progresso da rolagem
+     * Construção Progressiva da Rede, Conexões e Momento de Contemplação
      */
-    function setupInterdisciplinaryScrolly() {
-        const sectionContainer = document.getElementById('scene-interdisciplinary-container');
+    function setupInterdisciplinaryTimeline() {
+        const container = document.getElementById('scene-interdisciplinary-container');
         const pinStage = document.getElementById('scene-interdisciplinary-pin');
-        if (!sectionContainer || !pinStage) return;
+        if (!container || !pinStage) return;
 
         const isDesktop = window.innerWidth >= 768;
         const areas = window.LACC_DATA.interdisciplinaryAreas || [];
 
-        // Timeline sincronizada à rolagem com pinning nativo
+        // Distância confortável de scroll (permite construção pausada + contemplação)
+        const scrollDistance = isDesktop ? '+=280%' : '+=200%';
+
         const tl = gsap.timeline({
             scrollTrigger: {
-                trigger: sectionContainer,
+                trigger: container,
                 start: 'top top',
-                end: isDesktop ? '+=220%' : '+=180%',
+                end: scrollDistance,
                 pin: pinStage,
                 scrub: 1,
                 anticipatePin: 1
             }
         });
 
-        // 1. Entrada da premissa: "O crime não é um fenômeno de uma única ciência"
-        tl.fromTo('#interdisciplinary-quote', 
-            { opacity: 0, scale: 0.95, y: 30 },
-            { opacity: 1, scale: 1, y: 0, duration: 1, ease: 'power2.out' }
-        );
-
-        // 2. Pulso e iluminação do nó central (LACC Hub)
+        // FASE 1: O Núcleo Central LACC se estabelece (Ilusão do Brasão chegando e focando)
         tl.fromTo('#lacc-central-hub',
-            { scale: 0.8, opacity: 0 },
-            { scale: 1, opacity: 1, duration: 0.8, ease: 'back.out(1.5)' },
-            '-=0.4'
+            { scale: 2.2, opacity: 0.25 },
+            { scale: 1.0, opacity: 1.0, duration: 1.2, ease: 'power2.out' }
         );
 
-        // 3. Projeção das Linhas Douradas para cada ciência
-        if (isDesktop) {
-            areas.forEach((area) => {
-                tl.to(`#line-${area.id}`, {
-                    strokeDashoffset: 0,
-                    opacity: 0.9,
-                    duration: 0.8,
-                    ease: 'power1.inOut'
-                }, '-=0.6');
+        // Abertura da citação com a premissa epistemológica
+        tl.fromTo('#interdisciplinary-quote',
+            { opacity: 0, y: 25, scale: 0.95 },
+            { opacity: 1, y: 0, scale: 1, duration: 1.0, ease: 'power2.out' },
+            '-=0.6'
+        );
 
-                tl.fromTo(`#node-${area.id}`,
-                    { scale: 0.6, opacity: 0 },
-                    { scale: 1, opacity: 1, duration: 0.7, ease: 'back.out(1.4)' },
-                    '-=0.5'
-                );
+        // FASE 2: Construção da Rede com as conexões nascendo do núcleo
+        // Sequência planejada: Direito → Criminologia → Psicologia → Medicina → Farmácia → Perícia
+        const sequenceOrder = ['direito', 'criminologia', 'psicologia', 'medicina', 'farmacia', 'pericia'];
+
+        if (isDesktop) {
+            sequenceOrder.forEach((id) => {
+                const line = document.getElementById(`line-${id}`);
+                const node = document.getElementById(`node-${id}`);
+
+                if (line && node) {
+                    // Linha projeta-se do centro
+                    tl.to(line, {
+                        strokeDashoffset: 0,
+                        opacity: 0.85,
+                        duration: 0.9,
+                        ease: 'power1.inOut'
+                    }, '-=0.4');
+
+                    // Nó surge com scale suave e glow controlado
+                    tl.fromTo(node,
+                        { scale: 0.7, opacity: 0 },
+                        { scale: 1.0, opacity: 1.0, duration: 0.8, ease: 'back.out(1.3)' },
+                        '-=0.5'
+                    );
+                }
             });
         } else {
-            // No mobile, revelação progressiva dos cards de áreas
+            // Em telas mobile: entrada sequencial dos cards conectados
             tl.fromTo('.dynamic-area-node',
-                { opacity: 0, y: 20, scale: 0.95 },
-                { opacity: 1, y: 0, scale: 1, stagger: 0.25, duration: 1.2, ease: 'power2.out' },
-                '-=0.4'
+                { opacity: 0, y: 20, scale: 0.9 },
+                { opacity: 1, y: 0, scale: 1, stagger: 0.35, duration: 1.2, ease: 'power2.out' },
+                '-=0.3'
             );
         }
 
-        // 4. Convergência para "CONHECIMENTO INTERDISCIPLINAR"
+        // Revelação do selo de síntese "CONHECIMENTO INTERDISCIPLINAR"
         tl.fromTo('#interdisciplinary-synthesis',
-            { opacity: 0, y: 25, scale: 0.95 },
-            { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: 'power2.out' },
-            '+=0.2'
+            { opacity: 0, y: 20, scale: 0.95 },
+            { opacity: 1, y: 0, scale: 1, duration: 1.0, ease: 'power2.out' },
+            '+=0.1'
         );
 
-        // 5. Suave transição de saída para devolver o scroll normal
-        tl.to('#scene-interdisciplinary-pin', {
-            opacity: 0.96,
-            duration: 0.4
+        // FASE 3: MOMENTO DE CONTEMPLAÇÃO (Intervalo estável para absorção visual)
+        // Durante este trecho de rolagem, a composição permanece estável e iluminada
+        tl.to({}, { duration: 2.2 });
+
+        // FASE 4: Saída Suave para devolver o scroll convencional
+        tl.to(pinStage, {
+            opacity: 0,
+            y: -30,
+            duration: 1.0,
+            ease: 'power1.in'
         });
     }
 
     /**
-     * Fallback acessível para `prefers-reduced-motion`:
-     * Exibe os nós e linhas sem pinning nem movimentos rápidos
+     * Volta ao Site Convencional: Entrada suave da seção "Ciências Criminais na Prática"
      */
-    function setupStaticAccessibleLayout() {
+    function setupConventionalSectionsEntrance() {
+        const aboutContent = document.querySelector('#landing-about .max-w-5xl');
+        if (aboutContent) {
+            gsap.from(aboutContent, {
+                scrollTrigger: {
+                    trigger: '#landing-about',
+                    start: 'top 80%',
+                    toggleActions: 'play none none none'
+                },
+                opacity: 0,
+                y: 35,
+                duration: 0.9,
+                ease: 'power2.out'
+            });
+        }
+    }
+
+    /**
+     * Scrollspy: Atualiza automaticamente o indicador ativo na navbar e no drawer
+     */
+    function initScrollspy() {
+        const sections = [
+            { id: 'landing-hero', navKey: 'landing-hero' },
+            { id: 'areas', navKey: 'areas' },
+            { id: 'landing-about', navKey: 'landing-about' },
+            { id: 'landing-events', navKey: 'landing-events' }
+        ];
+
+        function updateNavState() {
+            const scrollPos = window.scrollY + 220;
+            let activeKey = 'landing-hero';
+
+            for (let i = 0; i < sections.length; i++) {
+                const sec = document.getElementById(sections[i].id);
+                if (sec) {
+                    const top = sec.offsetTop;
+                    const height = sec.offsetHeight;
+                    if (scrollPos >= top && scrollPos < top + height) {
+                        activeKey = sections[i].navKey;
+                    }
+                }
+            }
+
+            // Atualiza links desktop
+            document.querySelectorAll('.nav-item-desktop').forEach(link => {
+                const key = link.getAttribute('data-nav');
+                if (key === activeKey) {
+                    link.className = 'nav-item-desktop py-1 text-amber-400 font-bold border-b-2 border-amber-400 transition';
+                } else {
+                    link.className = 'nav-item-desktop py-1 text-slate-300 hover:text-amber-400 border-b-2 border-transparent transition';
+                }
+            });
+
+            // Atualiza links drawer
+            document.querySelectorAll('.nav-item-drawer').forEach(link => {
+                const key = link.getAttribute('data-drawer-nav');
+                if (key === activeKey) {
+                    link.className = 'nav-item-drawer flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-amber-300 bg-amber-500/10 border-l-2 border-amber-400 transition';
+                } else {
+                    link.className = 'nav-item-drawer flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 border-l-2 border-transparent transition';
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateNavState, { passive: true });
+        updateNavState();
+    }
+
+    /**
+     * Suporte para rolagem suave ao clicar em links da navbar (sem conflito com pinning)
+     */
+    function initSmoothAnchors() {
+        document.querySelectorAll('a[href^="#"]').forEach(link => {
+            link.addEventListener('click', (e) => {
+                const targetId = link.getAttribute('href').substring(1);
+                const targetEl = document.getElementById(targetId);
+                if (targetEl) {
+                    e.preventDefault();
+                    const yOffset = -70; // altura do cabeçalho fixo
+                    const y = targetEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+            });
+        });
+    }
+
+    /**
+     * Acessibilidade: Layout estático para `prefers-reduced-motion`
+     */
+    function setupReducedMotionLayout() {
         const pinStage = document.getElementById('scene-interdisciplinary-pin');
         const quote = document.getElementById('interdisciplinary-quote');
         const hub = document.getElementById('lacc-central-hub');
@@ -248,14 +380,18 @@
         const lines = document.querySelectorAll('.lacc-network-line');
         const nodes = document.querySelectorAll('.dynamic-area-node');
 
-        if (pinStage) pinStage.style.position = 'relative';
+        if (pinStage) {
+            pinStage.style.position = 'relative';
+            pinStage.style.opacity = '1';
+            pinStage.style.transform = 'none';
+        }
         if (quote) { quote.style.opacity = '1'; quote.style.transform = 'none'; }
         if (hub) { hub.style.opacity = '1'; hub.style.transform = 'none'; }
         if (synthesis) { synthesis.style.opacity = '1'; synthesis.style.transform = 'none'; }
-        
+
         lines.forEach(l => {
             l.style.strokeDashoffset = '0';
-            l.style.opacity = '0.8';
+            l.style.opacity = '0.85';
         });
 
         nodes.forEach(n => {
@@ -264,23 +400,11 @@
         });
     }
 
-    /**
-     * Fallback nativo caso GSAP não carregue por conexão lenta
-     */
-    function setupNativeScrollFallback() {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    setupStaticAccessibleLayout();
-                }
-            });
-        }, { threshold: 0.2 });
-
-        const section = document.getElementById('scene-interdisciplinary-container');
-        if (section) observer.observe(section);
+    function setupFallbackLayout() {
+        setupReducedMotionLayout();
     }
 
-    // Redimensionamento de janela (Debounce)
+    // Recalcular layout no redimensionamento da janela
     let resizeTimer;
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimer);
@@ -289,7 +413,7 @@
             if (window.ScrollTrigger) {
                 ScrollTrigger.refresh();
             }
-        }, 250);
+        }, 200);
     });
 
 })();

@@ -63,15 +63,15 @@
                 </div>
             </div>
 
-            <!-- Links Diretos no Desktop (Acessibilidade e Usabilidade Convencional) -->
-            <nav class="hidden xl:flex items-center gap-6 text-xs font-medium text-slate-300">
-                <a href="#landing-hero" class="hover:text-amber-400 transition">Início</a>
-                <a href="#areas" class="hover:text-amber-400 transition flex items-center gap-1">
+            <!-- Links Diretos no Desktop (Acessibilidade e Usabilidade Convencional com Scrollspy) -->
+            <nav class="hidden md:flex items-center gap-6 text-xs font-medium" id="landing-desktop-nav">
+                <a href="#landing-hero" data-nav="landing-hero" class="nav-item-desktop py-1 text-amber-400 font-bold border-b-2 border-amber-400 transition">Início</a>
+                <a href="#areas" data-nav="areas" class="nav-item-desktop py-1 text-slate-300 hover:text-amber-400 border-b-2 border-transparent transition flex items-center gap-1.5">
                     <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                     <span>Áreas</span>
                 </a>
-                <a href="#landing-about" class="hover:text-amber-400 transition">Sobre</a>
-                <a href="#landing-events" class="hover:text-amber-400 transition">Eventos</a>
+                <a href="#landing-about" data-nav="landing-about" class="nav-item-desktop py-1 text-slate-300 hover:text-amber-400 border-b-2 border-transparent transition">Sobre</a>
+                <a href="#landing-events" data-nav="landing-events" class="nav-item-desktop py-1 text-slate-300 hover:text-amber-400 border-b-2 border-transparent transition">Eventos</a>
             </nav>
 
             <!-- Botão das Três Barrinhas (Menu Hambúrguer) & Acesso Rápido -->
@@ -101,24 +101,24 @@
                         </button>
                     </div>
 
-                    <nav class="space-y-1 text-sm font-medium">
-                        <a href="#landing-hero" onclick="toggleLandingDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 transition">
+                    <nav class="space-y-1 text-sm font-medium" id="landing-drawer-nav">
+                        <a href="#landing-hero" data-drawer-nav="landing-hero" onclick="toggleLandingDrawer()" class="nav-item-drawer flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-amber-300 bg-amber-500/10 border-l-2 border-amber-400 transition">
                             <i data-lucide="home" class="w-4 h-4 text-amber-400"></i>
                             <span>Início</span>
                         </a>
-                        <a href="#areas" onclick="toggleLandingDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 transition">
+                        <a href="#areas" data-drawer-nav="areas" onclick="toggleLandingDrawer()" class="nav-item-drawer flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 border-l-2 border-transparent transition">
                             <i data-lucide="network" class="w-4 h-4 text-amber-400"></i>
                             <span>Áreas Interdisciplinares</span>
                         </a>
-                        <a href="#landing-about" onclick="toggleLandingDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 transition">
+                        <a href="#landing-about" data-drawer-nav="landing-about" onclick="toggleLandingDrawer()" class="nav-item-drawer flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 border-l-2 border-transparent transition">
                             <i data-lucide="scale" class="w-4 h-4 text-blue-400"></i>
                             <span>Sobre a Liga</span>
                         </a>
-                        <a href="#landing-events" onclick="toggleLandingDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 transition">
+                        <a href="#landing-events" data-drawer-nav="landing-events" onclick="toggleLandingDrawer()" class="nav-item-drawer flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 border-l-2 border-transparent transition">
                             <i data-lucide="calendar" class="w-4 h-4 text-amber-400"></i>
                             <span>Eventos & Atividades</span>
                         </a>
-                        <a href="/checkin.html" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 transition">
+                        <a href="/checkin.html" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 border-l-2 border-transparent transition">
                             <i data-lucide="qr-code" class="w-4 h-4 text-teal-400"></i>
                             <span>Check-in de Presença (QR)</span>
                         </a>
@@ -1090,7 +1090,7 @@
             <form id="form-event" onsubmit="submitEvent(event)" class="space-y-3.5">
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Título da Aula / Encontro *</label>
-                    <input type="text" id="event-title" required placeholder="Ex: Aula Magna de Trauma Torácico" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <input type="text" id="event-title" required placeholder="Ex: Simpósio de Ciências Criminais" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>

@@ -46,37 +46,23 @@ def seed():
         token_3 = str(uuid.uuid4())[:8]
         token_4 = str(uuid.uuid4())[:8]
 
-        events = [
-            ("Aula Inaugural: Abordagem Inicial no Trauma Grave", "Aula", event_1_date, "19:00", "Anfiteatro Central", 2.0, "Discussão com casos clínicos reais e introdução ao protocolo ATLS.", token_1, 1),
-            ("Reunião Ordinária: Planejamento do Simpósio Anual", "Reunião Ordinária", event_2_date, "18:30", "Sala de Reuniões 204", 1.5, "Alinhamento das comissões de patrocínio e palestrantes.", token_2, 1),
-            ("Workshop Prático: Suporte Avançado de Vida", "Workshop", event_3_date, "19:30", "Laboratório de Habilidades", 3.0, "Prática hands-on com manequins de intubação e ressuscitação cardiopulmonar.", token_3, 1),
-            ("Ação de Extensão: Prevenção de Acidentes na Comunidade", "Ação Social", event_4_date, "09:00", "Parque Municipal da Cidade", 4.0, "Atendimento e orientações de primeiros socorros para a comunidade.", token_4, 1),
-        ]
-
+        # Eventos públicos da LACC (Inicializa vazio conforme solicitado)
+        events = []
         cursor.executemany("""
             INSERT INTO events (title, event_type, date, time, location, hours, description, qr_code_token, is_active)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, events)
 
-        # 3. Presenças anteriores
-        # Evento 1: 8 membros presentes
-        for m_id in [1, 2, 3, 4, 5, 6, 7, 8]:
-            cursor.execute("INSERT OR IGNORE INTO attendance (event_id, member_id, status) VALUES (1, ?, 'Presente')", (m_id,))
-        cursor.execute("INSERT OR IGNORE INTO attendance (event_id, member_id, status) VALUES (1, 9, 'Justificado')")
+        # 3. Presenças anteriores (vazio)
 
-        # Evento 2: 7 membros presentes
-        for m_id in [1, 2, 3, 4, 5, 6, 9]:
-            cursor.execute("INSERT OR IGNORE INTO attendance (event_id, member_id, status) VALUES (2, ?, 'Presente')", (m_id,))
-        cursor.execute("INSERT OR IGNORE INTO attendance (event_id, member_id, status) VALUES (2, 7, 'Ausente')")
-
-        # 4. Tarefas (Kanban)
+        # 4. Tarefas (Kanban LACC)
         tasks = [
-            ("Definir palestrantes do Simpósio de Primavera", "Entrar em contato com professores convidados e confirmar disponibilidades.", "in_progress", "alta", "Científico", (today + timedelta(days=5)).strftime("%Y-%m-%d"), 3),
-            ("Criar artes de divulgação para o Instagram", "Elaborar carrossel com cronograma do mês de setembro.", "in_progress", "media", "Comunicação", (today + timedelta(days=2)).strftime("%Y-%m-%d"), 4),
-            ("Fechamento do balancete de agosto", "Consolidar comprovantes de pagamento e emitir relatório financeiro.", "todo", "alta", "Financeiro", (today + timedelta(days=7)).strftime("%Y-%m-%d"), 5),
-            ("Atualizar estatuto interno e submeter à Pro-Reitoria", "Revisar capítulo sobre renovação de vagas e processo seletivo.", "todo", "baixa", "Presidência", (today + timedelta(days=15)).strftime("%Y-%m-%d"), 1),
-            ("Emitir certificados da Aula Inaugural", "Gerar PDFs com código de autenticação para os 25 inscritos.", "done", "media", "Científico", (today - timedelta(days=2)).strftime("%Y-%m-%d"), 3),
-            ("Reservar laboratório de simulação para workshop", "Ofício protocolado e aprovado com a coordenação do bloco.", "done", "alta", "Presidência", (today - timedelta(days=4)).strftime("%Y-%m-%d"), 2)
+            ("Definir palestrantes do Simpósio de Ciências Criminais", "Entrar em contato com professores convidados e confirmar disponibilidades.", "in_progress", "alta", "Científico", (today + timedelta(days=5)).strftime("%Y-%m-%d"), 3),
+            ("Criar artes de divulgação para o Instagram da LACC", "Elaborar carrossel com cronograma do semestre.", "in_progress", "media", "Comunicação", (today + timedelta(days=2)).strftime("%Y-%m-%d"), 4),
+            ("Fechamento do balancete mensal", "Consolidar comprovantes e emitir relatório financeiro.", "todo", "alta", "Financeiro", (today + timedelta(days=7)).strftime("%Y-%m-%d"), 5),
+            ("Atualizar estatuto interno e submeter à Coordenação", "Revisar capítulo sobre renovação de vagas e processo seletivo.", "todo", "baixa", "Presidência", (today + timedelta(days=15)).strftime("%Y-%m-%d"), 1),
+            ("Emitir certificados dos encontros anteriores", "Gerar PDFs com código de autenticação para os participantes.", "done", "media", "Científico", (today - timedelta(days=2)).strftime("%Y-%m-%d"), 3),
+            ("Reservar auditório para mesa-redonda de Processo Penal", "Ofício protocolado e aprovado com a coordenação de Direito.", "done", "alta", "Presidência", (today - timedelta(days=4)).strftime("%Y-%m-%d"), 2)
         ]
 
         cursor.executemany("""
@@ -84,13 +70,11 @@ def seed():
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, tasks)
 
-        # 5. Materiais e Biblioteca
+        # 5. Materiais e Biblioteca Institucional da LACC
         materials = [
-            ("Diretrizes de Atendimento ao Politraumatizado (ATLS 10ª Ed.)", "Artigos", "link", None, "https://www.facs.org/quality-programs/trauma/education/atls/", "Guia de referência essencial para membros da liga.", "Comitê de Trauma"),
-            ("Slide da Aula 01: Fisiopatologia do Choque", "Aulas", "link", None, "https://docs.google.com/presentation/d/demo", "Apresentação ministrada pelo Prof. Dr. Silva.", "Mariana Costa"),
-            ("Ata da Reunião de Diretoria nº 04/2026", "Atas", "link", None, "https://docs.google.com/document/d/demo-ata", "Decisões tomadas a respeito de orçamentos e vagas de trainees.", "Secretaria Geral"),
-            ("Estatuto Oficial e Regulamento Interno da Liga", "Estatuto", "link", None, "https://drive.google.com/file/d/demo-estatuto", "Documento normativo registrado junto à coordenação de curso.", "Diretoria Executiva"),
-            ("Edital do Processo Seletivo 2026.2", "Editais", "link", None, "https://drive.google.com/file/d/demo-edital", "Regras e datas da prova teórica e entrevista.", "Comissão Avaliadora")
+            ("Ata da Reunião de Diretoria nº 04/2026", "Atas", "link", None, "https://docs.google.com/document/d/demo-ata", "Decisões tomadas a respeito de cronograma e grupos de estudo.", "Secretaria Geral"),
+            ("Estatuto Oficial e Regulamento Interno da Liga", "Estatuto", "link", None, "https://drive.google.com/file/d/demo-estatuto", "Documento normativo registrado junto à Faculdade Serra Dourada.", "Diretoria Executiva"),
+            ("Edital do Processo Seletivo 2026.2", "Editais", "link", None, "https://drive.google.com/file/d/demo-edital", "Regras e datas da avaliação teórica e entrevista.", "Comissão Avaliadora")
         ]
 
         cursor.executemany("""
