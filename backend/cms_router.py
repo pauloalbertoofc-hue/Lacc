@@ -329,3 +329,4 @@ def admin_rollback_revision(
         return {
             "message": f"Versão v{rev['version_number']} restaurada para o rascunho de '{s_key}'! Você pode visualizá-la no preview antes de publicar."
         }
+

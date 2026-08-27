@@ -101,6 +101,57 @@ def run_migrations():
             )
         """)
 
+        # Tabelas de Conteúdo Estruturado (Etapa 4)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS scientific_areas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                slug TEXT UNIQUE NOT NULL,
+                title TEXT NOT NULL,
+                specialty TEXT NOT NULL,
+                tags TEXT NOT NULL,
+                icon TEXT DEFAULT 'scale',
+                desc TEXT NOT NULL,
+                x_coord REAL DEFAULT 50.0,
+                y_coord REAL DEFAULT 50.0,
+                order_index INTEGER DEFAULT 0,
+                is_active INTEGER DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS researches (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                line_of_research TEXT NOT NULL,
+                coordinator_id INTEGER,
+                status TEXT DEFAULT 'Em Andamento',
+                description TEXT NOT NULL,
+                keywords TEXT,
+                start_date TEXT,
+                end_date TEXT,
+                is_featured INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (coordinator_id) REFERENCES members(id) ON DELETE SET NULL
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS publications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                publication_type TEXT NOT NULL,
+                authors TEXT NOT NULL,
+                journal_or_event TEXT,
+                year INTEGER DEFAULT 2026,
+                abstract TEXT,
+                doi_or_url TEXT,
+                file_path TEXT,
+                is_published INTEGER DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         # 3. Adicionar colunas necessárias na tabela members (se não existirem)
         existing_cols = [r["name"] for r in cursor.execute("PRAGMA table_info(members)").fetchall()]
         
@@ -321,6 +372,121 @@ def run_migrations():
                     VALUES (?, 1, ?, ?, 'Versão inicial institucional aprovada')
                 """, (s_key, s_json, paulo_id))
                 print(f"[+] Seção CMS '{s_key}' inicializada com versão v1.")
+
+        # 11. Seed de Áreas Científicas Interdisciplinares (se vazia)
+        areas_count = cursor.execute("SELECT COUNT(*) as c FROM scientific_areas").fetchone()["c"]
+        if areas_count == 0:
+            scientific_areas_seed = [
+                (
+                    "direito", "Direito", "Penal & Processual",
+                    json.dumps(["Garantismo", "Tipicidade", "Contraditório"]),
+                    "scale",
+                    "Dogmática penal, teoria do delito, garantias fundamentais e processo penal constitucional perante os tribunais superiores.",
+                    82.0, 50.0, 1
+                ),
+                (
+                    "criminologia", "Criminologia", "Crítica & Empírica",
+                    json.dumps(["Etiologia Criminal", "Controle Social", "Vitimologia"]),
+                    "microscope",
+                    "Análise sociológica do crime, política criminal, vitimização e os impactos institucionais do sistema penitenciário.",
+                    68.0, 82.0, 2
+                ),
+                (
+                    "pericia", "Perícia Criminal", "Forense & Vestígios",
+                    json.dumps(["Local de Crime", "Balística", "Cadeia de Custódia"]),
+                    "search",
+                    "Exame técnico da materialidade delitiva, balística forense, vestígios físicos e preservação probatória.",
+                    32.0, 82.0, 3
+                ),
+                (
+                    "farmacia", "Farmácia Forense", "Toxicologia & Análises",
+                    json.dumps(["Química Forense", "Drogas de Abuso", "Venenos"]),
+                    "flask-conical",
+                    "Identificação laboratorial de substâncias entorpecentes, dosagens toxicológicas e química analítica forense.",
+                    18.0, 50.0, 4
+                ),
+                (
+                    "psicologia", "Psicologia Forense", "Comportamento & Avaliação",
+                    json.dumps(["Falsas Memórias", "Testemunho", "Avaliação Pericial"]),
+                    "brain",
+                    "Estudo da psicologia do testemunho, confiabilidade da memória em reconhecimentos e avaliação da capacidade psíquica.",
+                    32.0, 18.0, 5
+                ),
+                (
+                    "medicina", "Medicina Legal", "Tanatologia & Traumatologia",
+                    json.dumps(["Lesões Corporais", "Causa Mortis", "Necropsia"]),
+                    "activity",
+                    "Perícias médico-legais no vivo e no cadáver, asfixiologia, traumatologia forense e elucidação da dinâmica do evento.",
+                    68.0, 18.0, 6
+                )
+            ]
+
+            for slug, title, specialty, tags, icon, desc, x, y, order in scientific_areas_seed:
+                cursor.execute("""
+                    INSERT INTO scientific_areas (slug, title, specialty, tags, icon, desc, x_coord, y_coord, order_index)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (slug, title, specialty, tags, icon, desc, x, y, order))
+            print("[+] 6 Áreas Científicas Interdisciplinares semeadas com sucesso.")
+
+        # 12. Seed de Pesquisas Acadêmicas (se vazia)
+        res_count = cursor.execute("SELECT COUNT(*) as c FROM researches").fetchone()["c"]
+        if res_count == 0:
+            cursor.execute("""
+                INSERT INTO researches (title, line_of_research, coordinator_id, status, description, keywords, start_date, is_featured)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                "Observatório de Garantias Processuais e Prisão Cautelar",
+                "Direito Processual Penal & Garantismo",
+                paulo_id,
+                "Em Andamento",
+                "Investigação empírica sobre a motivação de decisões judiciais e a conformidade constitucional de medidas cautelares no âmbito forense.",
+                json.dumps(["Garantismo", "Prisão Preventiva", "Processo Penal"]),
+                "2026-02-01",
+                1
+            ))
+            cursor.execute("""
+                INSERT INTO researches (title, line_of_research, coordinator_id, status, description, keywords, start_date, is_featured)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                "Cadeia de Custódia e Prova Pericial Tecnológica",
+                "Criminalística & Novas Tecnologias Forenses",
+                paulo_id,
+                "Em Andamento",
+                "Estudo comparado dos padrões de integridade da prova digital, extração pericial em dispositivos móveis e jurisprudência do STJ.",
+                json.dumps(["Cadeia de Custódia", "Perícia Digital", "Vestígios"]),
+                "2026-03-01",
+                1
+            ))
+            print("[+] Pesquisas acadêmicas semeadas com sucesso.")
+
+        # 13. Seed de Publicações Científicas (se vazia)
+        pub_count = cursor.execute("SELECT COUNT(*) as c FROM publications").fetchone()["c"]
+        if pub_count == 0:
+            cursor.execute("""
+                INSERT INTO publications (title, publication_type, authors, journal_or_event, year, abstract, doi_or_url)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                "Standard Probatório e Valoração da Prova Pericial no Processo Penal Brasileiro",
+                "Artigo Científico",
+                "Albuquerque, B.; Alberto, P.; Ribeiro, M. C.",
+                "Revista Acadêmica de Ciências Criminais da LACC",
+                2026,
+                "Análise crítica dos critérios de suficiência probatória para a condenação criminal a partir de laudos periciais multidisciplinares.",
+                "https://lacc.org.br/publicacoes/artigo-standard-probatorio-2026"
+            ))
+            cursor.execute("""
+                INSERT INTO publications (title, publication_type, authors, journal_or_event, year, abstract, doi_or_url)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                "Manual Prático de Ciências Criminais e Local de Crime",
+                "Cartilha Acadêmica",
+                "Diretoria Científica da LACC",
+                "Publicações Institucionais — Série Extensão Acadêmica",
+                2026,
+                "Guia metodológico voltado para estudantes de Direito e peritos em formação sobre a preservação de locais e vestígios.",
+                "https://lacc.org.br/publicacoes/manual-ciencias-criminais-2026"
+            ))
+            print("[+] Publicações científicas semeadas com sucesso.")
 
         print("[+] Migrações concluídas com sucesso!")
 

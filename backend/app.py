@@ -27,6 +27,7 @@ from backend.auth import (
     get_user_permissions, get_user_roles
 )
 from backend.cms_router import router as cms_router
+from backend.content_router import router as content_router
 
 app = FastAPI(title="LigaHub - Gestão de Liga Acadêmica", version="1.0.0")
 
@@ -39,8 +40,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Integrar Roteador do CMS
+# Integrar Roteadores do CMS e Conteúdo Estruturado
 app.include_router(cms_router)
+app.include_router(content_router)
 
 # Inicializar banco, migrações de segurança e dados de exemplo ao iniciar
 @app.on_event("startup")

@@ -152,23 +152,30 @@
                     <!-- Grupo 2: CMS do Site Público -->
                     <div class="space-y-1">
                         <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold px-3 block mb-1">Site Público (CMS)</span>
-                        <button onclick="switchAdminTab('cms-home')" id="tab-btn-cms-home" class="admin-nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
-                            <div class="flex items-center gap-3">
-                                <i data-lucide="monitor" class="w-4 h-4"></i>
-                                <span>Editor da Home</span>
-                            </div>
-                            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-amber-400 border border-slate-700">Etapa 3</span>
+                        <button onclick="switchAdminTab('cms-home')" id="tab-btn-cms-home" class="admin-nav-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                            <i data-lucide="monitor" class="w-4 h-4"></i>
+                            <span>Editor da Home</span>
                         </button>
-                        <button onclick="switchAdminTab('cms-areas')" id="tab-btn-cms-areas" class="admin-nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
-                            <div class="flex items-center gap-3">
-                                <i data-lucide="git-fork" class="w-4 h-4"></i>
-                                <span>Rede Interdisciplinar</span>
-                            </div>
-                            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-amber-400 border border-slate-700">Etapa 4</span>
+                        <button onclick="switchAdminTab('cms-areas')" id="tab-btn-cms-areas" class="admin-nav-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                            <i data-lucide="git-fork" class="w-4 h-4"></i>
+                            <span>Rede Interdisciplinar</span>
                         </button>
                     </div>
 
-                    <!-- Grupo 3: Governança & Segurança (Operacional!) -->
+                    <!-- Grupo 3: Produção Acadêmica -->
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold px-3 block mb-1">Produção Acadêmica</span>
+                        <button onclick="switchAdminTab('researches')" id="tab-btn-researches" class="admin-nav-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                            <i data-lucide="microscope" class="w-4 h-4"></i>
+                            <span>Pesquisas & Observatórios</span>
+                        </button>
+                        <button onclick="switchAdminTab('publications')" id="tab-btn-publications" class="admin-nav-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                            <i data-lucide="book-open" class="w-4 h-4"></i>
+                            <span>Publicações Científicas</span>
+                        </button>
+                    </div>
+
+                    <!-- Grupo 4: Governança & Segurança (Operacional!) -->
                     <div class="space-y-1">
                         <span class="text-[10px] font-mono uppercase tracking-wider text-amber-500/80 font-bold px-3 block mb-1">Governança & RBAC</span>
                         <button onclick="switchAdminTab('users')" id="tab-btn-users" class="admin-nav-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
@@ -555,18 +562,135 @@
                     </div>
                 </section>
 
-                <section id="section-cms-areas" class="space-y-6 max-w-4xl mx-auto hidden">
-                    <div class="p-8 rounded-3xl bg-slate-900/60 border border-slate-800 text-center space-y-4">
-                        <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mx-auto flex items-center justify-center">
-                            <i data-lucide="git-fork" class="w-7 h-7"></i>
+                <!-- ================= SEÇÃO: REDE INTERDISCIPLINAR / ÁREAS CIENTÍFICAS ================= -->
+                <section id="section-cms-areas" class="space-y-6 max-w-6xl mx-auto hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                                <i data-lucide="git-fork" class="w-5 h-5 text-amber-400"></i>
+                                Rede Interdisciplinar de Ciências Criminais
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-0.5">
+                                Gerenciamento das ciências integradas ao grafo vetorial e à narrativa scrollytelling da Home pública.
+                            </p>
                         </div>
-                        <h2 class="text-xl font-bold text-white">Gestor de Áreas Científicas Interdisciplinares</h2>
-                        <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                            Este módulo será implementado na <strong>Etapa 4</strong>, permitindo gerenciar dinamicamente as ciências conectadas à rede vetorial da Home.
-                        </p>
-                        <span class="inline-block text-[11px] font-mono px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30">
-                            Etapa 4 do Projeto
-                        </span>
+                        <button onclick="openAreaModal()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-2 self-start sm:self-auto">
+                            <i data-lucide="plus" class="w-4 h-4 text-slate-950"></i>
+                            <span>Nova Área Científica</span>
+                        </button>
+                    </div>
+
+                    <!-- Card com Instrução e Coordenadas do Canvas -->
+                    <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300/90 flex items-start gap-3">
+                        <i data-lucide="info" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+                        <div class="space-y-0.5">
+                            <span class="font-bold text-amber-200">Distribuição Vetorial Automática:</span>
+                            <p class="text-[11px] text-amber-300/80 leading-relaxed">
+                                Cada disciplina cadastrada conecta-se automaticamente ao Brasão Central da LACC por feixes luminosos dourados no SVG da Home pública. As coordenadas X e Y (0% a 100%) definem a posição orbital do nó no palco visual.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Tabela de Áreas Científicas -->
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-900 text-slate-400 font-mono text-[11px] uppercase border-b border-slate-800">
+                                    <tr>
+                                        <th class="py-3 px-4">Disciplina / Ícone</th>
+                                        <th class="py-3 px-4">Especialidade</th>
+                                        <th class="py-3 px-4">Conceitos-Chave</th>
+                                        <th class="py-3 px-4">Coordenadas (X, Y)</th>
+                                        <th class="py-3 px-4">Ordem</th>
+                                        <th class="py-3 px-4">Status</th>
+                                        <th class="py-3 px-4 text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="areas-tbody" class="divide-y divide-slate-800/60 font-sans">
+                                    <!-- Injetado dinamicamente via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= SEÇÃO: PESQUISAS & OBSERVATÓRIOS ================= -->
+                <section id="section-researches" class="space-y-6 max-w-6xl mx-auto hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                                <i data-lucide="microscope" class="w-5 h-5 text-amber-400"></i>
+                                Pesquisas & Observatórios Temáticos
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-0.5">
+                                Projetos de investigação científica, linhas de extensão e observatórios permanentes da LACC.
+                            </p>
+                        </div>
+                        <button onclick="openResearchModal()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-2 self-start sm:self-auto">
+                            <i data-lucide="plus" class="w-4 h-4 text-slate-950"></i>
+                            <span>Novo Projeto de Pesquisa</span>
+                        </button>
+                    </div>
+
+                    <!-- Tabela de Pesquisas -->
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-900 text-slate-400 font-mono text-[11px] uppercase border-b border-slate-800">
+                                    <tr>
+                                        <th class="py-3 px-4">Projeto / Linha de Pesquisa</th>
+                                        <th class="py-3 px-4">Coordenação</th>
+                                        <th class="py-3 px-4">Palavras-Chave</th>
+                                        <th class="py-3 px-4">Status</th>
+                                        <th class="py-3 px-4">Destaque</th>
+                                        <th class="py-3 px-4 text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="researches-tbody" class="divide-y divide-slate-800/60 font-sans">
+                                    <!-- Injetado dinamicamente via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= SEÇÃO: PUBLICAÇÕES CIENTÍFICAS ================= -->
+                <section id="section-publications" class="space-y-6 max-w-6xl mx-auto hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                                <i data-lucide="book-open" class="w-5 h-5 text-amber-400"></i>
+                                Produção Científica & Extensão
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-0.5">
+                                Artigos dogmáticos, cartilhas práticas, pareceres e anais publicados pela Liga Acadêmica.
+                            </p>
+                        </div>
+                        <button onclick="openPublicationModal()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-2 self-start sm:self-auto">
+                            <i data-lucide="plus" class="w-4 h-4 text-slate-950"></i>
+                            <span>Nova Publicação</span>
+                        </button>
+                    </div>
+
+                    <!-- Tabela de Publicações -->
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-900 text-slate-400 font-mono text-[11px] uppercase border-b border-slate-800">
+                                    <tr>
+                                        <th class="py-3 px-4">Título & Autores</th>
+                                        <th class="py-3 px-4">Tipo</th>
+                                        <th class="py-3 px-4">Periódico / Revista</th>
+                                        <th class="py-3 px-4">Ano</th>
+                                        <th class="py-3 px-4">Status</th>
+                                        <th class="py-3 px-4 text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="publications-tbody" class="divide-y divide-slate-800/60 font-sans">
+                                    <!-- Injetado dinamicamente via JS -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </section>
 
@@ -635,6 +759,261 @@
                     Fechar
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: ÁREA CIENTÍFICA (CRIAR / EDITAR) ================= -->
+    <div id="modal-area" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-fade-in text-white relative">
+            <button onclick="closeAreaModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="git-fork" class="w-4 h-4 text-amber-400"></i>
+                    <span id="modal-area-title-label">Cadastrar Área Científica</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">Defina as propriedades epistemológicas e a posição do nó no canvas.</p>
+            </div>
+
+            <form id="form-area" onsubmit="saveArea(event)" class="space-y-3.5 max-h-[75vh] overflow-y-auto custom-scrollbar pr-1">
+                <input type="hidden" id="form-area-id">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-semibold text-slate-300">Título da Disciplina *</label>
+                        <input type="text" id="form-area-title" required placeholder="Ex: Criminalística" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-semibold text-slate-300">Slug (Identificador) *</label>
+                        <input type="text" id="form-area-slug" required placeholder="Ex: criminalistica" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-semibold text-slate-300">Especialidade / Foco *</label>
+                        <input type="text" id="form-area-specialty" required placeholder="Ex: Forense & Prova Técnica" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-semibold text-slate-300">Ícone Representativo</label>
+                        <select id="form-area-icon" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                            <option value="scale">⚖️ Balança (scale)</option>
+                            <option value="microscope">🔬 Microscópio (microscope)</option>
+                            <option value="search">🔍 Lupa / Perícia (search)</option>
+                            <option value="flask-conical">🧪 Frasco / Química (flask-conical)</option>
+                            <option value="brain">🧠 Cérebro / Psico (brain)</option>
+                            <option value="activity">📈 Eletrocardiograma / Medicina (activity)</option>
+                            <option value="shield">🛡️ Escudo (shield)</option>
+                            <option value="book-open">📖 Livro (book-open)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-slate-300">Conceitos-Chave (separados por vírgula)</label>
+                    <input type="text" id="form-area-tags" placeholder="Ex: Cadeia de Custódia, Balística, Vestígios" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-slate-300">Descrição Epistemológica *</label>
+                    <textarea id="form-area-desc" required rows="3" placeholder="Síntese teórica e prática da disciplina no sistema penal..." class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 custom-scrollbar"></textarea>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-semibold text-slate-300">Posição X (%)</label>
+                        <input type="number" id="form-area-x" step="0.5" min="5" max="95" value="50" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-semibold text-slate-300">Posição Y (%)</label>
+                        <input type="number" id="form-area-y" step="0.5" min="5" max="95" value="50" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-semibold text-slate-300">Ordem (1-10)</label>
+                        <input type="number" id="form-area-order" min="1" max="50" value="1" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="form-area-active" checked class="rounded border-slate-700 text-amber-500 focus:ring-amber-500">
+                    <label for="form-area-active" class="text-xs text-slate-300">Área ativa e visível no grafo da Home</label>
+                </div>
+
+                <div id="modal-area-error" class="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl hidden"></div>
+
+                <div class="pt-3 border-t border-slate-800 flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="closeAreaModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btn-save-area" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-2">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Salvar Área</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: PESQUISA (CRIAR / EDITAR) ================= -->
+    <div id="modal-research" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-fade-in text-white relative">
+            <button onclick="closeResearchModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="microscope" class="w-4 h-4 text-amber-400"></i>
+                    <span id="modal-research-title-label">Cadastrar Projeto de Pesquisa</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">Informe os detalhes do projeto acadêmico ou observatório da Liga.</p>
+            </div>
+
+            <form id="form-research" onsubmit="saveResearch(event)" class="space-y-3.5 max-h-[75vh] overflow-y-auto custom-scrollbar pr-1">
+                <input type="hidden" id="form-research-id">
+
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-slate-300">Título da Pesquisa *</label>
+                    <input type="text" id="form-research-title" required placeholder="Ex: Observatório de Prisão Cautelar" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-semibold text-slate-300">Linha de Pesquisa *</label>
+                        <input type="text" id="form-research-line" required placeholder="Ex: Processo Penal & Garantias" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-semibold text-slate-300">Status</label>
+                        <select id="form-research-status" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                            <option value="Em Andamento">Em Andamento</option>
+                            <option value="Concluído">Concluído</option>
+                            <option value="Em Avaliação">Em Avaliação</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-semibold text-slate-300">Coordenador do Projeto</label>
+                        <select id="form-research-coordinator" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                            <!-- Injetado via JS com lista de membros -->
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-semibold text-slate-300">Data de Início</label>
+                        <input type="date" id="form-research-start-date" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-slate-300">Palavras-Chave (separadas por vírgula)</label>
+                    <input type="text" id="form-research-keywords" placeholder="Ex: Garantismo, Prisão Preventiva, Jurisprudência" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-slate-300">Descrição / Ementa do Projeto *</label>
+                    <textarea id="form-research-desc" required rows="3" placeholder="Objetivos e metodologia da pesquisa..." class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 custom-scrollbar"></textarea>
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="form-research-featured" class="rounded border-slate-700 text-amber-500 focus:ring-amber-500">
+                    <label for="form-research-featured" class="text-xs text-slate-300">Destacar projeto no portal</label>
+                </div>
+
+                <div id="modal-research-error" class="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl hidden"></div>
+
+                <div class="pt-3 border-t border-slate-800 flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="closeResearchModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btn-save-research" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-2">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Salvar Pesquisa</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: PUBLICAÇÃO CIENTÍFICA (CRIAR / EDITAR) ================= -->
+    <div id="modal-publication" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-fade-in text-white relative">
+            <button onclick="closePublicationModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="book-open" class="w-4 h-4 text-amber-400"></i>
+                    <span id="modal-publication-title-label">Cadastrar Publicação Científica</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">Registre artigos, cartilhas e anais produzidos pelos ligantes e diretoria.</p>
+            </div>
+
+            <form id="form-publication" onsubmit="savePublication(event)" class="space-y-3.5 max-h-[75vh] overflow-y-auto custom-scrollbar pr-1">
+                <input type="hidden" id="form-publication-id">
+
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-slate-300">Título da Publicação *</label>
+                    <input type="text" id="form-publication-title" required placeholder="Ex: Standard Probatório na Prova Pericial" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-semibold text-slate-300">Tipo de Produção</label>
+                        <select id="form-publication-type" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                            <option value="Artigo Científico">Artigo Científico</option>
+                            <option value="Cartilha Acadêmica">Cartilha Acadêmica</option>
+                            <option value="Capítulo de Livro">Capítulo de Livro</option>
+                            <option value="Revista / Boletim">Revista / Boletim</option>
+                            <option value="Anais de Evento">Anais de Evento</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-semibold text-slate-300">Ano de Publicação</label>
+                        <input type="number" id="form-publication-year" value="2026" min="2000" max="2035" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono">
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-slate-300">Autores (formato acadêmico) *</label>
+                    <input type="text" id="form-publication-authors" required placeholder="Ex: Albuquerque, B.; Alberto, P.; Ribeiro, M. C." class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-slate-300">Periódico, Revista ou Editora</label>
+                    <input type="text" id="form-publication-journal" placeholder="Ex: Revista Acadêmica de Ciências Criminais da LACC" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-slate-300">Link DOI / Acesso Externo</label>
+                    <input type="url" id="form-publication-url" placeholder="https://doi.org/... ou https://..." class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-slate-300">Resumo / Abstract</label>
+                    <textarea id="form-publication-abstract" rows="2" placeholder="Resumo informativo da publicação..." class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 custom-scrollbar"></textarea>
+                </div>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="form-publication-published" checked class="rounded border-slate-700 text-amber-500 focus:ring-amber-500">
+                    <label for="form-publication-published" class="text-xs text-slate-300">Publicação ativa no repositório</label>
+                </div>
+
+                <div id="modal-publication-error" class="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl hidden"></div>
+
+                <div class="pt-3 border-t border-slate-800 flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="closePublicationModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btn-save-publication" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-2">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Salvar Publicação</span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1404,9 +1783,554 @@
                 .replace(/>/g, '&gt;');
         }
 
+        // ==========================================
+        // ÁREAS CIENTÍFICAS (REDE INTERDISCIPLINAR)
+        // ==========================================
+        let cachedAreas = [];
+
+        async function loadAdminAreas() {
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch('/api/admin/areas', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                cachedAreas = await res.json();
+                renderAreasTable(cachedAreas);
+            } catch (err) {
+                console.error('Erro ao listar áreas científicas:', err);
+            }
+        }
+
+        function renderAreasTable(areas) {
+            const tbody = document.getElementById('areas-tbody');
+            if (!tbody) return;
+
+            if (!areas || areas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500">Nenhuma área científica cadastrada.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = areas.map(a => `
+                <tr class="hover:bg-slate-800/40 transition">
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 flex items-center justify-center font-bold">
+                                <i data-lucide="${a.icon || 'scale'}" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <span class="font-bold text-white block">${a.title}</span>
+                                <span class="text-[10px] font-mono text-slate-500">slug: ${a.slug}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-slate-300">${a.specialty}</td>
+                    <td class="py-3 px-4">
+                        <div class="flex flex-wrap gap-1">
+                            ${a.tags.slice(0, 3).map(t => `<span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-amber-300 border border-slate-700 font-mono">${t}</span>`).join('')}
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 font-mono text-[11px] text-amber-400">(${a.x_coord}%, ${a.y_coord}%)</td>
+                    <td class="py-3 px-4 font-mono text-slate-400">#${a.order_index}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold ${a.is_active ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-slate-800 text-slate-500 border border-slate-700'}">
+                            ${a.is_active ? '● Ativo' : '○ Inativo'}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <div class="flex items-center justify-end gap-1.5">
+                            <button onclick="openAreaModal(${a.id})" title="Editar área" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="deleteArea(${a.id})" title="Excluir área" class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 border border-slate-700 hover:border-rose-700 transition">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function openAreaModal(areaId = null) {
+            const form = document.getElementById('form-area');
+            form.reset();
+            document.getElementById('modal-area-error').classList.add('hidden');
+
+            if (areaId) {
+                const a = cachedAreas.find(item => item.id === areaId);
+                if (!a) return;
+                document.getElementById('modal-area-title-label').innerText = 'Editar Área Científica';
+                document.getElementById('form-area-id').value = a.id;
+                document.getElementById('form-area-title').value = a.title;
+                document.getElementById('form-area-slug').value = a.slug;
+                document.getElementById('form-area-specialty').value = a.specialty;
+                document.getElementById('form-area-icon').value = a.icon || 'scale';
+                document.getElementById('form-area-tags').value = Array.isArray(a.tags) ? a.tags.join(', ') : a.tags;
+                document.getElementById('form-area-desc').value = a.desc;
+                document.getElementById('form-area-x').value = a.x_coord;
+                document.getElementById('form-area-y').value = a.y_coord;
+                document.getElementById('form-area-order').value = a.order_index;
+                document.getElementById('form-area-active').checked = a.is_active;
+            } else {
+                document.getElementById('modal-area-title-label').innerText = 'Cadastrar Área Científica';
+                document.getElementById('form-area-id').value = '';
+                document.getElementById('form-area-x').value = '50';
+                document.getElementById('form-area-y').value = '50';
+                document.getElementById('form-area-order').value = cachedAreas.length + 1;
+                document.getElementById('form-area-active').checked = true;
+            }
+
+            document.getElementById('modal-area').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeAreaModal() {
+            document.getElementById('modal-area').classList.add('hidden');
+        }
+
+        async function saveArea(e) {
+            e.preventDefault();
+            const areaId = document.getElementById('form-area-id').value;
+            const tagsInput = document.getElementById('form-area-tags').value;
+            const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
+
+            const payload = {
+                title: document.getElementById('form-area-title').value.trim(),
+                slug: document.getElementById('form-area-slug').value.trim().toLowerCase(),
+                specialty: document.getElementById('form-area-specialty').value.trim(),
+                icon: document.getElementById('form-area-icon').value,
+                tags: tags,
+                desc: document.getElementById('form-area-desc').value.trim(),
+                x_coord: parseFloat(document.getElementById('form-area-x').value) || 50.0,
+                y_coord: parseFloat(document.getElementById('form-area-y').value) || 50.0,
+                order_index: parseInt(document.getElementById('form-area-order').value) || 1,
+                is_active: document.getElementById('form-area-active').checked
+            };
+
+            const errorDiv = document.getElementById('modal-area-error');
+            const saveBtn = document.getElementById('btn-save-area');
+
+            errorDiv.classList.add('hidden');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<span class="animate-spin mr-1">⏳</span> Salvando...`;
+
+            try {
+                const token = localStorage.getItem('lacc_token');
+                const url = areaId ? `/api/admin/areas/${areaId}` : '/api/admin/areas';
+                const method = areaId ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Erro ao salvar área científica.');
+                }
+
+                closeAreaModal();
+                showToastNotification('Área científica salva com sucesso!', 'success');
+                await loadAdminAreas();
+            } catch (err) {
+                errorDiv.innerText = err.message;
+                errorDiv.classList.remove('hidden');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Salvar Área</span>`;
+                lucide.createIcons();
+            }
+        }
+
+        async function deleteArea(areaId) {
+            if (!confirm('Tem certeza que deseja excluir esta área científica da rede?')) return;
+
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch(`/api/admin/areas/${areaId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Erro ao excluir área.');
+                }
+
+                showToastNotification('Área científica excluída!', 'success');
+                await loadAdminAreas();
+            } catch (err) {
+                showToastNotification(err.message, 'error');
+            }
+        }
+
+        // ==========================================
+        // PESQUISAS ACADÊMICAS & OBSERVATÓRIOS
+        // ==========================================
+        let cachedResearches = [];
+
+        async function loadAdminResearches() {
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch('/api/admin/researches', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                cachedResearches = await res.json();
+                renderResearchesTable(cachedResearches);
+            } catch (err) {
+                console.error('Erro ao carregar pesquisas:', err);
+            }
+        }
+
+        function renderResearchesTable(researches) {
+            const tbody = document.getElementById('researches-tbody');
+            if (!tbody) return;
+
+            if (!researches || researches.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-500">Nenhum projeto de pesquisa registrado.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = researches.map(r => `
+                <tr class="hover:bg-slate-800/40 transition">
+                    <td class="py-3 px-4">
+                        <div>
+                            <span class="font-bold text-white block">${r.title}</span>
+                            <span class="text-[10px] text-amber-400 font-mono">${r.line_of_research}</span>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-slate-300">${r.coordinator_name || '--'}</td>
+                    <td class="py-3 px-4">
+                        <div class="flex flex-wrap gap-1">
+                            ${(r.keywords || []).map(k => `<span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700">${k}</span>`).join('')}
+                        </div>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold ${r.status === 'Concluído' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-300 border border-amber-500/20'}">
+                            ${r.status}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">
+                        ${r.is_featured ? '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">★ Destaque</span>' : '<span class="text-slate-600 text-[10px]">--</span>'}
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <div class="flex items-center justify-end gap-1.5">
+                            <button onclick="openResearchModal(${r.id})" title="Editar pesquisa" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="deleteResearch(${r.id})" title="Excluir pesquisa" class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 border border-slate-700 hover:border-rose-700 transition">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function openResearchModal(resId = null) {
+            const form = document.getElementById('form-research');
+            form.reset();
+            document.getElementById('modal-research-error').classList.add('hidden');
+
+            // Popular select de membros coordenadores
+            const selectCoord = document.getElementById('form-research-coordinator');
+            selectCoord.innerHTML = '<option value="">Sem coordenação vinculada</option>' + cachedUsers.map(u => `
+                <option value="${u.id}">${u.name} (${u.email})</option>
+            `).join('');
+
+            if (resId) {
+                const r = cachedResearches.find(item => item.id === resId);
+                if (!r) return;
+                document.getElementById('modal-research-title-label').innerText = 'Editar Projeto de Pesquisa';
+                document.getElementById('form-research-id').value = r.id;
+                document.getElementById('form-research-title').value = r.title;
+                document.getElementById('form-research-line').value = r.line_of_research;
+                document.getElementById('form-research-status').value = r.status;
+                document.getElementById('form-research-coordinator').value = r.coordinator_id || '';
+                document.getElementById('form-research-start-date').value = r.start_date || '';
+                document.getElementById('form-research-keywords').value = Array.isArray(r.keywords) ? r.keywords.join(', ') : '';
+                document.getElementById('form-research-desc').value = r.description;
+                document.getElementById('form-research-featured').checked = r.is_featured;
+            } else {
+                document.getElementById('modal-research-title-label').innerText = 'Cadastrar Projeto de Pesquisa';
+                document.getElementById('form-research-id').value = '';
+                document.getElementById('form-research-status').value = 'Em Andamento';
+                document.getElementById('form-research-start-date').value = new Date().toISOString().split('T')[0];
+                document.getElementById('form-research-featured').checked = false;
+            }
+
+            document.getElementById('modal-research').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeResearchModal() {
+            document.getElementById('modal-research').classList.add('hidden');
+        }
+
+        async function saveResearch(e) {
+            e.preventDefault();
+            const resId = document.getElementById('form-research-id').value;
+            const kwInput = document.getElementById('form-research-keywords').value;
+            const keywords = kwInput.split(',').map(k => k.trim()).filter(Boolean);
+            const coordVal = document.getElementById('form-research-coordinator').value;
+
+            const payload = {
+                title: document.getElementById('form-research-title').value.trim(),
+                line_of_research: document.getElementById('form-research-line').value.trim(),
+                status: document.getElementById('form-research-status').value,
+                coordinator_id: coordVal ? parseInt(coordVal) : null,
+                start_date: document.getElementById('form-research-start-date').value || null,
+                end_date: null,
+                keywords: keywords,
+                description: document.getElementById('form-research-desc').value.trim(),
+                is_featured: document.getElementById('form-research-featured').checked
+            };
+
+            const errorDiv = document.getElementById('modal-research-error');
+            const saveBtn = document.getElementById('btn-save-research');
+
+            errorDiv.classList.add('hidden');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<span class="animate-spin mr-1">⏳</span> Salvando...`;
+
+            try {
+                const token = localStorage.getItem('lacc_token');
+                const url = resId ? `/api/admin/researches/${resId}` : '/api/admin/researches';
+                const method = resId ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Erro ao salvar pesquisa.');
+                }
+
+                closeResearchModal();
+                showToastNotification('Pesquisa salva com sucesso!', 'success');
+                await loadAdminResearches();
+            } catch (err) {
+                errorDiv.innerText = err.message;
+                errorDiv.classList.remove('hidden');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Salvar Pesquisa</span>`;
+                lucide.createIcons();
+            }
+        }
+
+        async function deleteResearch(resId) {
+            if (!confirm('Tem certeza que deseja excluir este projeto de pesquisa?')) return;
+
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch(`/api/admin/researches/${resId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Erro ao excluir pesquisa.');
+                }
+
+                showToastNotification('Pesquisa excluída!', 'success');
+                await loadAdminResearches();
+            } catch (err) {
+                showToastNotification(err.message, 'error');
+            }
+        }
+
+        // ==========================================
+        // PUBLICAÇÕES CIENTÍFICAS
+        // ==========================================
+        let cachedPublications = [];
+
+        async function loadAdminPublications() {
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch('/api/admin/publications', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                cachedPublications = await res.json();
+                renderPublicationsTable(cachedPublications);
+            } catch (err) {
+                console.error('Erro ao carregar publicações:', err);
+            }
+        }
+
+        function renderPublicationsTable(pubs) {
+            const tbody = document.getElementById('publications-tbody');
+            if (!tbody) return;
+
+            if (!pubs || pubs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-500">Nenhuma publicação registrada.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = pubs.map(p => `
+                <tr class="hover:bg-slate-800/40 transition">
+                    <td class="py-3 px-4">
+                        <div>
+                            <span class="font-bold text-white block">${p.title}</span>
+                            <span class="text-[10px] text-slate-400">${p.authors}</span>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-amber-300 border border-slate-700">
+                            ${p.publication_type}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-slate-300 text-[11px]">${p.journal_or_event || '--'}</td>
+                    <td class="py-3 px-4 font-mono text-slate-400">${p.year}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold ${p.is_published ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-slate-800 text-slate-500 border border-slate-700'}">
+                            ${p.is_published ? '● Publicado' : '○ Oculto'}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <div class="flex items-center justify-end gap-1.5">
+                            ${p.doi_or_url ? `<a href="${p.doi_or_url}" target="_blank" title="Acessar publicação" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 transition"><i data-lucide="external-link" class="w-3.5 h-3.5"></i></a>` : ''}
+                            <button onclick="openPublicationModal(${p.id})" title="Editar publicação" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="deletePublication(${p.id})" title="Excluir publicação" class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 border border-slate-700 hover:border-rose-700 transition">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function openPublicationModal(pubId = null) {
+            const form = document.getElementById('form-publication');
+            form.reset();
+            document.getElementById('modal-publication-error').classList.add('hidden');
+
+            if (pubId) {
+                const p = cachedPublications.find(item => item.id === pubId);
+                if (!p) return;
+                document.getElementById('modal-publication-title-label').innerText = 'Editar Publicação Científica';
+                document.getElementById('form-publication-id').value = p.id;
+                document.getElementById('form-publication-title').value = p.title;
+                document.getElementById('form-publication-type').value = p.publication_type;
+                document.getElementById('form-publication-year').value = p.year;
+                document.getElementById('form-publication-authors').value = p.authors;
+                document.getElementById('form-publication-journal').value = p.journal_or_event || '';
+                document.getElementById('form-publication-url').value = p.doi_or_url || '';
+                document.getElementById('form-publication-abstract').value = p.abstract || '';
+                document.getElementById('form-publication-published').checked = p.is_published;
+            } else {
+                document.getElementById('modal-publication-title-label').innerText = 'Cadastrar Publicação Científica';
+                document.getElementById('form-publication-id').value = '';
+                document.getElementById('form-publication-type').value = 'Artigo Científico';
+                document.getElementById('form-publication-year').value = 2026;
+                document.getElementById('form-publication-published').checked = true;
+            }
+
+            document.getElementById('modal-publication').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closePublicationModal() {
+            document.getElementById('modal-publication').classList.add('hidden');
+        }
+
+        async function savePublication(e) {
+            e.preventDefault();
+            const pubId = document.getElementById('form-publication-id').value;
+
+            const payload = {
+                title: document.getElementById('form-publication-title').value.trim(),
+                publication_type: document.getElementById('form-publication-type').value,
+                year: parseInt(document.getElementById('form-publication-year').value) || 2026,
+                authors: document.getElementById('form-publication-authors').value.trim(),
+                journal_or_event: document.getElementById('form-publication-journal').value.trim() || null,
+                doi_or_url: document.getElementById('form-publication-url').value.trim() || null,
+                abstract: document.getElementById('form-publication-abstract').value.trim() || null,
+                is_published: document.getElementById('form-publication-published').checked
+            };
+
+            const errorDiv = document.getElementById('modal-publication-error');
+            const saveBtn = document.getElementById('btn-save-publication');
+
+            errorDiv.classList.add('hidden');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<span class="animate-spin mr-1">⏳</span> Salvando...`;
+
+            try {
+                const token = localStorage.getItem('lacc_token');
+                const url = pubId ? `/api/admin/publications/${pubId}` : '/api/admin/publications';
+                const method = pubId ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Erro ao salvar publicação.');
+                }
+
+                closePublicationModal();
+                showToastNotification('Publicação salva com sucesso!', 'success');
+                await loadAdminPublications();
+            } catch (err) {
+                errorDiv.innerText = err.message;
+                errorDiv.classList.remove('hidden');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Salvar Publicação</span>`;
+                lucide.createIcons();
+            }
+        }
+
+        async function deletePublication(pubId) {
+            if (!confirm('Tem certeza que deseja excluir esta publicação?')) return;
+
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch(`/api/admin/publications/${pubId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Erro ao excluir publicação.');
+                }
+
+                showToastNotification('Publicação excluída!', 'success');
+                await loadAdminPublications();
+            } catch (err) {
+                showToastNotification(err.message, 'error');
+            }
+        }
+
         function switchAdminTab(tabName) {
             // Ocultar todas as seções
-            ['overview', 'users', 'audit', 'security', 'cms-home', 'cms-areas'].forEach(tab => {
+            ['overview', 'users', 'audit', 'security', 'cms-home', 'cms-areas', 'researches', 'publications'].forEach(tab => {
                 const sec = document.getElementById(`section-${tab}`);
                 const btn = document.getElementById(`tab-btn-${tab}`);
                 if (sec) sec.classList.add('hidden');
@@ -1429,6 +2353,9 @@
             if (tabName === 'audit') loadAuditLogs();
             if (tabName === 'overview') loadOverview();
             if (tabName === 'cms-home') loadCMSSections();
+            if (tabName === 'cms-areas') loadAdminAreas();
+            if (tabName === 'researches') loadAdminResearches();
+            if (tabName === 'publications') loadAdminPublications();
 
             // Fechar sidebar mobile se aberta
             const sidebar = document.getElementById('admin-sidebar');

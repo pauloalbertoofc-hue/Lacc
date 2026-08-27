@@ -12,10 +12,24 @@
         }, 120);
     });
 
-    function initScrollytellingExperience() {
+    async function initScrollytellingExperience() {
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         
-        // 1. Renderizar os nós e linhas da rede
+        // 1. Carregar áreas científicas dinâmicas da API pública com fallback resiliente
+        try {
+            const res = await fetch('/api/areas/public');
+            if (res.ok) {
+                const apiAreas = await res.json();
+                if (Array.isArray(apiAreas) && apiAreas.length > 0) {
+                    if (!window.LACC_DATA) window.LACC_DATA = {};
+                    window.LACC_DATA.interdisciplinaryAreas = apiAreas;
+                }
+            }
+        } catch (e) {
+            console.warn('Scrollytelling: usando áreas pré-carregadas em lacc-data.js', e);
+        }
+
+        // 2. Renderizar os nós e linhas da rede
         renderInterdisciplinaryNetwork();
 
         // 2. Inicializar Scrollspy da barra de navegação e drawer
