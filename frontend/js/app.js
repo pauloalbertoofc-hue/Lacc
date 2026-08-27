@@ -23,11 +23,13 @@ function checkAuthState() {
     const landing = document.getElementById('app-landing');
     const dashboard = document.getElementById('app-dashboard');
 
-    if (isAuth) {
+    // Se o usuário estiver explicitamente acessando o hash #dashboard e estiver logado
+    if (window.location.hash === '#dashboard' && isAuth) {
         if (landing) landing.classList.add('hidden');
         if (dashboard) dashboard.classList.remove('hidden');
         loadDashboard();
     } else {
+        // Por padrão no link principal, SEMPRE abre a Tela Inicial pública da LACC!
         if (landing) landing.classList.remove('hidden');
         if (dashboard) dashboard.classList.add('hidden');
         loadLandingEvents();
@@ -43,7 +45,23 @@ function toggleLandingDrawer() {
 }
 
 function openLoginModal() {
-    openModal('modal-login');
+    const isAuth = localStorage.getItem('lacc_auth') === 'true';
+    if (isAuth) {
+        // Se já está logado, entra direto no Dashboard!
+        goToDashboard();
+    } else {
+        openModal('modal-login');
+    }
+}
+
+function goToDashboard() {
+    const landing = document.getElementById('app-landing');
+    const dashboard = document.getElementById('app-dashboard');
+    if (landing) landing.classList.add('hidden');
+    if (dashboard) dashboard.classList.remove('hidden');
+    window.location.hash = '#dashboard';
+    loadDashboard();
+    initIcons();
 }
 
 async function submitLogin(e) {
@@ -59,21 +77,26 @@ async function submitLogin(e) {
     localStorage.setItem('lacc_user_email', email);
 
     closeModal('modal-login');
-    checkAuthState();
+    goToDashboard();
     showToast('Bem-vindo à Área de Membros da LACC!');
 }
 
 function quickLoginDemo() {
     localStorage.setItem('lacc_auth', 'true');
     closeModal('modal-login');
-    checkAuthState();
+    goToDashboard();
     showToast('Acesso de Membro concedido!');
 }
 
 function handleLogout() {
     localStorage.removeItem('lacc_auth');
-    checkAuthState();
+    window.location.hash = '';
+    const landing = document.getElementById('app-landing');
+    const dashboard = document.getElementById('app-dashboard');
+    if (landing) landing.classList.remove('hidden');
+    if (dashboard) dashboard.classList.add('hidden');
     showToast('Você saiu da Área de Membros.', 'info');
+    loadLandingEvents();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
