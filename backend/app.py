@@ -5,7 +5,7 @@ import io
 from datetime import datetime
 from typing import Optional, List
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, Response
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, Response, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, StreamingResponse
@@ -17,9 +17,15 @@ from backend.models import (
     AttendanceCheckin, AttendanceBulkUpdate,
     TaskCreate, TaskUpdate,
     MaterialCreate, FinanceCreate,
-    SettingsUpdate
+    SettingsUpdate, LoginRequest, UserRolesUpdate
 )
 from backend.seed_data import seed
+from backend.migrations import run_migrations
+from backend.auth import (
+    hash_password, verify_password, create_access_token,
+    get_current_user, require_admin, require_permission, log_audit_event,
+    get_user_permissions, get_user_roles
+)
 
 app = FastAPI(title="LigaHub - Gestão de Liga Acadêmica", version="1.0.0")
 
@@ -32,10 +38,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Inicializar banco e dados de exemplo ao iniciar
+# Inicializar banco, migrações de segurança e dados de exemplo ao iniciar
 @app.on_event("startup")
 def on_startup():
     init_db()
+    run_migrations()
     seed()
 
 # ==========================================
@@ -596,8 +603,209 @@ def delete_finance_entry(finance_id: int):
         conn.execute("DELETE FROM finances WHERE id = ?", (finance_id,))
         return {"message": "Lançamento removido com sucesso."}
 
-# Servir uploads e frontend estático
+# ==========================================
+# AUTENTICAÇÃO E SESSÃO (RBAC)
+# ==========================================
+@app.post("/api/auth/login")
+def auth_login(data: LoginRequest, request: Request):
+    client_ip = request.client.host if request.client else "unknown"
+    with get_db() as conn:
+        member = conn.execute(
+            "SELECT id, name, email, role, status, password_hash, is_active, mfa_enabled FROM members WHERE LOWER(email) = LOWER(?)",
+            (data.email.strip(),)
+        ).fetchone()
+
+        if not member:
+            log_audit_event(None, "FAILED_LOGIN", f"email:{data.email}", client_ip, {"reason": "User not found"}, conn=conn)
+            raise HTTPException(status_code=401, detail="E-mail ou senha incorretos.")
+
+        if not member["is_active"] or member["status"] != "Ativo":
+            log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "User inactive"}, conn=conn)
+            raise HTTPException(status_code=403, detail="Esta conta está inativa ou suspensa. Contate a diretoria.")
+
+        # Validação segura da senha
+        if not verify_password(data.password, member["password_hash"]):
+            log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "Invalid password"}, conn=conn)
+            raise HTTPException(status_code=401, detail="E-mail ou senha incorretos.")
+
+        # Sucesso: Gerar JWT
+        token = create_access_token({"sub": str(member["id"]), "email": member["email"]})
+        perms = list(get_user_permissions(member["id"]))
+        roles = get_user_roles(member["id"])
+        is_admin = "admin:access" in perms or any(r["slug"] == "superadmin" for r in roles)
+
+        log_audit_event(member["id"], "LOGIN", f"member:{member['id']}", client_ip, {"success": True}, conn=conn)
+
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "user": {
+                "id": member["id"],
+                "name": member["name"],
+                "email": member["email"],
+                "role": member["role"],
+                "is_admin": is_admin,
+                "roles": roles,
+                "permissions": perms
+            }
+        }
+
+@app.get("/api/auth/me")
+def auth_me(current_user: dict = Depends(get_current_user)):
+    return current_user
+
+# ==========================================
+# PAINEL ADMINISTRATIVO (ENDPOINTS RBAC)
+# ==========================================
+@app.get("/api/admin/check")
+def admin_check(current_user: dict = Depends(require_admin)):
+    """Valida se o usuário tem privilégio administrativo para abrir o painel."""
+    return {"status": "authorized", "user": current_user}
+
+@app.get("/api/admin/overview")
+def admin_overview(current_user: dict = Depends(require_admin)):
+    """Retorna estatísticas consolidadas para a visão geral administrativa."""
+    with get_db() as conn:
+        total_members = conn.execute("SELECT COUNT(*) as c FROM members WHERE is_active = 1").fetchone()["c"]
+        total_events = conn.execute("SELECT COUNT(*) as c FROM events WHERE is_active = 1").fetchone()["c"]
+        total_tasks = conn.execute("SELECT COUNT(*) as c FROM tasks").fetchone()["c"]
+        total_materials = conn.execute("SELECT COUNT(*) as c FROM materials").fetchone()["c"]
+
+        role_dist = conn.execute("""
+            SELECT r.name, r.slug, COUNT(mr.member_id) as count
+            FROM roles r
+            LEFT JOIN member_roles mr ON r.id = mr.role_id
+            GROUP BY r.id
+            ORDER BY count DESC
+        """).fetchall()
+
+        recent_audit = conn.execute("""
+            SELECT a.*, COALESCE(m.name, 'Sistema') as user_name, m.email as user_email
+            FROM audit_logs a
+            LEFT JOIN members m ON a.user_id = m.id
+            ORDER BY a.id DESC LIMIT 8
+        """).fetchall()
+
+        return {
+            "total_members": total_members,
+            "total_events": total_events,
+            "total_tasks": total_tasks,
+            "total_materials": total_materials,
+            "role_distribution": [dict(r) for r in role_dist],
+            "recent_audit": [dict(a) for a in recent_audit]
+        }
+
+@app.get("/api/admin/users")
+def admin_list_users(current_user: dict = Depends(require_permission("members:manage"))):
+    """Lista todos os membros com suas respectivas funções e permissões."""
+    with get_db() as conn:
+        users = conn.execute("""
+            SELECT id, name, email, role, course, semester, status, is_active, created_at
+            FROM members
+            ORDER BY id ASC
+        """).fetchall()
+
+        res = []
+        for u in users:
+            u_dict = dict(u)
+            u_dict["roles"] = get_user_roles(u["id"])
+            u_dict["permissions"] = list(get_user_permissions(u["id"]))
+            res.append(u_dict)
+        return res
+
+@app.put("/api/admin/users/{user_id}/roles")
+def admin_update_user_roles(
+    user_id: int, 
+    data: UserRolesUpdate, 
+    request: Request, 
+    current_user: dict = Depends(require_permission("roles:manage"))
+):
+    """Gerencia papéis do membro, garantindo proteção contra lockout do último Superadmin."""
+    client_ip = request.client.host if request.client else "unknown"
+    with get_db() as conn:
+        target = conn.execute("SELECT id, name, email FROM members WHERE id = ?", (user_id,)).fetchone()
+        if not target:
+            raise HTTPException(status_code=404, detail="Membro não encontrado.")
+
+        # Proteção contra lockout do último Superadministrador
+        superadmin_role = conn.execute("SELECT id FROM roles WHERE slug = 'superadmin'").fetchone()
+        if superadmin_role:
+            target_roles = [r["role_id"] for r in conn.execute("SELECT role_id FROM member_roles WHERE member_id = ?", (user_id,)).fetchall()]
+            is_currently_superadmin = superadmin_role["id"] in target_roles
+            will_remain_superadmin = superadmin_role["id"] in data.role_ids
+
+            if is_currently_superadmin and not will_remain_superadmin:
+                other_superadmins = conn.execute("""
+                    SELECT COUNT(mr.member_id) as count
+                    FROM member_roles mr
+                    JOIN members m ON mr.member_id = m.id
+                    WHERE mr.role_id = ? AND mr.member_id != ? AND m.is_active = 1
+                """, (superadmin_role["id"], user_id)).fetchone()["count"]
+
+                if other_superadmins <= 0:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Operação bloqueada por segurança: Não é permitido remover o último Superadministrador da plataforma."
+                    )
+
+        # Atualizar papéis
+        conn.execute("DELETE FROM member_roles WHERE member_id = ?", (user_id,))
+        for r_id in data.role_ids:
+            conn.execute("INSERT OR IGNORE INTO member_roles (member_id, role_id) VALUES (?, ?)", (user_id, r_id))
+
+        log_audit_event(
+            current_user["id"],
+            "UPDATE_USER_ROLES",
+            f"member:{user_id}",
+            client_ip,
+            {"target_email": target["email"], "new_role_ids": data.role_ids},
+            conn=conn
+        )
+
+        return {"message": f"Funções de {target['name']} atualizadas com sucesso!"}
+
+@app.get("/api/admin/roles")
+def admin_list_roles(current_user: dict = Depends(require_admin)):
+    """Lista todas as funções da plataforma com suas permissões associadas."""
+    with get_db() as conn:
+        roles = conn.execute("SELECT id, slug, name, description, is_system FROM roles ORDER BY id ASC").fetchall()
+        res = []
+        for r in roles:
+            r_dict = dict(r)
+            perms = conn.execute("""
+                SELECT p.id, p.slug, p.name, p.module
+                FROM permissions p
+                JOIN role_permissions rp ON p.id = rp.permission_id
+                WHERE rp.role_id = ?
+            """, (r["id"],)).fetchall()
+            r_dict["permissions"] = [dict(p) for p in perms]
+            res.append(r_dict)
+        return res
+
+@app.get("/api/admin/audit")
+def admin_list_audit(limit: int = 50, current_user: dict = Depends(require_permission("audit:view"))):
+    """Consulta os registros da trilha de auditoria para fins de compliance e segurança."""
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT a.*, COALESCE(m.name, 'Sistema') as user_name, m.email as user_email
+            FROM audit_logs a
+            LEFT JOIN members m ON a.user_id = m.id
+            ORDER BY a.id DESC LIMIT ?
+        """, (limit,)).fetchall()
+        return [dict(r) for r in rows]
+
+# ==========================================
+# SERVIR PAINEL ADMINISTRATIVO E ESTÁTICOS
+# ==========================================
+@app.get("/admin")
+def serve_admin():
+    admin_path = os.path.join(PROJECT_ROOT, "frontend", "admin.html")
+    if os.path.exists(admin_path):
+        return FileResponse(admin_path)
+    return FileResponse(os.path.join(PROJECT_ROOT, "frontend", "index.html"))
+
 os.makedirs(os.path.join(PROJECT_ROOT, "frontend"), exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 app.mount("/", StaticFiles(directory=os.path.join(PROJECT_ROOT, "frontend"), html=True), name="frontend")
+
 

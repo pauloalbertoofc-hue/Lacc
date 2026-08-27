@@ -94,3 +94,11 @@ class SettingsUpdate(BaseModel):
     min_attendance_percent: Optional[str] = None
     monthly_fee: Optional[str] = None
 
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class UserRolesUpdate(BaseModel):
+    role_ids: List[int]
+
+

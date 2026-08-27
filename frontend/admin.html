@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração da Plataforma — LACC</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Cinzel:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        serif: ['Cinzel', 'serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        gold: {
+                            400: '#fcd34d',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            glow: 'rgba(245, 158, 11, 0.25)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+    </style>
+</head>
+<body class="h-full font-sans text-slate-200 antialiased overflow-hidden bg-slate-950 flex flex-col">
+
+    <!-- 0. TELA DE CARREGAMENTO INICIAL -->
+    <div id="admin-loading" class="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center space-y-4">
+        <div class="w-12 h-12 rounded-2xl border-2 border-amber-500/30 border-t-amber-400 animate-spin"></div>
+        <p class="text-xs font-mono text-slate-400 tracking-wider">Validando privilégios institucionais...</p>
+    </div>
+
+    <!-- 0.1 TELA DE ACESSO NEGADO (HTTP 403) -->
+    <div id="admin-access-denied" class="fixed inset-0 z-40 bg-slate-950 flex flex-col items-center justify-center p-6 text-center hidden">
+        <div class="w-16 h-16 rounded-3xl bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mb-5 shadow-lg shadow-rose-500/10">
+            <i data-lucide="shield-alert" class="w-8 h-8"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-white mb-2">Acesso Restrito à Administração</h1>
+        <p class="text-slate-400 text-sm max-w-md mb-6 leading-relaxed">
+            Sua conta de membro está autenticada, porém não possui funções ou permissões administrativas associadas.
+        </p>
+        <div class="flex items-center gap-3">
+            <a href="/#dashboard" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs border border-slate-700 transition flex items-center gap-2">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span>Voltar à Área de Membros</span>
+            </a>
+            <a href="/" class="px-5 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 font-semibold text-xs border border-amber-500/30 transition">
+                Ir para o Portal Público
+            </a>
+        </div>
+    </div>
+
+    <!-- 1. ENVOLUCRO PRINCIPAL DO ADMIN -->
+    <div id="admin-main-wrapper" class="flex-1 flex flex-col h-full overflow-hidden hidden">
+
+        <!-- Barra Superior (Header) -->
+        <header class="h-16 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md px-4 md:px-6 flex items-center justify-between shrink-0 select-none z-30">
+            <!-- Esquerda: Marca + Badge -->
+            <div class="flex items-center gap-3 md:gap-4">
+                <button onclick="toggleAdminSidebar()" class="lg:hidden p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
+                </button>
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm">
+                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-serif font-bold text-sm tracking-wider text-amber-400">LACC</span>
+                            <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 font-semibold">Admin / CMS</span>
+                        </div>
+                        <span class="text-[11px] text-slate-400 block -mt-0.5">Governança da Plataforma</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Direita: Perfil + Atalhos de Navegação -->
+            <div class="flex items-center gap-3">
+                <a href="/#dashboard" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/70 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium border border-slate-700/60 transition">
+                    <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
+                    <span>Área de Membros</span>
+                </a>
+                <a href="/" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/70 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium border border-slate-700/60 transition">
+                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                    <span>Portal Público</span>
+                </a>
+
+                <!-- Chip do Usuário Administrador -->
+                <div class="flex items-center gap-2.5 pl-2 border-l border-slate-800">
+                    <div class="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold text-xs flex items-center justify-center" id="admin-user-avatar">
+                        AD
+                    </div>
+                    <div class="hidden md:block text-left">
+                        <div class="text-xs font-bold text-white truncate max-w-[140px]" id="admin-user-name">Administrador</div>
+                        <div class="text-[10px] text-amber-400/90 font-mono" id="admin-user-role">Superadmin</div>
+                    </div>
+                    <button onclick="adminLogout()" title="Sair da sessão" class="p-1.5 rounded-lg hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 transition ml-1">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Corpo: Sidebar + Painel de Conteúdo -->
+        <div class="flex-1 flex overflow-hidden relative">
+
+            <!-- Sidebar de Navegação do Admin -->
+            <aside id="admin-sidebar" class="w-64 bg-slate-900/95 border-r border-slate-800/80 flex flex-col shrink-0 overflow-y-auto custom-scrollbar select-none z-20 transition-all duration-300 fixed lg:relative inset-y-0 left-0 -translate-x-full lg:translate-x-0">
+                <div class="p-4 space-y-6">
+
+                    <!-- Grupo 1: Geral -->
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold px-3 block mb-1">Painel Principal</span>
+                        <button onclick="switchAdminTab('overview')" id="tab-btn-overview" class="admin-nav-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 transition">
+                            <i data-lucide="layout-grid" class="w-4 h-4 text-amber-400"></i>
+                            <span>Visão Geral</span>
+                        </button>
+                    </div>
+
+                    <!-- Grupo 2: CMS do Site Público -->
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold px-3 block mb-1">Site Público (CMS)</span>
+                        <button onclick="switchAdminTab('cms-home')" id="tab-btn-cms-home" class="admin-nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="monitor" class="w-4 h-4"></i>
+                                <span>Editor da Home</span>
+                            </div>
+                            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-amber-400 border border-slate-700">Etapa 3</span>
+                        </button>
+                        <button onclick="switchAdminTab('cms-areas')" id="tab-btn-cms-areas" class="admin-nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="git-fork" class="w-4 h-4"></i>
+                                <span>Rede Interdisciplinar</span>
+                            </div>
+                            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-amber-400 border border-slate-700">Etapa 4</span>
+                        </button>
+                    </div>
+
+                    <!-- Grupo 3: Governança & Segurança (Operacional!) -->
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-mono uppercase tracking-wider text-amber-500/80 font-bold px-3 block mb-1">Governança & RBAC</span>
+                        <button onclick="switchAdminTab('users')" id="tab-btn-users" class="admin-nav-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                            <i data-lucide="users-round" class="w-4 h-4"></i>
+                            <span>Usuários & Funções</span>
+                        </button>
+                        <button onclick="switchAdminTab('audit')" id="tab-btn-audit" class="admin-nav-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                            <i data-lucide="scroll" class="w-4 h-4"></i>
+                            <span>Trilha de Auditoria</span>
+                        </button>
+                        <button onclick="switchAdminTab('security')" id="tab-btn-security" class="admin-nav-item w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                            <i data-lucide="lock" class="w-4 h-4"></i>
+                            <span>Segurança & MFA</span>
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- Footer do Sidebar -->
+                <div class="mt-auto p-4 border-t border-slate-800/80 text-[11px] text-slate-500 font-mono">
+                    <div class="flex items-center justify-between mb-1">
+                        <span>Status RBAC:</span>
+                        <span class="text-emerald-400 font-semibold flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Ativo
+                        </span>
+                    </div>
+                    <div class="text-[10px] text-slate-600">LACC v2.0 • Serra Dourada</div>
+                </div>
+            </aside>
+
+            <!-- Área Central de Conteúdo -->
+            <main class="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 bg-slate-950" id="admin-content-area">
+
+                <!-- ================= SEÇÃO 1: VISÃO GERAL ================= -->
+                <section id="section-overview" class="space-y-6 max-w-6xl mx-auto">
+                    <!-- Banner de Boas-Vindas -->
+                    <div class="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-amber-950/30 border border-slate-800 relative overflow-hidden shadow-xl">
+                        <div class="max-w-2xl space-y-2">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/25">
+                                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Módulo de Governança Institucional Ativado
+                            </span>
+                            <h2 class="text-xl md:text-2xl font-bold text-white">Painel Administrativo da LACC</h2>
+                            <p class="text-xs md:text-sm text-slate-400 leading-relaxed">
+                                Gerencie com segurança o controle de acesso baseado em funções (RBAC), credenciais protegidas, trilha de auditoria e os futuros componentes do CMS institucional.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Métricas / Indicadores da Plataforma -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 md:p-5 shadow-sm">
+                            <div class="flex items-center justify-between text-slate-400 mb-2">
+                                <span class="text-xs font-semibold uppercase tracking-wider">Membros Ativos</span>
+                                <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                                    <i data-lucide="users" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <div class="text-2xl md:text-3xl font-bold text-white" id="stat-members">--</div>
+                            <div class="text-[11px] text-slate-500 mt-1">Sincronizados no banco</div>
+                        </div>
+
+                        <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 md:p-5 shadow-sm">
+                            <div class="flex items-center justify-between text-slate-400 mb-2">
+                                <span class="text-xs font-semibold uppercase tracking-wider">Eventos Ativos</span>
+                                <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <div class="text-2xl md:text-3xl font-bold text-white" id="stat-events">--</div>
+                            <div class="text-[11px] text-slate-500 mt-1">Aulas e simpósios</div>
+                        </div>
+
+                        <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 md:p-5 shadow-sm">
+                            <div class="flex items-center justify-between text-slate-400 mb-2">
+                                <span class="text-xs font-semibold uppercase tracking-wider">Tarefas no Kanban</span>
+                                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                                    <i data-lucide="check-square" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <div class="text-2xl md:text-3xl font-bold text-white" id="stat-tasks">--</div>
+                            <div class="text-[11px] text-slate-500 mt-1">Gestão de diretorias</div>
+                        </div>
+
+                        <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-4 md:p-5 shadow-sm">
+                            <div class="flex items-center justify-between text-slate-400 mb-2">
+                                <span class="text-xs font-semibold uppercase tracking-wider">Materiais & Atas</span>
+                                <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <div class="text-2xl md:text-3xl font-bold text-white" id="stat-materials">--</div>
+                            <div class="text-[11px] text-slate-500 mt-1">Repositório acadêmico</div>
+                        </div>
+                    </div>
+
+                    <!-- Duas colunas: Distribuição de Funções + Auditoria Recente -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Funções Cadastradas -->
+                        <div class="bg-slate-900/70 border border-slate-800 rounded-3xl p-5 md:p-6 space-y-4">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i data-lucide="shield" class="w-4 h-4 text-amber-400"></i>
+                                Funções Ativas (RBAC)
+                            </h3>
+                            <div id="overview-roles-list" class="space-y-2.5">
+                                <!-- Preenchido via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Auditoria Recente -->
+                        <div class="lg:col-span-2 bg-slate-900/70 border border-slate-800 rounded-3xl p-5 md:p-6 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                    <i data-lucide="activity" class="w-4 h-4 text-emerald-400"></i>
+                                    Atividades Recentes de Segurança
+                                </h3>
+                                <button onclick="switchAdminTab('audit')" class="text-xs text-amber-400 hover:underline">Ver trilha completa →</button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead>
+                                        <tr class="text-slate-500 border-b border-slate-800 pb-2">
+                                            <th class="py-2 font-medium">Ação</th>
+                                            <th class="py-2 font-medium">Usuário</th>
+                                            <th class="py-2 font-medium">Data / Hora</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="overview-audit-list" class="divide-y divide-slate-800/60 text-slate-300">
+                                        <!-- Preenchido via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= SEÇÃO 2: USUÁRIOS & FUNÇÕES (RBAC) ================= -->
+                <section id="section-users" class="space-y-6 max-w-6xl mx-auto hidden">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                                <i data-lucide="users" class="w-5 h-5 text-amber-400"></i>
+                                Gestão de Usuários e Permissões
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-0.5">
+                                Administre os membros da LACC e atribua papéis administrativos com validação no backend.
+                            </p>
+                        </div>
+                        <div class="relative w-full sm:w-64">
+                            <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                            <input type="text" id="filter-users-input" onkeyup="filterUsersTable()" placeholder="Buscar por nome ou e-mail..." class="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                        </div>
+                    </div>
+
+                    <!-- Tabela de Membros -->
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs" id="table-users">
+                                <thead>
+                                    <tr class="bg-slate-900 text-slate-400 border-b border-slate-800 uppercase tracking-wider font-mono text-[10px]">
+                                        <th class="py-3 px-4">Membro</th>
+                                        <th class="py-3 px-4">E-mail</th>
+                                        <th class="py-3 px-4">Cargos / Funções</th>
+                                        <th class="py-3 px-4">Status</th>
+                                        <th class="py-3 px-4 text-right">Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-tbody" class="divide-y divide-slate-800/80">
+                                    <!-- Renderizado dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= SEÇÃO 3: TRILHA DE AUDITORIA ================= -->
+                <section id="section-audit" class="space-y-6 max-w-6xl mx-auto hidden">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                                <i data-lucide="scroll" class="w-5 h-5 text-amber-400"></i>
+                                Trilha de Auditoria (Audit Logs)
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-0.5">
+                                Registro imutável de eventos de segurança, autenticações e alterações administrativas.
+                            </p>
+                        </div>
+                        <button onclick="loadAuditLogs()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 flex items-center gap-2 border border-slate-700 transition">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                            <span>Atualizar</span>
+                        </button>
+                    </div>
+
+                    <div class="bg-slate-900/80 border border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="bg-slate-900 text-slate-400 border-b border-slate-800 uppercase tracking-wider font-mono text-[10px]">
+                                        <th class="py-3 px-4">Ação</th>
+                                        <th class="py-3 px-4">Usuário</th>
+                                        <th class="py-3 px-4">Entidade</th>
+                                        <th class="py-3 px-4">IP</th>
+                                        <th class="py-3 px-4">Data / Hora</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="audit-tbody" class="divide-y divide-slate-800/80 font-mono text-[11px]">
+                                    <!-- Renderizado dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= SEÇÃO 4: SEGURANÇA & MFA ================= -->
+                <section id="section-security" class="space-y-6 max-w-4xl mx-auto hidden">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i data-lucide="shield-check" class="w-5 h-5 text-amber-400"></i>
+                            Políticas de Segurança e Acesso
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            Diretrizes técnicas ativas para conformidade e proteção da infraestrutura da LACC.
+                        </p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center">
+                                    <i data-lucide="key-round" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-white">Assinatura Digital JWT (RFC 7519)</h4>
+                                    <p class="text-xs text-slate-400">Tokens assinados via HS256 com tempo de expiração estrito de 24 horas.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center">
+                                    <i data-lucide="fingerprint" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-white">Proteção contra Lockout de Superadministrador</h4>
+                                    <p class="text-xs text-slate-400">Regra de validação que impede desativar ou rebaixar o último superadministrador ativo da base.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center justify-center">
+                                    <i data-lucide="smartphone" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-white">Preparação para 2FA / MFA (TOTP)</h4>
+                                    <p class="text-xs text-slate-400">Tabelas e colunas no banco já preparadas para chaves TOTP (Google Authenticator / Microsoft Authenticator).</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= SEÇÕES EM DESENVOLVIMENTO (ETAPA 3 & 4) ================= -->
+                <section id="section-cms-home" class="space-y-6 max-w-4xl mx-auto hidden">
+                    <div class="p-8 rounded-3xl bg-slate-900/60 border border-slate-800 text-center space-y-4">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mx-auto flex items-center justify-center">
+                            <i data-lucide="pen-tool" class="w-7 h-7"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-white">Editor de Componentes da Home (CMS)</h2>
+                        <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                            Este módulo será implementado na <strong>Etapa 3</strong>, trazendo a interface lado a lado (split-screen) para edição de textos, badges, rascunhos e publicação da landing page com preview em tempo real.
+                        </p>
+                        <span class="inline-block text-[11px] font-mono px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                            Próxima Etapa do Projeto
+                        </span>
+                    </div>
+                </section>
+
+                <section id="section-cms-areas" class="space-y-6 max-w-4xl mx-auto hidden">
+                    <div class="p-8 rounded-3xl bg-slate-900/60 border border-slate-800 text-center space-y-4">
+                        <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mx-auto flex items-center justify-center">
+                            <i data-lucide="git-fork" class="w-7 h-7"></i>
+                        </div>
+                        <h2 class="text-xl font-bold text-white">Gestor de Áreas Científicas Interdisciplinares</h2>
+                        <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                            Este módulo será implementado na <strong>Etapa 4</strong>, permitindo gerenciar dinamicamente as ciências conectadas à rede vetorial da Home.
+                        </p>
+                        <span class="inline-block text-[11px] font-mono px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                            Etapa 4 do Projeto
+                        </span>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: EDITAR FUNÇÕES DO USUÁRIO ================= -->
+    <div id="modal-edit-roles" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 animate-fade-in text-white relative">
+            <button onclick="closeEditRolesModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-amber-400"></i>
+                    Atribuir Funções (RBAC)
+                </h3>
+                <p class="text-xs text-slate-400 mt-1">Membro: <strong id="modal-target-user-name" class="text-white">--</strong></p>
+            </div>
+
+            <form id="form-edit-roles" onsubmit="saveUserRoles(event)" class="space-y-4">
+                <input type="hidden" id="modal-target-user-id">
+                
+                <div class="space-y-2.5 max-h-64 overflow-y-auto custom-scrollbar pr-1" id="roles-checkboxes-container">
+                    <!-- Checkboxes injetados via JS -->
+                </div>
+
+                <div id="modal-roles-error" class="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl hidden"></div>
+
+                <div class="pt-3 border-t border-slate-800 flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="closeEditRolesModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btn-save-roles" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-2">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Salvar Funções</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script de inicialização e controle do painel Admin -->
+    <script>
+        let currentAdminUser = null;
+        let availableRoles = [];
+        let cachedUsers = [];
+
+        // Inicialização de segurança
+        document.addEventListener('DOMContentLoaded', async () => {
+            lucide.createIcons();
+            const token = localStorage.getItem('lacc_token');
+
+            if (!token) {
+                // Não autenticado -> Redirecionar para login
+                window.location.href = '/?login=admin';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/check', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.status === 401) {
+                    localStorage.removeItem('lacc_token');
+                    localStorage.removeItem('lacc_auth');
+                    window.location.href = '/?login=expired';
+                    return;
+                }
+
+                if (response.status === 403) {
+                    // Autenticado mas sem permissão administrativa
+                    document.getElementById('admin-loading').classList.add('hidden');
+                    document.getElementById('admin-access-denied').classList.remove('hidden');
+                    lucide.createIcons();
+                    return;
+                }
+
+                const data = await response.json();
+                currentAdminUser = data.user;
+                initAdminPanel();
+
+            } catch (err) {
+                console.error('Falha de verificação administrativa:', err);
+                window.location.href = '/?login=admin';
+            }
+        });
+
+        function initAdminPanel() {
+            document.getElementById('admin-loading').classList.add('hidden');
+            document.getElementById('admin-main-wrapper').classList.remove('hidden');
+
+            // Preencher dados do usuário no header
+            const initials = currentAdminUser.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+            document.getElementById('admin-user-avatar').innerText = initials || 'AD';
+            document.getElementById('admin-user-name').innerText = currentAdminUser.name;
+            
+            const highestRole = currentAdminUser.roles.find(r => r.slug === 'superadmin') || currentAdminUser.roles[0] || { name: 'Membro' };
+            document.getElementById('admin-user-role').innerText = highestRole.name;
+
+            // Carregar dados iniciais
+            loadOverview();
+            loadRolesList();
+            lucide.createIcons();
+        }
+
+        async function loadOverview() {
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch('/api/admin/overview', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                document.getElementById('stat-members').innerText = data.total_members;
+                document.getElementById('stat-events').innerText = data.total_events;
+                document.getElementById('stat-tasks').innerText = data.total_tasks;
+                document.getElementById('stat-materials').innerText = data.total_materials;
+
+                // Renderizar funções na visão geral
+                const rolesContainer = document.getElementById('overview-roles-list');
+                rolesContainer.innerHTML = data.role_distribution.map(r => `
+                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/60 border border-slate-800 text-xs">
+                        <span class="font-medium text-slate-200">${r.name}</span>
+                        <span class="font-mono text-amber-400 font-bold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">${r.count}</span>
+                    </div>
+                `).join('');
+
+                // Renderizar auditoria recente
+                const auditContainer = document.getElementById('overview-audit-list');
+                if (data.recent_audit && data.recent_audit.length > 0) {
+                    auditContainer.innerHTML = data.recent_audit.map(a => `
+                        <tr class="hover:bg-slate-800/40">
+                            <td class="py-2.5 font-mono text-amber-300 font-semibold">${a.action}</td>
+                            <td class="py-2.5 text-slate-300">${a.user_name}</td>
+                            <td class="py-2.5 text-slate-500 font-mono text-[10px]">${new Date(a.created_at).toLocaleString('pt-BR')}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    auditContainer.innerHTML = `<tr><td colspan="3" class="py-4 text-center text-slate-500">Nenhum evento registrado ainda.</td></tr>`;
+                }
+
+                lucide.createIcons();
+            } catch (err) {
+                console.error('Erro ao carregar visão geral:', err);
+            }
+        }
+
+        async function loadRolesList() {
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch('/api/admin/roles', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                availableRoles = await res.json();
+            } catch (e) {
+                console.error('Erro ao carregar roles:', e);
+            }
+        }
+
+        async function loadUsers() {
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch('/api/admin/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                cachedUsers = await res.json();
+                renderUsersTable(cachedUsers);
+            } catch (err) {
+                console.error('Erro ao listar membros:', err);
+            }
+        }
+
+        function renderUsersTable(users) {
+            const tbody = document.getElementById('users-tbody');
+            if (!users || users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500">Nenhum membro encontrado.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = users.map(u => {
+                const roleBadges = u.roles.map(r => {
+                    const isSuper = r.slug === 'superadmin';
+                    const color = isSuper ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-slate-800 text-slate-300 border-slate-700';
+                    return `<span class="inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${color}">${r.name}</span>`;
+                }).join(' ');
+
+                const statusColor = u.status === 'Ativo' ? 'text-emerald-400 bg-emerald-500/10' : 'text-slate-400 bg-slate-800';
+
+                return `
+                    <tr class="hover:bg-slate-800/30 transition">
+                        <td class="py-3 px-4 font-semibold text-white">
+                            ${u.name}
+                            <span class="block text-[10px] text-slate-500 font-normal">${u.course || 'Direito'}</span>
+                        </td>
+                        <td class="py-3 px-4 text-slate-300 font-mono text-[11px]">${u.email}</td>
+                        <td class="py-3 px-4"><div class="flex flex-wrap gap-1">${roleBadges || '<span class="text-slate-500 text-[10px]">Sem função</span>'}</div></td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColor}">${u.status}</span>
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="openEditRolesModal(${u.id})" class="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold border border-amber-500/25 transition">
+                                Editar Funções
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function filterUsersTable() {
+            const term = document.getElementById('filter-users-input').value.toLowerCase();
+            const filtered = cachedUsers.filter(u => 
+                u.name.toLowerCase().includes(term) || 
+                u.email.toLowerCase().includes(term)
+            );
+            renderUsersTable(filtered);
+        }
+
+        function openEditRolesModal(userId) {
+            const user = cachedUsers.find(u => u.id === userId);
+            if (!user) return;
+
+            document.getElementById('modal-target-user-id').value = user.id;
+            document.getElementById('modal-target-user-name').innerText = `${user.name} (${user.email})`;
+            document.getElementById('modal-roles-error').classList.add('hidden');
+
+            const assignedRoleIds = user.roles.map(r => r.id);
+            const container = document.getElementById('roles-checkboxes-container');
+
+            container.innerHTML = availableRoles.map(role => {
+                const checked = assignedRoleIds.includes(role.id) ? 'checked' : '';
+                return `
+                    <label class="flex items-start gap-3 p-2.5 rounded-xl bg-slate-800/70 border border-slate-700/80 hover:bg-slate-800 cursor-pointer transition">
+                        <input type="checkbox" name="role_checkbox" value="${role.id}" ${checked} class="mt-1 rounded border-slate-700 text-amber-500 focus:ring-amber-500">
+                        <div>
+                            <span class="text-xs font-bold text-white block">${role.name}</span>
+                            <span class="text-[11px] text-slate-400">${role.description || ''}</span>
+                        </div>
+                    </label>
+                `;
+            }).join('');
+
+            document.getElementById('modal-edit-roles').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeEditRolesModal() {
+            document.getElementById('modal-edit-roles').classList.add('hidden');
+        }
+
+        async function saveUserRoles(e) {
+            e.preventDefault();
+            const userId = document.getElementById('modal-target-user-id').value;
+            const checkboxes = document.querySelectorAll('input[name="role_checkbox"]:checked');
+            const selectedRoleIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+            const errorDiv = document.getElementById('modal-roles-error');
+            const saveBtn = document.getElementById('btn-save-roles');
+
+            errorDiv.classList.add('hidden');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<span class="animate-spin mr-1">⏳</span> Salvando...`;
+
+            try {
+                const token = localStorage.getItem('lacc_token');
+                const res = await fetch(`/api/admin/users/${userId}/roles`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ role_ids: selectedRoleIds })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Erro ao atualizar funções.');
+                }
+
+                closeEditRolesModal();
+                loadUsers();
+                loadOverview();
+
+            } catch (err) {
+                errorDiv.innerText = err.message;
+                errorDiv.classList.remove('hidden');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Salvar Funções</span>`;
+                lucide.createIcons();
+            }
+        }
+
+        async function loadAuditLogs() {
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch('/api/admin/audit?limit=50', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const logs = await res.json();
+                const tbody = document.getElementById('audit-tbody');
+
+                if (!logs || logs.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500 font-sans">Nenhum registro de auditoria.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = logs.map(l => `
+                    <tr class="hover:bg-slate-800/30 transition">
+                        <td class="py-2.5 px-4 text-amber-300 font-bold">${l.action}</td>
+                        <td class="py-2.5 px-4 text-slate-300 font-sans">${l.user_name} <span class="text-[10px] text-slate-500 block font-mono">${l.user_email || ''}</span></td>
+                        <td class="py-2.5 px-4 text-slate-400">${l.target_entity || '--'}</td>
+                        <td class="py-2.5 px-4 text-slate-500">${l.ip_address || '--'}</td>
+                        <td class="py-2.5 px-4 text-slate-400">${new Date(l.created_at).toLocaleString('pt-BR')}</td>
+                    </tr>
+                `).join('');
+
+                lucide.createIcons();
+            } catch (err) {
+                console.error('Erro ao carregar auditoria:', err);
+            }
+        }
+
+        function switchAdminTab(tabName) {
+            // Ocultar todas as seções
+            ['overview', 'users', 'audit', 'security', 'cms-home', 'cms-areas'].forEach(tab => {
+                const sec = document.getElementById(`section-${tab}`);
+                const btn = document.getElementById(`tab-btn-${tab}`);
+                if (sec) sec.classList.add('hidden');
+                if (btn) {
+                    btn.classList.remove('bg-amber-500/15', 'text-amber-300', 'border-amber-500/30');
+                    btn.classList.add('text-slate-400');
+                }
+            });
+
+            // Ativar a selecionada
+            const targetSec = document.getElementById(`section-${tabName}`);
+            const targetBtn = document.getElementById(`tab-btn-${tabName}`);
+            if (targetSec) targetSec.classList.remove('hidden');
+            if (targetBtn) {
+                targetBtn.classList.remove('text-slate-400');
+                targetBtn.classList.add('bg-amber-500/15', 'text-amber-300', 'border', 'border-amber-500/30');
+            }
+
+            if (tabName === 'users') loadUsers();
+            if (tabName === 'audit') loadAuditLogs();
+            if (tabName === 'overview') loadOverview();
+
+            // Fechar sidebar mobile se aberta
+            const sidebar = document.getElementById('admin-sidebar');
+            if (window.innerWidth < 1024) {
+                sidebar.classList.add('-translate-x-full');
+            }
+
+            lucide.createIcons();
+        }
+
+        function toggleAdminSidebar() {
+            const sidebar = document.getElementById('admin-sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+
+        function adminLogout() {
+            localStorage.removeItem('lacc_auth');
+            localStorage.removeItem('lacc_token');
+            localStorage.removeItem('lacc_user');
+            localStorage.removeItem('lacc_user_email');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

@@ -9,6 +9,12 @@ const api = {
             const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
             const headers = options.headers || {};
             
+            // Injeção automática de Token JWT Bearer
+            const token = localStorage.getItem('lacc_token');
+            if (token && !headers['Authorization']) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             if (!(options.body instanceof FormData) && !headers['Content-Type']) {
                 headers['Content-Type'] = 'application/json';
             }
@@ -17,6 +23,15 @@ const api = {
                 ...options,
                 headers
             });
+
+            if (response.status === 401) {
+                // Se a sessão expirou e estamos no admin, redireciona para login
+                if (window.location.pathname.startsWith('/admin')) {
+                    localStorage.removeItem('lacc_token');
+                    localStorage.removeItem('lacc_auth');
+                    window.location.href = '/?login=expired';
+                }
+            }
 
             if (!response.ok) {
                 let errorMsg = `Erro ${response.status}: ${response.statusText}`;
@@ -205,6 +220,40 @@ const api = {
         return this.request(`/finances/${id}`, {
             method: 'DELETE'
         });
+    },
+
+    // Autenticação e Sessão
+    login(email, password) {
+        return this.request('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password })
+        });
+    },
+    getMe() {
+        return this.request('/auth/me');
+    },
+
+    // Painel Administrativo / RBAC
+    checkAdmin() {
+        return this.request('/admin/check');
+    },
+    getAdminOverview() {
+        return this.request('/admin/overview');
+    },
+    getAdminUsers() {
+        return this.request('/admin/users');
+    },
+    updateUserRoles(userId, roleIds) {
+        return this.request(`/admin/users/${userId}/roles`, {
+            method: 'PUT',
+            body: JSON.stringify({ role_ids: roleIds })
+        });
+    },
+    getAdminRoles() {
+        return this.request('/admin/roles');
+    },
+    getAdminAudit(limit = 50) {
+        return this.request(`/admin/audit?limit=${limit}`);
     }
 };
 

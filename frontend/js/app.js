@@ -24,6 +24,8 @@ function checkAuthState() {
     const landing = document.getElementById('app-landing');
     const dashboard = document.getElementById('app-dashboard');
 
+    updateAdminVisibility();
+
     // Se o usuário estiver explicitamente acessando o hash #dashboard e estiver logado
     if (window.location.hash === '#dashboard' && isAuth) {
         if (landing) landing.classList.add('hidden');
@@ -34,6 +36,18 @@ function checkAuthState() {
         if (landing) landing.classList.remove('hidden');
         if (dashboard) dashboard.classList.add('hidden');
         loadLandingEvents();
+    }
+
+    // Tratamento de redirecionamentos da rota /admin
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('login') === 'admin') {
+        openLoginModal();
+        showToast('Faça login com uma conta administrativa para acessar o painel.', 'info');
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (urlParams.get('login') === 'expired') {
+        openLoginModal();
+        showToast('Sua sessão expirou. Faça login novamente.', 'warning');
+        window.history.replaceState({}, document.title, window.location.pathname);
     }
 }
 
@@ -67,36 +81,78 @@ function goToDashboard() {
 
 async function submitLogin(e) {
     e.preventDefault();
-    const email = document.getElementById('login-email').value;
+    const emailInput = document.getElementById('login-email');
+    const passwordInput = document.getElementById('login-password');
+    const email = emailInput ? emailInput.value.trim() : '';
+    const password = passwordInput ? passwordInput.value : '';
 
     if (!email) {
         showToast('Por favor, informe seu e-mail.', 'error');
         return;
     }
 
-    localStorage.setItem('lacc_auth', 'true');
-    localStorage.setItem('lacc_user_email', email);
+    try {
+        const res = await api.login(email, password || 'lacc2026!');
+        localStorage.setItem('lacc_token', res.access_token);
+        localStorage.setItem('lacc_user', JSON.stringify(res.user));
+        localStorage.setItem('lacc_auth', 'true');
+        localStorage.setItem('lacc_user_email', res.user.email);
 
-    closeModal('modal-login');
-    goToDashboard();
-    showToast('Bem-vindo à Área de Membros da LACC!');
+        updateAdminVisibility();
+        closeModal('modal-login');
+        goToDashboard();
+        showToast(`Bem-vindo, ${res.user.name}!`);
+    } catch (err) {
+        showToast(err.message || 'Falha na autenticação.', 'error');
+    }
 }
 
-function quickLoginDemo() {
-    localStorage.setItem('lacc_auth', 'true');
-    closeModal('modal-login');
-    goToDashboard();
-    showToast('Acesso de Membro concedido!');
+async function quickLoginDemo() {
+    try {
+        const res = await api.login('paulo.alberto.ofc@gmail.com', 'lacc2026!');
+        localStorage.setItem('lacc_token', res.access_token);
+        localStorage.setItem('lacc_user', JSON.stringify(res.user));
+        localStorage.setItem('lacc_auth', 'true');
+        localStorage.setItem('lacc_user_email', res.user.email);
+
+        updateAdminVisibility();
+        closeModal('modal-login');
+        goToDashboard();
+        showToast('Acesso de Superadministrador autenticado!');
+    } catch (err) {
+        showToast(err.message || 'Erro no login rápido.', 'error');
+    }
+}
+
+function updateAdminVisibility() {
+    const adminEntry = document.getElementById('admin-platform-entry');
+    if (!adminEntry) return;
+
+    try {
+        const userStr = localStorage.getItem('lacc_user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            if (user.is_admin) {
+                adminEntry.classList.remove('hidden');
+                return;
+            }
+        }
+    } catch (e) {}
+    adminEntry.classList.add('hidden');
 }
 
 function handleLogout() {
     localStorage.removeItem('lacc_auth');
+    localStorage.removeItem('lacc_token');
+    localStorage.removeItem('lacc_user');
+    localStorage.removeItem('lacc_user_email');
+    updateAdminVisibility();
     window.location.hash = '';
     const landing = document.getElementById('app-landing');
     const dashboard = document.getElementById('app-dashboard');
-    if (landing) landing.classList.remove('hidden');
     if (dashboard) dashboard.classList.add('hidden');
-    showToast('Você saiu da Área de Membros.', 'info');
+    if (landing) landing.classList.remove('hidden');
+    showToast('Você saiu da Área de Membros.');
     loadLandingEvents();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
