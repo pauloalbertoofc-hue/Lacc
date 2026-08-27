@@ -432,19 +432,126 @@
                     </div>
                 </section>
 
-                <!-- ================= SEÇÕES EM DESENVOLVIMENTO (ETAPA 3 & 4) ================= -->
-                <section id="section-cms-home" class="space-y-6 max-w-4xl mx-auto hidden">
-                    <div class="p-8 rounded-3xl bg-slate-900/60 border border-slate-800 text-center space-y-4">
-                        <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mx-auto flex items-center justify-center">
-                            <i data-lucide="pen-tool" class="w-7 h-7"></i>
+                <!-- ================= SEÇÃO: EDITOR DA HOME (CMS COM SPLIT-SCREEN) ================= -->
+                <section id="section-cms-home" class="h-full flex flex-col space-y-4 max-w-full mx-auto hidden">
+                    
+                    <!-- Barra de Ferramentas Superior do CMS -->
+                    <div class="bg-slate-900/90 border border-slate-800 p-3.5 md:p-4 rounded-3xl flex flex-wrap items-center justify-between gap-3 shrink-0 shadow-lg">
+                        <!-- Esquerda: Seletor de Seções -->
+                        <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 sm:pb-0">
+                            <span class="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-bold px-2 shrink-0">Seção:</span>
+                            <button onclick="selectCMSSection('hero')" id="btn-sec-hero" class="cms-sec-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 transition shrink-0 flex items-center gap-1.5">
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                                <span>Hero (Inicial)</span>
+                            </button>
+                            <button onclick="selectCMSSection('interdisciplinary_intro')" id="btn-sec-interdisciplinary_intro" class="cms-sec-btn px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition shrink-0 flex items-center gap-1.5">
+                                <i data-lucide="network" class="w-3.5 h-3.5"></i>
+                                <span>Premissa da Rede</span>
+                            </button>
+                            <button onclick="selectCMSSection('about_pillars')" id="btn-sec-about_pillars" class="cms-sec-btn px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition shrink-0 flex items-center gap-1.5">
+                                <i data-lucide="scale" class="w-3.5 h-3.5"></i>
+                                <span>Pilares (Prática)</span>
+                            </button>
+                            <button onclick="selectCMSSection('footer')" id="btn-sec-footer" class="cms-sec-btn px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition shrink-0 flex items-center gap-1.5">
+                                <i data-lucide="layout" class="w-3.5 h-3.5"></i>
+                                <span>Rodapé</span>
+                            </button>
                         </div>
-                        <h2 class="text-xl font-bold text-white">Editor de Componentes da Home (CMS)</h2>
-                        <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                            Este módulo será implementado na <strong>Etapa 3</strong>, trazendo a interface lado a lado (split-screen) para edição de textos, badges, rascunhos e publicação da landing page com preview em tempo real.
-                        </p>
-                        <span class="inline-block text-[11px] font-mono px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30">
-                            Próxima Etapa do Projeto
-                        </span>
+
+                        <!-- Direita: Status da Seção + Botões de Publicação -->
+                        <div class="flex items-center gap-2">
+                            <span id="cms-section-status-badge" class="px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Publicado
+                            </span>
+                            
+                            <button onclick="openRevisionsModal()" title="Ver histórico e rollback" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
+                                <i data-lucide="history" class="w-4 h-4"></i>
+                            </button>
+
+                            <button onclick="saveCurrentDraft()" id="btn-save-draft" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
+                                <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                                <span>Salvar Rascunho</span>
+                            </button>
+
+                            <button onclick="publishCurrentSection()" id="btn-publish-section" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold shadow-md transition flex items-center gap-1.5">
+                                <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                                <span>Publicar Seção</span>
+                            </button>
+
+                            <button onclick="publishAllSections()" title="Publicar todas as seções alteradas" class="hidden sm:flex px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition items-center gap-1.5">
+                                <i data-lucide="check-check" class="w-3.5 h-3.5"></i>
+                                <span>Publicar Tudo</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Split-Screen: Editor à Esquerda | Live Preview à Direita -->
+                    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[550px] overflow-hidden">
+                        
+                        <!-- Painel Esquerdo: Formulário Estruturado do Componente (col-span-5) -->
+                        <div class="lg:col-span-5 bg-slate-900/80 border border-slate-800 rounded-3xl p-5 overflow-y-auto custom-scrollbar flex flex-col space-y-4">
+                            <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-sm font-bold text-white flex items-center gap-2" id="cms-editor-title">
+                                        <i data-lucide="edit-3" class="w-4 h-4 text-amber-400"></i>
+                                        <span>Hero Institucional</span>
+                                    </h3>
+                                    <p class="text-[11px] text-slate-400" id="cms-editor-desc">Edição estruturada de títulos, badges e chamadas de ação.</p>
+                                </div>
+                                <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">Preview ao Vivo</span>
+                            </div>
+
+                            <!-- Área dinâmica do formulário da seção -->
+                            <form id="cms-section-form" oninput="handleEditorInput()" class="space-y-4 flex-1">
+                                <!-- Injetado dinamicamente via JS -->
+                            </form>
+                        </div>
+
+                        <!-- Painel Direito: Preview Interativo ao Vivo (col-span-7) -->
+                        <div class="lg:col-span-7 bg-slate-900/80 border border-slate-800 rounded-3xl overflow-hidden flex flex-col">
+                            <!-- Barra de Controles do Preview -->
+                            <div class="h-11 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between text-xs shrink-0">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
+                                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500/80"></span>
+                                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
+                                    </div>
+                                    <span class="text-[11px] font-mono text-slate-400 ml-2 font-medium flex items-center gap-1">
+                                        <i data-lucide="eye" class="w-3.5 h-3.5 text-amber-400"></i>
+                                        Preview Interativo em Tempo Real
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <!-- Seletor de Viewport -->
+                                    <div class="flex items-center p-0.5 rounded-lg bg-slate-800 border border-slate-700">
+                                        <button onclick="setPreviewViewport('desktop')" id="btn-vp-desktop" title="Modo Desktop" class="p-1 rounded-md bg-amber-500/20 text-amber-300 transition">
+                                            <i data-lucide="monitor" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                        <button onclick="setPreviewViewport('mobile')" id="btn-vp-mobile" title="Modo Mobile" class="p-1 rounded-md text-slate-400 hover:text-white transition">
+                                            <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </div>
+
+                                    <button onclick="syncPreviewFrame()" title="Recarregar preview" class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                                    </button>
+
+                                    <a href="/?preview=true" target="_blank" title="Abrir preview em nova aba" class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <!-- Frame de Visualização da Home -->
+                            <div class="flex-1 bg-slate-950 p-3 overflow-hidden flex items-center justify-center relative">
+                                <div id="preview-wrapper" class="w-full h-full transition-all duration-300 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
+                                    <iframe id="cms-preview-frame" src="/?preview=true" class="w-full h-full border-0 bg-slate-950"></iframe>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </section>
 
@@ -501,6 +608,33 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: HISTÓRICO DE REVISÕES & ROLLBACK ================= -->
+    <div id="modal-revisions" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-fade-in text-white relative">
+            <button onclick="closeRevisionsModal()" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="history" class="w-4 h-4 text-amber-400"></i>
+                    Histórico de Revisões da Seção
+                </h3>
+                <p class="text-xs text-slate-400 mt-1">Seção: <strong id="modal-rev-section-title" class="text-amber-300">--</strong></p>
+            </div>
+
+            <div class="max-h-80 overflow-y-auto custom-scrollbar space-y-2.5 pr-1" id="revisions-list-container">
+                <!-- Lista de versões injetada via JS -->
+            </div>
+
+            <div class="pt-3 border-t border-slate-800 flex items-center justify-end">
+                <button type="button" onclick="closeRevisionsModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">
+                    Fechar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -789,6 +923,487 @@
             }
         }
 
+        // ==========================================
+        // CMS DA HOME: ESTADO & CONTROLADORES
+        // ==========================================
+        let cmsSectionsCache = [];
+        let activeCMSSectionKey = 'hero';
+        let editorDebounceTimer = null;
+
+        async function loadCMSSections() {
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch('/api/admin/content', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                cmsSectionsCache = await res.json();
+                selectCMSSection(activeCMSSectionKey);
+            } catch (err) {
+                console.error('Erro ao carregar seções CMS:', err);
+            }
+        }
+
+        function selectCMSSection(sectionKey) {
+            activeCMSSectionKey = sectionKey;
+
+            // Atualizar botões de seleção de seção
+            document.querySelectorAll('.cms-sec-btn').forEach(btn => {
+                btn.classList.remove('bg-amber-500/20', 'text-amber-300', 'border-amber-500/30', 'font-semibold');
+                btn.classList.add('text-slate-400', 'font-medium');
+            });
+            const activeBtn = document.getElementById(`btn-sec-${sectionKey}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-400', 'font-medium');
+                activeBtn.classList.add('bg-amber-500/20', 'text-amber-300', 'border-amber-500/30', 'font-semibold');
+            }
+
+            const sec = cmsSectionsCache.find(s => s.section_key === sectionKey);
+            if (!sec) return;
+
+            // Atualizar badge de status
+            updateCMSStatusBadge(sec);
+
+            // Atualizar Título e Descrição do Editor
+            const titleMap = {
+                hero: { title: 'Hero Institucional', desc: 'Edição de títulos, badges e chamadas de ação do topo da página.' },
+                interdisciplinary_intro: { title: 'Premissa da Rede Epistemológica', desc: 'Frase de impacto e subtítulo que introduzem a rede scrollytelling.' },
+                about_pillars: { title: 'Ciências Criminais na Prática', desc: 'Título, introdução e os 3 pilares acadêmicos fundamentais.' },
+                footer: { title: 'Rodapé Institucional', desc: 'Nome oficial, universidade e créditos de copyright.' }
+            };
+            const meta = titleMap[sectionKey] || { title: sectionKey, desc: '' };
+            document.getElementById('cms-editor-title').querySelector('span').innerText = meta.title;
+            document.getElementById('cms-editor-desc').innerText = meta.desc;
+
+            // Renderizar formulário correspondente
+            renderCMSForm(sectionKey, sec.draft_data || sec.published_data);
+
+            // Rolar o iframe de preview para a seção correspondente
+            scrollPreviewToSection(sectionKey);
+
+            lucide.createIcons();
+        }
+
+        function updateCMSStatusBadge(sec) {
+            const badge = document.getElementById('cms-section-status-badge');
+            if (sec.has_pending_changes) {
+                badge.className = 'px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1.5';
+                badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Rascunho com alterações';
+            } else {
+                badge.className = 'px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center gap-1.5';
+                badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Publicado';
+            }
+        }
+
+        function renderCMSForm(sectionKey, data) {
+            const form = document.getElementById('cms-section-form');
+            if (!data) data = {};
+
+            if (sectionKey === 'hero') {
+                form.innerHTML = `
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-slate-300">Badge Superior (Instituição / Gestão)</label>
+                        <input type="text" id="f_hero_badge" value="${escapeHtml(data.badge || '')}" class="w-full px-3.5 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-slate-300">Título Principal</label>
+                        <input type="text" id="f_hero_title" value="${escapeHtml(data.title || '')}" class="w-full px-3.5 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-slate-300">Subtítulo / Descrição Institucional</label>
+                        <textarea id="f_hero_subtitle" rows="3" class="w-full px-3.5 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 custom-scrollbar">${escapeHtml(data.subtitle || '')}</textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="block text-xs font-semibold text-slate-300">Botão Primário (Texto)</label>
+                            <input type="text" id="f_hero_primary_btn" value="${escapeHtml(data.primary_btn_text || '')}" class="w-full px-3.5 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-xs font-semibold text-slate-300">Botão Secundário (Texto)</label>
+                            <input type="text" id="f_hero_secondary_btn" value="${escapeHtml(data.secondary_btn_text || '')}" class="w-full px-3.5 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-slate-300">Indicador de Scroll</label>
+                        <input type="text" id="f_hero_scroll_cue" value="${escapeHtml(data.scroll_cue || '')}" class="w-full px-3.5 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    </div>
+                `;
+            } else if (sectionKey === 'interdisciplinary_intro') {
+                form.innerHTML = `
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-slate-300">Frase de Abertura / Epígrafe</label>
+                        <textarea id="f_intro_headline" rows="2" class="w-full px-3.5 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 custom-scrollbar">${escapeHtml(data.headline || '')}</textarea>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-slate-300">Subtítulo Epistemológico</label>
+                        <textarea id="f_intro_subheadline" rows="3" class="w-full px-3.5 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 custom-scrollbar">${escapeHtml(data.subheadline || '')}</textarea>
+                    </div>
+                `;
+            } else if (sectionKey === 'about_pillars') {
+                const pillars = data.pillars || [];
+                const pillarsHtml = pillars.map((p, idx) => `
+                    <div class="p-3.5 rounded-2xl bg-slate-800/50 border border-slate-700/80 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-amber-300 font-mono">Pilar ${idx + 1}</span>
+                            <div class="flex items-center gap-1.5 text-xs text-slate-400">
+                                <label class="text-[11px]">Ícone:</label>
+                                <select id="f_pillar_${idx}_icon" class="px-2 py-1 rounded bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none">
+                                    <option value="scale" ${p.icon === 'scale' ? 'selected' : ''}>⚖️ Balança (scale)</option>
+                                    <option value="brain" ${p.icon === 'brain' ? 'selected' : ''}>🧠 Cérebro (brain)</option>
+                                    <option value="microscope" ${p.icon === 'microscope' ? 'selected' : ''}>🔬 Microscópio (microscope)</option>
+                                    <option value="briefcase" ${p.icon === 'briefcase' ? 'selected' : ''}>💼 Maleta (briefcase)</option>
+                                    <option value="book-open" ${p.icon === 'book-open' ? 'selected' : ''}>📖 Livro (book-open)</option>
+                                    <option value="shield" ${p.icon === 'shield' ? 'selected' : ''}>🛡️ Escudo (shield)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <input type="text" id="f_pillar_${idx}_title" value="${escapeHtml(p.title || '')}" placeholder="Título do pilar" class="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                        </div>
+                        <div class="space-y-1">
+                            <textarea id="f_pillar_${idx}_desc" rows="2" placeholder="Descrição do pilar" class="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 custom-scrollbar">${escapeHtml(p.desc || '')}</textarea>
+                        </div>
+                    </div>
+                `).join('');
+
+                form.innerHTML = `
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-slate-300">Badge Superior</label>
+                        <input type="text" id="f_about_badge" value="${escapeHtml(data.badge || '')}" class="w-full px-3.5 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-slate-300">Título da Seção</label>
+                        <input type="text" id="f_about_title" value="${escapeHtml(data.title || '')}" class="w-full px-3.5 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-slate-300">Subtítulo da Seção</label>
+                        <textarea id="f_about_subtitle" rows="2" class="w-full px-3.5 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 custom-scrollbar">${escapeHtml(data.subtitle || '')}</textarea>
+                    </div>
+                    <div class="space-y-2 pt-1">
+                        <label class="block text-xs font-semibold text-slate-300">Cards dos Pilares Acadêmicos</label>
+                        ${pillarsHtml}
+                    </div>
+                `;
+            } else if (sectionKey === 'footer') {
+                form.innerHTML = `
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-slate-300">Nome Oficial</label>
+                        <input type="text" id="f_footer_name" value="${escapeHtml(data.name || '')}" class="w-full px-3.5 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-slate-300">Instituição de Ensino</label>
+                        <input type="text" id="f_footer_institution" value="${escapeHtml(data.institution || '')}" class="w-full px-3.5 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-semibold text-slate-300">Ano de Gestão</label>
+                        <input type="text" id="f_footer_year" value="${escapeHtml(data.year || '')}" class="w-full px-3.5 py-2 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500">
+                    </div>
+                `;
+            }
+        }
+
+        function extractCurrentFormData() {
+            if (activeCMSSectionKey === 'hero') {
+                return {
+                    badge: document.getElementById('f_hero_badge') ? document.getElementById('f_hero_badge').value : '',
+                    title: document.getElementById('f_hero_title') ? document.getElementById('f_hero_title').value : '',
+                    subtitle: document.getElementById('f_hero_subtitle') ? document.getElementById('f_hero_subtitle').value : '',
+                    primary_btn_text: document.getElementById('f_hero_primary_btn') ? document.getElementById('f_hero_primary_btn').value : '',
+                    secondary_btn_text: document.getElementById('f_hero_secondary_btn') ? document.getElementById('f_hero_secondary_btn').value : '',
+                    scroll_cue: document.getElementById('f_hero_scroll_cue') ? document.getElementById('f_hero_scroll_cue').value : ''
+                };
+            } else if (activeCMSSectionKey === 'interdisciplinary_intro') {
+                return {
+                    headline: document.getElementById('f_intro_headline') ? document.getElementById('f_intro_headline').value : '',
+                    subheadline: document.getElementById('f_intro_subheadline') ? document.getElementById('f_intro_subheadline').value : ''
+                };
+            } else if (activeCMSSectionKey === 'about_pillars') {
+                const pillars = [];
+                for (let i = 0; i < 3; i++) {
+                    const titleEl = document.getElementById(`f_pillar_${i}_title`);
+                    const iconEl = document.getElementById(`f_pillar_${i}_icon`);
+                    const descEl = document.getElementById(`f_pillar_${i}_desc`);
+                    if (titleEl && descEl) {
+                        pillars.push({
+                            id: i === 0 ? 'dogmatica' : (i === 1 ? 'criminologia' : 'pratica'),
+                            title: titleEl.value,
+                            icon: iconEl ? iconEl.value : 'scale',
+                            desc: descEl.value
+                        });
+                    }
+                }
+                return {
+                    badge: document.getElementById('f_about_badge') ? document.getElementById('f_about_badge').value : '',
+                    title: document.getElementById('f_about_title') ? document.getElementById('f_about_title').value : '',
+                    subtitle: document.getElementById('f_about_subtitle') ? document.getElementById('f_about_subtitle').value : '',
+                    pillars: pillars
+                };
+            } else if (activeCMSSectionKey === 'footer') {
+                return {
+                    name: document.getElementById('f_footer_name') ? document.getElementById('f_footer_name').value : '',
+                    institution: document.getElementById('f_footer_institution') ? document.getElementById('f_footer_institution').value : '',
+                    year: document.getElementById('f_footer_year') ? document.getElementById('f_footer_year').value : ''
+                };
+            }
+            return {};
+        }
+
+        function handleEditorInput() {
+            clearTimeout(editorDebounceTimer);
+            editorDebounceTimer = setTimeout(() => {
+                const updatedData = extractCurrentFormData();
+                const sec = cmsSectionsCache.find(s => s.section_key === activeCMSSectionKey);
+                if (sec) {
+                    sec.draft_data = updatedData;
+                    sec.has_pending_changes = true;
+                    updateCMSStatusBadge(sec);
+                }
+
+                // Sincronizar em tempo real com o iframe via postMessage
+                syncPreviewFrame();
+            }, 100);
+        }
+
+        function syncPreviewFrame() {
+            const iframe = document.getElementById('cms-preview-frame');
+            if (!iframe || !iframe.contentWindow) return;
+
+            const fullCMSData = {};
+            cmsSectionsCache.forEach(s => {
+                fullCMSData[s.section_key] = {
+                    content: s.draft_data || s.published_data
+                };
+            });
+
+            iframe.contentWindow.postMessage({
+                type: 'LACC_CMS_PREVIEW_SYNC',
+                sections: fullCMSData
+            }, '*');
+        }
+
+        function scrollPreviewToSection(sectionKey) {
+            const iframe = document.getElementById('cms-preview-frame');
+            if (!iframe || !iframe.contentWindow) return;
+
+            const targetSelectorMap = {
+                hero: '#landing-hero',
+                interdisciplinary_intro: '#areas',
+                about_pillars: '#landing-about',
+                footer: 'footer'
+            };
+            const selector = targetSelectorMap[sectionKey];
+            if (selector && iframe.contentDocument) {
+                const el = iframe.contentDocument.querySelector(selector);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        }
+
+        async function saveCurrentDraft() {
+            const btn = document.getElementById('btn-save-draft');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="animate-spin mr-1">⏳</span> Salvando...`;
+
+            const currentData = extractCurrentFormData();
+            const token = localStorage.getItem('lacc_token');
+
+            try {
+                const res = await fetch(`/api/admin/content/${activeCMSSectionKey}/draft`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        draft_data: currentData,
+                        is_visible: true
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Falha ao salvar rascunho.');
+                }
+
+                const sec = cmsSectionsCache.find(s => s.section_key === activeCMSSectionKey);
+                if (sec) {
+                    sec.draft_data = currentData;
+                    sec.has_pending_changes = true;
+                    updateCMSStatusBadge(sec);
+                }
+
+                showToastNotification('Rascunho gravado com sucesso! (O site público permanece inalterado)', 'info');
+            } catch (err) {
+                showToastNotification(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="save" class="w-3.5 h-3.5"></i><span>Salvar Rascunho</span>`;
+                lucide.createIcons();
+            }
+        }
+
+        async function publishCurrentSection() {
+            const btn = document.getElementById('btn-publish-section');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="animate-spin mr-1">⏳</span> Publicando...`;
+
+            // Garante que os dados do form atual estejam no draft antes de publicar
+            await saveCurrentDraft();
+
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch(`/api/admin/content/${activeCMSSectionKey}/publish`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        change_summary: `Publicação realizada pelo painel de controle`
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Falha ao publicar seção.');
+                }
+
+                const data = await res.json();
+                const sec = cmsSectionsCache.find(s => s.section_key === activeCMSSectionKey);
+                if (sec) {
+                    sec.published_data = JSON.parse(JSON.stringify(sec.draft_data));
+                    sec.has_pending_changes = false;
+                    updateCMSStatusBadge(sec);
+                }
+
+                showToastNotification(data.message || 'Seção publicada com sucesso!', 'success');
+            } catch (err) {
+                showToastNotification(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="send" class="w-3.5 h-3.5"></i><span>Publicar Seção</span>`;
+                lucide.createIcons();
+            }
+        }
+
+        async function publishAllSections() {
+            if (!confirm('Deseja publicar todos os rascunhos pendentes de uma só vez?')) return;
+
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch('/api/admin/content/publish-all', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                showToastNotification(data.message || 'Todas as seções foram publicadas!', 'success');
+                await loadCMSSections();
+            } catch (err) {
+                showToastNotification('Erro ao publicar em lote.', 'error');
+            }
+        }
+
+        async function openRevisionsModal() {
+            document.getElementById('modal-rev-section-title').innerText = activeCMSSectionKey;
+            const container = document.getElementById('revisions-list-container');
+            container.innerHTML = '<div class="py-8 text-center text-slate-500 text-xs font-mono">Carregando histórico...</div>';
+            document.getElementById('modal-revisions').classList.remove('hidden');
+
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch(`/api/admin/content/${activeCMSSectionKey}/revisions`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const revisions = await res.json();
+
+                if (!revisions || revisions.length === 0) {
+                    container.innerHTML = '<div class="py-6 text-center text-slate-500 text-xs">Nenhuma revisão histórica anterior encontrada.</div>';
+                    return;
+                }
+
+                container.innerHTML = revisions.map(r => `
+                    <div class="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/80 flex items-center justify-between gap-3 text-xs">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-amber-300 font-mono">Versão ${r.version_number}</span>
+                                <span class="text-[10px] text-slate-500 font-mono">${new Date(r.created_at).toLocaleString('pt-BR')}</span>
+                            </div>
+                            <p class="text-slate-400 text-[11px] mt-0.5">${r.change_summary || 'Atualização'}</p>
+                            <span class="text-[10px] text-slate-500 block mt-0.5">Por: ${r.author_name || 'Admin'}</span>
+                        </div>
+                        <button onclick="rollbackToRevision(${r.id})" class="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold transition shrink-0">
+                            Restaurar (Rollback)
+                        </button>
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            } catch (err) {
+                container.innerHTML = '<div class="py-6 text-center text-rose-400 text-xs">Erro ao carregar histórico.</div>';
+            }
+        }
+
+        function closeRevisionsModal() {
+            document.getElementById('modal-revisions').classList.add('hidden');
+        }
+
+        async function rollbackToRevision(revId) {
+            if (!confirm('Deseja restaurar esta versão para o seu rascunho de edição?')) return;
+
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch(`/api/admin/content/revisions/${revId}/rollback`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                showToastNotification(data.message, 'success');
+                closeRevisionsModal();
+                await loadCMSSections();
+                syncPreviewFrame();
+            } catch (err) {
+                showToastNotification('Erro ao restaurar versão.', 'error');
+            }
+        }
+
+        function setPreviewViewport(mode) {
+            const wrapper = document.getElementById('preview-wrapper');
+            const btnDesk = document.getElementById('btn-vp-desktop');
+            const btnMob = document.getElementById('btn-vp-mobile');
+
+            if (mode === 'mobile') {
+                wrapper.className = 'w-[375px] h-full max-h-[700px] transition-all duration-300 rounded-3xl overflow-hidden border-4 border-slate-700 shadow-2xl';
+                btnMob.className = 'p-1 rounded-md bg-amber-500/20 text-amber-300 transition';
+                btnDesk.className = 'p-1 rounded-md text-slate-400 hover:text-white transition';
+            } else {
+                wrapper.className = 'w-full h-full transition-all duration-300 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl';
+                btnDesk.className = 'p-1 rounded-md bg-amber-500/20 text-amber-300 transition';
+                btnMob.className = 'p-1 rounded-md text-slate-400 hover:text-white transition';
+            }
+            lucide.createIcons();
+        }
+
+        function showToastNotification(msg, type = 'info') {
+            const toast = document.createElement('div');
+            const bg = type === 'error' ? 'bg-rose-950 border-rose-800 text-rose-200' : (type === 'success' ? 'bg-emerald-950 border-emerald-800 text-emerald-200' : 'bg-slate-900 border-slate-800 text-slate-200');
+            toast.className = `fixed bottom-5 right-5 z-50 px-4 py-3 rounded-2xl border text-xs font-semibold shadow-2xl flex items-center gap-2 animate-fade-in ${bg}`;
+            toast.innerHTML = `<span>${msg}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
         function switchAdminTab(tabName) {
             // Ocultar todas as seções
             ['overview', 'users', 'audit', 'security', 'cms-home', 'cms-areas'].forEach(tab => {
@@ -813,6 +1428,7 @@
             if (tabName === 'users') loadUsers();
             if (tabName === 'audit') loadAuditLogs();
             if (tabName === 'overview') loadOverview();
+            if (tabName === 'cms-home') loadCMSSections();
 
             // Fechar sidebar mobile se aberta
             const sidebar = document.getElementById('admin-sidebar');
@@ -838,3 +1454,4 @@
     </script>
 </body>
 </html>
+

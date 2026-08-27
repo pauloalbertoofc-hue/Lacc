@@ -245,7 +245,85 @@ def run_migrations():
             if has_role == 0:
                 cursor.execute("INSERT INTO member_roles (member_id, role_id) VALUES (?, ?)", (m["id"], membro_role))
 
+        # 10. Seed inicial de seções do CMS da Home
+        import json
+        cms_sections_seed = [
+            (
+                "hero",
+                {
+                    "badge": "Faculdade Serra Dourada • Gestão 2026",
+                    "title": "LIGA ACADÊMICA DE CIÊNCIAS CRIMINAIS",
+                    "subtitle": "Espaço de excelência para o aprofundamento científico, debate dogmático e extensão prática no campo das Ciências Criminais contemporâneas.",
+                    "primary_btn_text": "Área de Membros",
+                    "secondary_btn_text": "Explorar a Rede",
+                    "scroll_cue": "Role para explorar a rede"
+                }
+            ),
+            (
+                "interdisciplinary_intro",
+                {
+                    "headline": "O crime não é um fenômeno de uma única ciência.",
+                    "subheadline": "A investigação criminal contemporânea exige a convergência entre a dogmática jurídica, a análise comportamental, o rigor pericial e a ciência biomédica."
+                }
+            ),
+            (
+                "about_pillars",
+                {
+                    "badge": "Pilares de Formação",
+                    "title": "Ciências Criminais na Prática",
+                    "subtitle": "Construindo uma formação jurídica diferenciada por meio da integração indissociável entre ensino dogmático, pesquisa científica e aplicação forense.",
+                    "pillars": [
+                        {
+                            "id": "dogmatica",
+                            "title": "Dogmática Penal",
+                            "icon": "scale",
+                            "desc": "Estudo aprofundado da teoria do delito, culpabilidade, garantismo penal e jurisprudência dos tribunais superiores com rigor analítico e constitucional."
+                        },
+                        {
+                            "id": "criminologia",
+                            "title": "Criminologia Crítica",
+                            "icon": "brain",
+                            "desc": "Análise sociológica e empírica dos fatores de criminalização, política criminal contemporânea, sistema penitenciário e direitos humanos fundamentais."
+                        },
+                        {
+                            "id": "pratica",
+                            "title": "Prática & Extensão",
+                            "icon": "microscope",
+                            "desc": "Simulações de júri, workshops de perícia criminalística, estudos de casos reais e publicações de artigos acadêmicos com impacto social relevante."
+                        }
+                    ]
+                }
+            ),
+            (
+                "footer",
+                {
+                    "name": "Liga Acadêmica de Ciências Criminais (LACC)",
+                    "institution": "Faculdade Serra Dourada",
+                    "year": "2026",
+                    "copyright": "© 2026 Liga Acadêmica de Ciências Criminais — Todos os direitos reservados."
+                }
+            )
+        ]
+
+        for s_key, s_data in cms_sections_seed:
+            existing = cursor.execute("SELECT section_key FROM cms_sections WHERE section_key = ?", (s_key,)).fetchone()
+            if not existing:
+                s_json = json.dumps(s_data, ensure_ascii=False)
+                cursor.execute("""
+                    INSERT INTO cms_sections (
+                        section_key, content_json, draft_json, is_visible, draft_is_visible, 
+                        updated_by, updated_at, published_by, published_at
+                    ) VALUES (?, ?, ?, 1, 1, ?, CURRENT_TIMESTAMP, ?, CURRENT_TIMESTAMP)
+                """, (s_key, s_json, s_json, paulo_id, paulo_id))
+
+                cursor.execute("""
+                    INSERT INTO cms_revisions (section_key, version_number, content_json, created_by, change_summary)
+                    VALUES (?, 1, ?, ?, 'Versão inicial institucional aprovada')
+                """, (s_key, s_json, paulo_id))
+                print(f"[+] Seção CMS '{s_key}' inicializada com versão v1.")
+
         print("[+] Migrações concluídas com sucesso!")
 
 if __name__ == "__main__":
     run_migrations()
+

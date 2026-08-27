@@ -14,6 +14,7 @@ let allMembersCache = [];
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
     await loadSettings();
+    await loadCMSContent();
     checkAuthState();
     initHeroParallax();
     initIcons();
@@ -156,6 +157,130 @@ function handleLogout() {
     loadLandingEvents();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// ==========================================
+// INTEGRAÇÃO COM O CMS DA HOME (PUBLIC & PREVIEW)
+// ==========================================
+async function loadCMSContent() {
+    try {
+        const isPreview = new URLSearchParams(window.location.search).get('preview') === 'true';
+        const endpoint = isPreview ? '/api/content/preview' : '/api/content/public';
+        const res = await fetch(endpoint);
+        if (!res.ok) return;
+        const data = await res.json();
+        applyCMSContent(data);
+    } catch (e) {
+        console.warn('CMS: Usando conteúdo institucional padrão do HTML.', e);
+    }
+}
+
+function applyCMSContent(cmsData) {
+    if (!cmsData) return;
+
+    // 1. Hero Institucional
+    const heroSec = cmsData.hero;
+    if (heroSec && (heroSec.content || heroSec.draft_data)) {
+        const h = heroSec.content || heroSec.draft_data;
+        const badgeEl = document.getElementById('landing-badge-faculdade');
+        if (badgeEl && h.badge) badgeEl.innerText = h.badge;
+
+        const titleEl = document.getElementById('landing-main-title');
+        if (titleEl && h.title) {
+            if (h.title.toUpperCase().includes('CIÊNCIAS CRIMINAIS')) {
+                titleEl.innerHTML = `LIGA ACADÊMICA DE<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200">CIÊNCIAS CRIMINAIS</span>`;
+            } else {
+                titleEl.innerText = h.title;
+            }
+        }
+
+        const descEl = document.getElementById('landing-main-desc');
+        if (descEl && h.subtitle) descEl.innerText = h.subtitle;
+
+        if (h.primary_btn_text) {
+            const primaryBtn = document.querySelector('#hero-foreground-content button span');
+            if (primaryBtn) primaryBtn.innerText = h.primary_btn_text;
+        }
+        if (h.secondary_btn_text) {
+            const secondaryBtn = document.querySelector('#hero-foreground-content a span');
+            if (secondaryBtn) secondaryBtn.innerText = h.secondary_btn_text;
+        }
+        if (h.scroll_cue) {
+            const scrollCue = document.querySelector('#hero-foreground-content .text-amber-400\\/80');
+            if (scrollCue) scrollCue.innerText = h.scroll_cue;
+        }
+    }
+
+    // 2. Introdução da Rede Interdisciplinar
+    const introSec = cmsData.interdisciplinary_intro;
+    if (introSec && (introSec.content || introSec.draft_data)) {
+        const intro = introSec.content || introSec.draft_data;
+        const quoteH2 = document.querySelector('#interdisciplinary-quote h2');
+        if (quoteH2 && intro.headline) {
+            quoteH2.innerText = `“${intro.headline.replace(/^“|”$/g, '')}”`;
+        }
+
+        const quoteP = document.querySelector('#interdisciplinary-quote p');
+        if (quoteP && intro.subheadline) quoteP.innerText = intro.subheadline;
+    }
+
+    // 3. Ciências Criminais na Prática (Pilares de Formação)
+    const pillarsSec = cmsData.about_pillars;
+    if (pillarsSec && (pillarsSec.content || pillarsSec.draft_data)) {
+        const ap = pillarsSec.content || pillarsSec.draft_data;
+        const badge = document.querySelector('#landing-about span');
+        if (badge && ap.badge) badge.innerText = ap.badge;
+
+        const title = document.querySelector('#landing-about h2');
+        if (title && ap.title) title.innerText = ap.title;
+
+        const subtitle = document.querySelector('#landing-about p');
+        if (subtitle && ap.subtitle) subtitle.innerText = ap.subtitle;
+
+        if (Array.isArray(ap.pillars) && ap.pillars.length > 0) {
+            const container = document.getElementById('landing-pillars-container');
+            if (container) {
+                const colorMap = [
+                    { bg: 'bg-blue-500/10', text: 'text-blue-400' },
+                    { bg: 'bg-purple-500/10', text: 'text-purple-400' },
+                    { bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
+                    { bg: 'bg-amber-500/10', text: 'text-amber-400' }
+                ];
+                container.innerHTML = ap.pillars.map((p, idx) => {
+                    const c = colorMap[idx % colorMap.length];
+                    const icon = p.icon || 'scale';
+                    return `
+                        <div class="bg-slate-900/70 p-6 rounded-3xl border border-slate-800/80 hover:border-slate-700 transition space-y-3">
+                            <div class="w-12 h-12 rounded-2xl ${c.bg} ${c.text} flex items-center justify-center">
+                                <i data-lucide="${icon}" class="w-6 h-6"></i>
+                            </div>
+                            <h3 class="font-bold text-lg text-white">${p.title}</h3>
+                            <p class="text-xs text-slate-400 leading-relaxed">${p.desc}</p>
+                        </div>
+                    `;
+                }).join('');
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+    }
+
+    // 4. Rodapé
+    const footerSec = cmsData.footer;
+    if (footerSec && (footerSec.content || footerSec.draft_data)) {
+        const f = footerSec.content || footerSec.draft_data;
+        const nameEl = document.getElementById('landing-footer-name');
+        if (nameEl && f.name) nameEl.innerText = f.name;
+
+        const uniEl = document.getElementById('landing-footer-uni');
+        if (uniEl && f.institution) uniEl.innerText = f.institution;
+    }
+}
+
+// Ouvinte para mensagens de preview instantâneo via postMessage do Editor CMS
+window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'LACC_CMS_PREVIEW_SYNC') {
+        applyCMSContent(event.data.sections);
+    }
+});
 
 async function loadLandingEvents() {
     try {
