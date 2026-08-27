@@ -389,6 +389,7 @@ async function loadSettings() {
         const landHeroLogo = document.getElementById('landing-hero-logo');
         const landHeroSigla = document.getElementById('landing-hero-sigla');
         const heroParallaxCrestImg = document.getElementById('hero-parallax-crest-img');
+        const centralHubLogo = document.getElementById('central-hub-logo');
         const loginLogoImg = document.getElementById('login-logo-img');
         const loginLogoSigla = document.getElementById('login-logo-sigla');
 
@@ -406,12 +407,13 @@ async function loadSettings() {
             if (emptyState) emptyState.classList.add('hidden');
             if (btnRemove) btnRemove.classList.remove('hidden');
 
-            // Exibir imagem na landing page, hero parallax e modal de login
+            // Exibir imagem na landing page, hero parallax, rede central e modal de login
             if (landNavLogo) { landNavLogo.src = logoUrl; landNavLogo.classList.remove('hidden'); }
             if (landNavSigla) landNavSigla.classList.add('hidden');
             if (landHeroLogo) { landHeroLogo.src = logoUrl; landHeroLogo.classList.remove('hidden'); }
             if (landHeroSigla) landHeroSigla.classList.add('hidden');
             if (heroParallaxCrestImg) { heroParallaxCrestImg.src = logoUrl; heroParallaxCrestImg.classList.remove('hidden'); }
+            if (centralHubLogo) { centralHubLogo.src = logoUrl; centralHubLogo.classList.remove('hidden'); }
             if (loginLogoImg) { loginLogoImg.src = logoUrl; loginLogoImg.classList.remove('hidden'); }
             if (loginLogoSigla) loginLogoSigla.classList.add('hidden');
         } else {
@@ -429,6 +431,7 @@ async function loadSettings() {
             if (landHeroLogo) landHeroLogo.classList.add('hidden');
             if (landHeroSigla) landHeroSigla.classList.remove('hidden');
             if (heroParallaxCrestImg) heroParallaxCrestImg.classList.add('hidden');
+            if (centralHubLogo) centralHubLogo.classList.add('hidden');
             if (loginLogoImg) loginLogoImg.classList.add('hidden');
             if (loginLogoSigla) loginLogoSigla.classList.remove('hidden');
         }

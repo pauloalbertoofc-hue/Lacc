@@ -160,3 +160,97 @@ body {
         transform: none !important;
     }
 }
+
+/* ==========================================
+   SCROLLYTELLING - LINGUAGEM DE NÓS E LINHAS (LACC)
+   ========================================== */
+
+/* Indicador sutil de rolagem no Hero */
+@keyframes scrollBounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(6px); }
+    60% { transform: translateY(3px); }
+}
+
+.scroll-indicator-bounce {
+    animation: scrollBounce 2.5s infinite;
+}
+
+/* Pulso Dourado Institucional */
+@keyframes goldenGlowPulse {
+    0%, 100% {
+        box-shadow: 0 0 16px rgba(245, 158, 11, 0.35), 0 0 35px rgba(217, 119, 6, 0.15);
+    }
+    50% {
+        box-shadow: 0 0 28px rgba(245, 158, 11, 0.65), 0 0 55px rgba(217, 119, 6, 0.35);
+    }
+}
+
+.node-pulse-golden {
+    animation: goldenGlowPulse 3s ease-in-out infinite;
+}
+
+/* Nós Dourados (Conhecimento / Pessoas / Ideias) */
+.lacc-node-core {
+    background: radial-gradient(circle at 35% 35%, #fef3c7 0%, #f59e0b 50%, #b45309 100%);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+}
+
+/* Linhas de Conexão SVG */
+.lacc-network-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.lacc-network-line {
+    stroke: url(#goldenGradient);
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    opacity: 0.75;
+    filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.4));
+    transition: stroke-dashoffset 0.1s linear, opacity 0.3s ease;
+}
+
+/* Cards das Áreas Interdisciplinares */
+.lacc-area-node {
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+    cursor: pointer;
+    outline: none;
+}
+
+.lacc-area-node:hover,
+.lacc-area-node:focus-visible {
+    transform: scale(1.05);
+    border-color: rgba(245, 158, 11, 0.6);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.25);
+}
+
+/* Tooltip / Descrição Detalhada em Hover no Desktop */
+.lacc-node-popover {
+    transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: center bottom;
+    pointer-events: none;
+}
+
+.lacc-area-node:hover .lacc-node-popover,
+.lacc-area-node:focus-visible .lacc-node-popover {
+    opacity: 1;
+    transform: translateY(-8px) scale(1);
+    pointer-events: auto;
+}
+
+/* Acessibilidade: prefers-reduced-motion para scrollytelling */
+@media (prefers-reduced-motion: reduce) {
+    .node-pulse-golden,
+    .scroll-indicator-bounce {
+        animation: none !important;
+    }
+    .lacc-area-node {
+        transform: none !important;
+        transition: none !important;
+    }
+}
