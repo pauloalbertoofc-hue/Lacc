@@ -170,6 +170,9 @@ def run_migrations():
         if "is_active" not in existing_cols:
             cursor.execute("ALTER TABLE members ADD COLUMN is_active INTEGER DEFAULT 1")
             print("[+] Coluna members.is_active adicionada.")
+        if "master_pin_hash" not in existing_cols:
+            cursor.execute("ALTER TABLE members ADD COLUMN master_pin_hash TEXT DEFAULT NULL")
+            print("[+] Coluna members.master_pin_hash adicionada.")
 
         # 4. Adicionar status na tabela events (se não existir)
         event_cols = [r["name"] for r in cursor.execute("PRAGMA table_info(events)").fetchall()]
@@ -231,22 +234,21 @@ def run_migrations():
         all_perms = [p["slug"] for p in cursor.execute("SELECT slug FROM permissions").fetchall()]
         assign_perms_to_role("superadmin", all_perms)
 
+        # Apenas Superadministrador tem admin:access por padrão; os demais só acessam se Paulo autorizar
         assign_perms_to_role("presidencia", [
-            "admin:access", "content:home_edit", "content:home_publish",
-            "areas:manage", "events:manage", "research:manage", "publications:manage",
-            "members:manage", "audit:view", "settings:manage"
+            "content:home_edit", "areas:manage", "events:manage", "research:manage", "publications:manage"
         ])
 
         assign_perms_to_role("comunicacao", [
-            "admin:access", "content:home_edit", "content:home_publish", "events:manage"
+            "content:home_edit", "events:manage"
         ])
 
         assign_perms_to_role("cientifico", [
-            "admin:access", "areas:manage", "research:manage", "publications:manage"
+            "areas:manage", "research:manage", "publications:manage"
         ])
 
         assign_perms_to_role("eventos", [
-            "admin:access", "events:manage"
+            "events:manage"
         ])
 
         # 8. Atualizar senhas padrão para membros sem hash (Senha padrão inicial: 'lacc2026!')
@@ -257,12 +259,13 @@ def run_migrations():
             WHERE password_hash IS NULL OR password_hash = ''
         """, (default_pwd_hash,))
 
-        # 9. Garantir que o usuário Paulo Alberto exista como Superadmin
+        # 9. Garantir que o usuário Paulo Alberto exista como ÚNICO Superadmin com PIN de 8 dígitos
+        paulo_pin_hash = hash_password("84920173")
         paulo = cursor.execute("SELECT id FROM members WHERE email = ?", ("paulo.alberto.ofc@gmail.com",)).fetchone()
         if not paulo:
             cursor.execute("""
-                INSERT INTO members (name, email, role, course, semester, status, password_hash)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO members (name, email, role, course, semester, status, password_hash, master_pin_hash)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 "Paulo Alberto",
                 "paulo.alberto.ofc@gmail.com",
@@ -270,22 +273,28 @@ def run_migrations():
                 "Direito",
                 "10º Período",
                 "Ativo",
-                default_pwd_hash
+                paulo_pin_hash,
+                paulo_pin_hash
             ))
             paulo_id = cursor.lastrowid
             print("[+] Usuário Superadministrador 'paulo.alberto.ofc@gmail.com' criado.")
         else:
             paulo_id = paulo["id"]
+            cursor.execute("""
+                UPDATE members 
+                SET password_hash = ?, master_pin_hash = ?
+                WHERE id = ?
+            """, (paulo_pin_hash, paulo_pin_hash, paulo_id))
 
-        # Atribuir papel de superadmin para Paulo Alberto
+        # Atribuir papel de superadmin EXCLUSIVAMENTE para Paulo Alberto
         superadmin_role = cursor.execute("SELECT id FROM roles WHERE slug = 'superadmin'").fetchone()["id"]
         cursor.execute("INSERT OR IGNORE INTO member_roles (member_id, role_id) VALUES (?, ?)", (paulo_id, superadmin_role))
+        cursor.execute("DELETE FROM member_roles WHERE role_id = ? AND member_id != ?", (superadmin_role, paulo_id))
 
-        # Também garantir que Dra. Beatriz (Presidente) seja Superadmin e Presidência
+        # Dra. Beatriz (Presidente) recebe exclusivamente o papel 'presidencia'
         beatriz = cursor.execute("SELECT id FROM members WHERE email = ?", ("beatriz.albuquerque@liga.edu.br",)).fetchone()
         if beatriz:
             presidencia_role = cursor.execute("SELECT id FROM roles WHERE slug = 'presidencia'").fetchone()["id"]
-            cursor.execute("INSERT OR IGNORE INTO member_roles (member_id, role_id) VALUES (?, ?)", (beatriz["id"], superadmin_role))
             cursor.execute("INSERT OR IGNORE INTO member_roles (member_id, role_id) VALUES (?, ?)", (beatriz["id"], presidencia_role))
 
         # Todos os demais membros existentes recebem a função 'membro' se não tiverem papel

@@ -101,4 +101,11 @@ class LoginRequest(BaseModel):
 class UserRolesUpdate(BaseModel):
     role_ids: List[int]
 
+class VerifyPinRequest(BaseModel):
+    pin: str
+
+class ChangePinRequest(BaseModel):
+    current_pin: str
+    new_pin: str
+
 

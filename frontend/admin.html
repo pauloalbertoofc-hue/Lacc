@@ -436,6 +436,50 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Card: Chave Mestre / PIN de 8 Dígitos -->
+                        <div class="p-6 rounded-2xl bg-slate-900/90 border border-amber-500/30 space-y-4 shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center">
+                                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                                            Chave Mestre de Segurança (PIN Numérico de 8 Dígitos)
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30">Ativo</span>
+                                        </h4>
+                                        <p class="text-xs text-slate-400">Proteção mestre contra acesso indevido às configurações do Superadministrador.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form id="form-change-pin" onsubmit="changeMasterPin(event)" class="pt-2 border-t border-slate-800 space-y-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div class="space-y-1">
+                                        <label class="block text-[11px] font-semibold text-slate-300">PIN Atual (8 dígitos)</label>
+                                        <input type="password" id="pin-change-current" required maxlength="8" pattern="[0-9]{8}" inputmode="numeric" placeholder="••••••••" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono tracking-widest">
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="block text-[11px] font-semibold text-slate-300">Novo PIN (8 dígitos)</label>
+                                        <input type="password" id="pin-change-new" required maxlength="8" pattern="[0-9]{8}" inputmode="numeric" placeholder="••••••••" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono tracking-widest">
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="block text-[11px] font-semibold text-slate-300">Confirmar Novo PIN</label>
+                                        <input type="password" id="pin-change-confirm" required maxlength="8" pattern="[0-9]{8}" inputmode="numeric" placeholder="••••••••" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono tracking-widest">
+                                    </div>
+                                </div>
+
+                                <div id="pin-change-msg" class="text-xs p-2.5 rounded-xl hidden"></div>
+
+                                <div class="flex justify-end pt-1">
+                                    <button type="submit" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-2">
+                                        <i data-lucide="check" class="w-4 h-4"></i>
+                                        <span>Atualizar PIN Mestre</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </section>
 
@@ -1017,6 +1061,57 @@
         </div>
     </div>
 
+    <!-- ================= MODAL: COFRE MASTER DE SEGURANÇA (8 DÍGITOS) ================= -->
+    <div id="vault-gate-modal" class="fixed inset-0 z-[100] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-amber-500/40 rounded-3xl max-w-md w-full p-8 shadow-[0_0_60px_rgba(245,158,11,0.2)] space-y-6 animate-fade-in text-white text-center relative overflow-hidden">
+            <!-- Efeito de iluminação dourada -->
+            <div class="absolute -top-20 -left-20 w-44 h-44 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-20 -right-20 w-44 h-44 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10 flex flex-col items-center space-y-3">
+                <div class="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-400 flex items-center justify-center shadow-lg">
+                    <i data-lucide="shield-alert" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-white tracking-wide">Cofre do Superadministrador</h2>
+                    <p class="text-xs text-amber-300 font-mono mt-1">Autenticação Mestre Obrigatória (8 Dígitos)</p>
+                </div>
+                <p class="text-xs text-slate-400 max-w-xs leading-relaxed">
+                    Acesso exclusivo ao Administrador Geral. Digite a chave numérica de 8 dígitos para liberar o painel.
+                </p>
+            </div>
+
+            <form id="vault-pin-form" onsubmit="submitVaultPin(event)" class="relative z-10 space-y-4">
+                <div class="space-y-1.5">
+                    <input 
+                        type="password" 
+                        id="vault-pin-input" 
+                        maxlength="8" 
+                        pattern="[0-9]{8}" 
+                        inputmode="numeric" 
+                        required 
+                        autocomplete="off"
+                        placeholder="••••••••" 
+                        class="w-full text-center text-2xl tracking-[0.4em] font-mono py-3.5 px-4 rounded-2xl bg-slate-950 border border-amber-500/50 text-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition placeholder:text-slate-700"
+                    >
+                    <span class="text-[10px] text-slate-500 font-mono block">Digite os 8 dígitos numéricos da sua chave</span>
+                </div>
+
+                <div id="vault-error-msg" class="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl hidden"></div>
+
+                <div class="pt-2 flex items-center gap-3">
+                    <button type="button" onclick="adminLogout()" class="w-1/3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">
+                        Sair
+                    </button>
+                    <button type="submit" id="btn-vault-unlock" class="w-2/3 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs shadow-lg transition flex items-center justify-center gap-2">
+                        <i data-lucide="lock-open" class="w-4 h-4"></i>
+                        <span>Desbloquear Painel</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Script de inicialização e controle do painel Admin -->
     <script>
         let currentAdminUser = null;
@@ -1056,6 +1151,12 @@
 
                 const data = await response.json();
                 currentAdminUser = data.user;
+
+                // Trava de Segurança Mestre: Se requer PIN e ainda não foi destravado nesta sessão
+                if (data.requires_pin && sessionStorage.getItem('lacc_vault_unlocked') !== 'true') {
+                    showVaultGateModal();
+                }
+
                 initAdminPanel();
 
             } catch (err) {
@@ -2371,11 +2472,117 @@
             sidebar.classList.toggle('-translate-x-full');
         }
 
+        // ==========================================
+        // CONTROLE DO COFRE MASTER (PIN DE 8 DÍGITOS)
+        // ==========================================
+        function showVaultGateModal() {
+            const modal = document.getElementById('vault-gate-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    const input = document.getElementById('vault-pin-input');
+                    if (input) input.focus();
+                }, 100);
+            }
+        }
+
+        async function submitVaultPin(e) {
+            e.preventDefault();
+            const pin = document.getElementById('vault-pin-input').value.trim();
+            const errDiv = document.getElementById('vault-error-msg');
+            const unlockBtn = document.getElementById('btn-vault-unlock');
+            const token = localStorage.getItem('lacc_token');
+
+            errDiv.classList.add('hidden');
+            unlockBtn.disabled = true;
+            unlockBtn.innerHTML = `<span class="animate-spin mr-1">⏳</span> Verificando...`;
+
+            try {
+                const res = await fetch('/api/admin/verify-pin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ pin: pin })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.detail || 'PIN incorreto.');
+                }
+
+                sessionStorage.setItem('lacc_vault_unlocked', 'true');
+                document.getElementById('vault-gate-modal').classList.add('hidden');
+                showToastNotification('Cofre destravado com sucesso! Bem-vindo, Administrador Geral.', 'success');
+            } catch (err) {
+                errDiv.innerText = err.message;
+                errDiv.classList.remove('hidden');
+                document.getElementById('vault-pin-input').value = '';
+                document.getElementById('vault-pin-input').focus();
+            } finally {
+                unlockBtn.disabled = false;
+                unlockBtn.innerHTML = `<i data-lucide="lock-open" class="w-4 h-4"></i><span>Desbloquear Painel</span>`;
+                lucide.createIcons();
+            }
+        }
+
+        async function changeMasterPin(e) {
+            e.preventDefault();
+            const currentPin = document.getElementById('pin-change-current').value.trim();
+            const newPin = document.getElementById('pin-change-new').value.trim();
+            const confirmPin = document.getElementById('pin-change-confirm').value.trim();
+            const msgDiv = document.getElementById('pin-change-msg');
+            const token = localStorage.getItem('lacc_token');
+
+            msgDiv.classList.add('hidden');
+
+            if (newPin !== confirmPin) {
+                msgDiv.className = 'text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl';
+                msgDiv.innerText = 'A confirmação do novo PIN não confere.';
+                msgDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (newPin.length !== 8 || !/^\d+$/.test(newPin)) {
+                msgDiv.className = 'text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl';
+                msgDiv.innerText = 'O novo PIN deve conter exatamente 8 dígitos numéricos.';
+                msgDiv.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/admin/change-pin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ current_pin: currentPin, new_pin: newPin })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.detail || 'Erro ao alterar o PIN.');
+                }
+
+                msgDiv.className = 'text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-xl';
+                msgDiv.innerText = 'Chave Mestre de 8 dígitos atualizada com sucesso!';
+                msgDiv.classList.remove('hidden');
+                document.getElementById('form-change-pin').reset();
+            } catch (err) {
+                msgDiv.className = 'text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl';
+                msgDiv.innerText = err.message;
+                msgDiv.classList.remove('hidden');
+            }
+        }
+
         function adminLogout() {
             localStorage.removeItem('lacc_auth');
             localStorage.removeItem('lacc_token');
             localStorage.removeItem('lacc_user');
             localStorage.removeItem('lacc_user_email');
+            sessionStorage.removeItem('lacc_vault_unlocked');
             window.location.href = '/';
         }
     </script>

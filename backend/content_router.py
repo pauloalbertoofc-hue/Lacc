@@ -520,3 +520,4 @@ def delete_publication(
             conn=conn
         )
         return {"message": "Publicação científica removida com sucesso!"}
+
