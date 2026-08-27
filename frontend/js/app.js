@@ -15,6 +15,7 @@ let allMembersCache = [];
 document.addEventListener('DOMContentLoaded', async () => {
     await loadSettings();
     checkAuthState();
+    initHeroParallax();
     initIcons();
 });
 
@@ -140,6 +141,109 @@ async function loadLandingEvents() {
     } catch (err) {
         console.error('Erro ao carregar eventos da landing:', err);
     }
+}
+
+// ==========================================
+// HERO PARALLAX INTERATIVO (LACC)
+// ==========================================
+let heroParallaxInitialized = false;
+
+function initHeroParallax() {
+    if (heroParallaxInitialized) return;
+
+    // Respeitar preferência do sistema operacional para redução de movimento
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    const hero = document.getElementById('landing-hero');
+    const crestWrapper = document.getElementById('hero-parallax-crest-wrapper');
+    const crestImg = document.getElementById('hero-parallax-crest-img');
+    const foreground = document.getElementById('hero-foreground-content');
+
+    if (!hero || !crestWrapper) return;
+    heroParallaxInitialized = true;
+
+    // Detectar se o dispositivo possui cursor fino (desktop com mouse)
+    const hasFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    let targetMouseX = 0;
+    let targetMouseY = 0;
+    let currentMouseX = 0;
+    let currentMouseY = 0;
+
+    let targetScrollY = window.scrollY || 0;
+    let currentScrollY = window.scrollY || 0;
+
+    // Interação sutil com o cursor (Desktop apenas)
+    if (hasFinePointer) {
+        hero.addEventListener('mousemove', (e) => {
+            const rect = hero.getBoundingClientRect();
+            // Ignora se o hero não estiver visível na janela
+            if (rect.bottom < 0 || rect.top > window.innerHeight) return;
+
+            // Posição normalizada de -1 a 1 em relação ao centro do hero
+            const normX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+            const normY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+
+            // Deslocamento sutil oposto ao cursor (máximo 16px horizontal, 12px vertical)
+            targetMouseX = -normX * 16;
+            targetMouseY = -normY * 12;
+        }, { passive: true });
+
+        hero.addEventListener('mouseleave', () => {
+            // Retorna suavemente ao centro
+            targetMouseX = 0;
+            targetMouseY = 0;
+        });
+    }
+
+    // Acompanhamento contínuo e passivo do scroll
+    window.addEventListener('scroll', () => {
+        targetScrollY = window.scrollY || window.pageYOffset || 0;
+    }, { passive: true });
+
+    // Loop de renderização fluida com LERP (Linear Interpolation) via requestAnimationFrame
+    function renderParallax() {
+        // Interpolação suave para mouse e scroll
+        currentMouseX += (targetMouseX - currentMouseX) * 0.07;
+        currentMouseY += (targetMouseY - currentMouseY) * 0.07;
+        currentScrollY += (targetScrollY - currentScrollY) * 0.09;
+
+        const heroHeight = hero.offsetHeight || 650;
+
+        // Executar transformações apenas enquanto a seção estiver dentro/próxima da tela
+        if (currentScrollY <= heroHeight + 150) {
+            // 1. Brasão Parallax de Fundo
+            // Deslocamento lento (~0.20x) + aumento sutil de escala (até 1.05x)
+            const crestScrollY = currentScrollY * 0.20;
+            const crestScale = 1 + Math.min(currentScrollY * 0.00025, 0.05);
+
+            // Opacidade decresce progressivamente com a saída da tela
+            const scrollFactor = Math.min(1, Math.max(0, currentScrollY / heroHeight));
+            const crestOpacity = Math.max(0.03, 0.16 * (1 - scrollFactor * 0.75));
+
+            const posX = currentMouseX.toFixed(2);
+            const posY = (crestScrollY + currentMouseY).toFixed(2);
+
+            crestWrapper.style.transform = `translate3d(${posX}px, ${posY}px, 0) scale(${crestScale.toFixed(4)})`;
+            if (crestImg) {
+                crestImg.style.opacity = crestOpacity.toFixed(3);
+            }
+
+            // 2. Conteúdo em Primeiro Plano (Texto e Botões)
+            // Deslocamento em velocidade diferente (~0.40x) para criar profundidade tangível
+            if (foreground) {
+                const fgScrollY = currentScrollY * 0.40;
+                const fgOpacity = Math.max(0, 1 - scrollFactor * 1.3);
+                foreground.style.transform = `translate3d(0, ${fgScrollY.toFixed(2)}px, 0)`;
+                foreground.style.opacity = fgOpacity.toFixed(3);
+            }
+        }
+
+        requestAnimationFrame(renderParallax);
+    }
+
+    requestAnimationFrame(renderParallax);
 }
 
 function initIcons() {
@@ -284,6 +388,7 @@ async function loadSettings() {
         const landNavSigla = document.getElementById('landing-nav-sigla');
         const landHeroLogo = document.getElementById('landing-hero-logo');
         const landHeroSigla = document.getElementById('landing-hero-sigla');
+        const heroParallaxCrestImg = document.getElementById('hero-parallax-crest-img');
         const loginLogoImg = document.getElementById('login-logo-img');
         const loginLogoSigla = document.getElementById('login-logo-sigla');
 
@@ -301,11 +406,12 @@ async function loadSettings() {
             if (emptyState) emptyState.classList.add('hidden');
             if (btnRemove) btnRemove.classList.remove('hidden');
 
-            // Exibir imagem na landing page e modal de login
+            // Exibir imagem na landing page, hero parallax e modal de login
             if (landNavLogo) { landNavLogo.src = logoUrl; landNavLogo.classList.remove('hidden'); }
             if (landNavSigla) landNavSigla.classList.add('hidden');
             if (landHeroLogo) { landHeroLogo.src = logoUrl; landHeroLogo.classList.remove('hidden'); }
             if (landHeroSigla) landHeroSigla.classList.add('hidden');
+            if (heroParallaxCrestImg) { heroParallaxCrestImg.src = logoUrl; heroParallaxCrestImg.classList.remove('hidden'); }
             if (loginLogoImg) { loginLogoImg.src = logoUrl; loginLogoImg.classList.remove('hidden'); }
             if (loginLogoSigla) loginLogoSigla.classList.add('hidden');
         } else {
@@ -322,6 +428,7 @@ async function loadSettings() {
             if (landNavSigla) landNavSigla.classList.remove('hidden');
             if (landHeroLogo) landHeroLogo.classList.add('hidden');
             if (landHeroSigla) landHeroSigla.classList.remove('hidden');
+            if (heroParallaxCrestImg) heroParallaxCrestImg.classList.add('hidden');
             if (loginLogoImg) loginLogoImg.classList.add('hidden');
             if (loginLogoSigla) loginLogoSigla.classList.remove('hidden');
         }

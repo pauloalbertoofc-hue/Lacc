@@ -126,37 +126,42 @@
             </div>
         </div>
 
-        <!-- Hero Section com o Brasão da Liga -->
-        <main class="flex-1 flex flex-col justify-center items-center text-center px-4 md:px-8 py-16 md:py-24 relative overflow-hidden" id="landing-hero">
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <!-- Hero Section com o Brasão da Liga em Parallax Interativo -->
+        <main class="flex-1 flex flex-col justify-center items-center text-center px-4 md:px-8 py-20 md:py-28 relative overflow-hidden min-h-[85vh]" id="landing-hero">
+            <!-- Camada 0: Iluminação Ambiente Dourada & Azul-Marinho Profundo -->
+            <div class="hero-ambient-glow absolute inset-0 pointer-events-none z-0"></div>
 
-            <div class="relative z-10 max-w-3xl space-y-6">
-                <!-- Brasão Oficial da Liga em Destaque -->
-                <div class="w-28 h-28 md:w-36 md:h-36 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl p-2.5 flex items-center justify-center mx-auto relative group overflow-hidden" id="landing-hero-logo-box">
-                    <img id="landing-hero-logo" src="" alt="Brasão LACC" class="w-full h-full object-contain hidden">
-                    <span id="landing-hero-sigla" class="font-black text-3xl md:text-4xl text-emerald-400 tracking-wider">LACC</span>
-                </div>
+            <!-- Camada 1: Brasão Oficial da LACC em Parallax de Fundo -->
+            <div id="hero-parallax-crest-wrapper" class="hero-parallax-crest-layer absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
+                <img id="hero-parallax-crest-img" src="/uploads/brasao_liga_15f2437f.png" alt="Brasão LACC Marca D'Água" class="hero-parallax-crest-img w-[340px] sm:w-[480px] md:w-[580px] lg:w-[660px] max-w-[90vw] aspect-square object-contain">
+            </div>
 
-                <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                    <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>
+            <!-- Camada 2: Conteúdo Institucional em Primeiro Plano -->
+            <div id="hero-foreground-content" class="hero-foreground relative z-10 max-w-3xl space-y-6">
+                <!-- Badge Institucional com Pequeno Selo da Liga -->
+                <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full text-xs font-semibold bg-slate-900/90 text-amber-300 border border-amber-500/30 shadow-lg backdrop-blur-md">
+                    <div class="w-5 h-5 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-slate-800" id="landing-hero-logo-box">
+                        <img id="landing-hero-logo" src="/uploads/brasao_liga_15f2437f.png" alt="Símbolo LACC" class="w-full h-full object-cover">
+                        <span id="landing-hero-sigla" class="font-extrabold text-[10px] text-amber-400 hidden">LACC</span>
+                    </div>
                     <span id="landing-badge-faculdade">Faculdade Serra Dourada • Gestão 2026</span>
                 </div>
 
-                <h1 class="text-3xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight" id="landing-main-title">
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight hero-title-shadow" id="landing-main-title">
                     Liga Acadêmica de Ciências Criminais
                 </h1>
 
-                <p class="text-base md:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed" id="landing-main-desc">
+                <p class="text-base md:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed hero-text-shadow font-normal" id="landing-main-desc">
                     Espaço de excelência para o aprofundamento científico, debate dogmático e extensão prática do Direito Penal, Processo Penal e Criminologia Crítica.
                 </p>
 
                 <!-- Botões de Ação -->
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-                    <button onclick="openLoginModal()" class="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-xl shadow-emerald-500/25 transition flex items-center justify-center gap-2.5 hover:scale-[1.02] active:scale-[0.98]">
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
+                    <button onclick="openLoginModal()" class="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-xl shadow-emerald-900/30 transition flex items-center justify-center gap-2.5 hover:scale-[1.02] active:scale-[0.98]">
                         <i data-lucide="user-check" class="w-4 h-4"></i>
                         <span>Acessar Área de Membros</span>
                     </button>
-                    <a href="#landing-about" class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-sm font-semibold border border-slate-800 transition flex items-center justify-center gap-2">
+                    <a href="#landing-about" class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 text-sm font-semibold border border-slate-700/70 backdrop-blur-sm transition flex items-center justify-center gap-2">
                         <span>Conhecer a Liga</span>
                         <i data-lucide="chevron-down" class="w-4 h-4"></i>
                     </a>
