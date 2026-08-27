@@ -98,20 +98,8 @@ def seed():
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, materials)
 
-        # 6. Finanças (Caixa da Liga)
-        finances = [
-            ("income", "Patrocínio", 1200.00, (today - timedelta(days=25)).strftime("%Y-%m-%d"), "Patrocínio Empresa Médica Parceria", None),
-            ("income", "Mensalidade", 270.00, (today - timedelta(days=15)).strftime("%Y-%m-%d"), "Mensalidades de Agosto (9 membros)", None),
-            ("income", "Inscrição de Evento", 450.00, (today - timedelta(days=12)).strftime("%Y-%m-%d"), "Inscrições ouvintes Aula Inaugural", None),
-            ("expense", "Coffee Break", 185.50, (today - timedelta(days=14)).strftime("%Y-%m-%d"), "Lanche recepção dos novos ligantes", None),
-            ("expense", "Material/Gráfica", 95.00, (today - timedelta(days=10)).strftime("%Y-%m-%d"), "Impressão de crachás e apostilas", None),
-            ("expense", "Certificados", 45.00, (today - timedelta(days=5)).strftime("%Y-%m-%d"), "Papel especial e selos holográficos", None)
-        ]
-
-        cursor.executemany("""
-            INSERT INTO finances (type, category, amount, date, description, member_id)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, finances)
+        # 6. Finanças (Caixa da Liga) - Inicializa zerado conforme solicitado
+        print("Finances initialized at R$ 0,00.")
 
         print("Demo data seeded successfully!")
 
