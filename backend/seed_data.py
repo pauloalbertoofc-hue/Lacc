@@ -1,0 +1,120 @@
+import uuid
+from datetime import datetime, timedelta
+from backend.database import get_db, init_db
+
+def seed():
+    init_db()
+    with get_db() as conn:
+        cursor = conn.cursor()
+        
+        # Check if already seeded
+        cursor.execute("SELECT COUNT(*) as cnt FROM members")
+        if cursor.fetchone()["cnt"] > 0:
+            print("Database already contains members. Skipping seed.")
+            return
+
+        print("Seeding demo data for Liga Acadêmica...")
+
+        # 1. Inserir Membros da Liga
+        members = [
+            ("Dra. Beatriz Albuquerque", "beatriz.albuquerque@liga.edu.br", "11987654321", "Medicina", "8º Período", "Presidente", "Ativo", "2024-02-15", "#1E40AF", "Fundadora e coordenadora científica"),
+            ("Lucas Vinícius Santos", "lucas.santos@liga.edu.br", "11976543210", "Medicina", "7º Período", "Vice-Presidente", "Ativo", "2024-02-15", "#0D9488", "Responsável pelas relações institucionais"),
+            ("Mariana Costa Ribeiro", "mariana.costa@liga.edu.br", "11965432109", "Medicina", "6º Período", "Diretor Científico", "Ativo", "2024-08-10", "#7C3AED", "Coordena aulas magnas e produção científica"),
+            ("Gabriel Meireles Prado", "gabriel.prado@liga.edu.br", "11954321098", "Medicina", "5º Período", "Diretor de Comunicação", "Ativo", "2025-02-20", "#DB2777", "Gestão de mídias sociais e divulgação"),
+            ("Camila Nogueira Ferreira", "camila.ferreira@liga.edu.br", "11943210987", "Medicina", "6º Período", "Diretor Financeiro", "Ativo", "2024-08-10", "#059669", "Gestão do fluxo de caixa e inscrições"),
+            ("Felipe Augusto Barreto", "felipe.barreto@liga.edu.br", "11932109876", "Medicina", "4º Período", "Membro Efetivo", "Ativo", "2025-02-20", "#2563EB", "Ligante de pesquisa em emergências"),
+            ("Larissa Martins Souza", "larissa.souza@liga.edu.br", "11921098765", "Enfermagem", "5º Período", "Membro Efetivo", "Ativo", "2025-02-20", "#D97706", "Representante interprofissional"),
+            ("Thiago Mendes Oliveira", "thiago.oliveira@liga.edu.br", "11910987654", "Medicina", "3º Período", "Ligante Trainee", "Ativo", "2025-08-01", "#4F46E5", "Novo ingressante pelo processo seletivo"),
+            ("Juliana Paes Rocha", "juliana.rocha@liga.edu.br", "11909876543", "Medicina", "3º Período", "Ligante Trainee", "Ativo", "2025-08-01", "#EA580C", "Comissão de apoio a simpósio"),
+            ("Rodrigo Silveira Lima", "rodrigo.lima@liga.edu.br", "11988887777", "Medicina", "10º Período", "Egresso", "Egresso", "2023-01-10", "#64748B", "Ex-Presidente (Gestão 2024)")
+        ]
+        
+        cursor.executemany("""
+            INSERT INTO members (name, email, phone, course, semester, role, status, admission_date, avatar_color, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, members)
+
+        # 2. Inserir Eventos e Aulas
+        today = datetime.now()
+        event_1_date = (today - timedelta(days=14)).strftime("%Y-%m-%d")
+        event_2_date = (today - timedelta(days=7)).strftime("%Y-%m-%d")
+        event_3_date = (today + timedelta(days=3)).strftime("%Y-%m-%d")
+        event_4_date = (today + timedelta(days=10)).strftime("%Y-%m-%d")
+
+        token_1 = str(uuid.uuid4())[:8]
+        token_2 = str(uuid.uuid4())[:8]
+        token_3 = str(uuid.uuid4())[:8]
+        token_4 = str(uuid.uuid4())[:8]
+
+        events = [
+            ("Aula Inaugural: Abordagem Inicial no Trauma Grave", "Aula", event_1_date, "19:00", "Anfiteatro Central", 2.0, "Discussão com casos clínicos reais e introdução ao protocolo ATLS.", token_1, 1),
+            ("Reunião Ordinária: Planejamento do Simpósio Anual", "Reunião Ordinária", event_2_date, "18:30", "Sala de Reuniões 204", 1.5, "Alinhamento das comissões de patrocínio e palestrantes.", token_2, 1),
+            ("Workshop Prático: Suporte Avançado de Vida", "Workshop", event_3_date, "19:30", "Laboratório de Habilidades", 3.0, "Prática hands-on com manequins de intubação e ressuscitação cardiopulmonar.", token_3, 1),
+            ("Ação de Extensão: Prevenção de Acidentes na Comunidade", "Ação Social", event_4_date, "09:00", "Parque Municipal da Cidade", 4.0, "Atendimento e orientações de primeiros socorros para a comunidade.", token_4, 1),
+        ]
+
+        cursor.executemany("""
+            INSERT INTO events (title, event_type, date, time, location, hours, description, qr_code_token, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, events)
+
+        # 3. Presenças anteriores
+        # Evento 1: 8 membros presentes
+        for m_id in [1, 2, 3, 4, 5, 6, 7, 8]:
+            cursor.execute("INSERT OR IGNORE INTO attendance (event_id, member_id, status) VALUES (1, ?, 'Presente')", (m_id,))
+        cursor.execute("INSERT OR IGNORE INTO attendance (event_id, member_id, status) VALUES (1, 9, 'Justificado')")
+
+        # Evento 2: 7 membros presentes
+        for m_id in [1, 2, 3, 4, 5, 6, 9]:
+            cursor.execute("INSERT OR IGNORE INTO attendance (event_id, member_id, status) VALUES (2, ?, 'Presente')", (m_id,))
+        cursor.execute("INSERT OR IGNORE INTO attendance (event_id, member_id, status) VALUES (2, 7, 'Ausente')")
+
+        # 4. Tarefas (Kanban)
+        tasks = [
+            ("Definir palestrantes do Simpósio de Primavera", "Entrar em contato com professores convidados e confirmar disponibilidades.", "in_progress", "alta", "Científico", (today + timedelta(days=5)).strftime("%Y-%m-%d"), 3),
+            ("Criar artes de divulgação para o Instagram", "Elaborar carrossel com cronograma do mês de setembro.", "in_progress", "media", "Comunicação", (today + timedelta(days=2)).strftime("%Y-%m-%d"), 4),
+            ("Fechamento do balancete de agosto", "Consolidar comprovantes de pagamento e emitir relatório financeiro.", "todo", "alta", "Financeiro", (today + timedelta(days=7)).strftime("%Y-%m-%d"), 5),
+            ("Atualizar estatuto interno e submeter à Pro-Reitoria", "Revisar capítulo sobre renovação de vagas e processo seletivo.", "todo", "baixa", "Presidência", (today + timedelta(days=15)).strftime("%Y-%m-%d"), 1),
+            ("Emitir certificados da Aula Inaugural", "Gerar PDFs com código de autenticação para os 25 inscritos.", "done", "media", "Científico", (today - timedelta(days=2)).strftime("%Y-%m-%d"), 3),
+            ("Reservar laboratório de simulação para workshop", "Ofício protocolado e aprovado com a coordenação do bloco.", "done", "alta", "Presidência", (today - timedelta(days=4)).strftime("%Y-%m-%d"), 2)
+        ]
+
+        cursor.executemany("""
+            INSERT INTO tasks (title, description, status, priority, department, due_date, assignee_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, tasks)
+
+        # 5. Materiais e Biblioteca
+        materials = [
+            ("Diretrizes de Atendimento ao Politraumatizado (ATLS 10ª Ed.)", "Artigos", "link", None, "https://www.facs.org/quality-programs/trauma/education/atls/", "Guia de referência essencial para membros da liga.", "Comitê de Trauma"),
+            ("Slide da Aula 01: Fisiopatologia do Choque", "Aulas", "link", None, "https://docs.google.com/presentation/d/demo", "Apresentação ministrada pelo Prof. Dr. Silva.", "Mariana Costa"),
+            ("Ata da Reunião de Diretoria nº 04/2026", "Atas", "link", None, "https://docs.google.com/document/d/demo-ata", "Decisões tomadas a respeito de orçamentos e vagas de trainees.", "Secretaria Geral"),
+            ("Estatuto Oficial e Regulamento Interno da Liga", "Estatuto", "link", None, "https://drive.google.com/file/d/demo-estatuto", "Documento normativo registrado junto à coordenação de curso.", "Diretoria Executiva"),
+            ("Edital do Processo Seletivo 2026.2", "Editais", "link", None, "https://drive.google.com/file/d/demo-edital", "Regras e datas da prova teórica e entrevista.", "Comissão Avaliadora")
+        ]
+
+        cursor.executemany("""
+            INSERT INTO materials (title, category, file_type, file_path, external_url, description, author_or_speaker)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, materials)
+
+        # 6. Finanças (Caixa da Liga)
+        finances = [
+            ("income", "Patrocínio", 1200.00, (today - timedelta(days=25)).strftime("%Y-%m-%d"), "Patrocínio Empresa Médica Parceria", None),
+            ("income", "Mensalidade", 270.00, (today - timedelta(days=15)).strftime("%Y-%m-%d"), "Mensalidades de Agosto (9 membros)", None),
+            ("income", "Inscrição de Evento", 450.00, (today - timedelta(days=12)).strftime("%Y-%m-%d"), "Inscrições ouvintes Aula Inaugural", None),
+            ("expense", "Coffee Break", 185.50, (today - timedelta(days=14)).strftime("%Y-%m-%d"), "Lanche recepção dos novos ligantes", None),
+            ("expense", "Material/Gráfica", 95.00, (today - timedelta(days=10)).strftime("%Y-%m-%d"), "Impressão de crachás e apostilas", None),
+            ("expense", "Certificados", 45.00, (today - timedelta(days=5)).strftime("%Y-%m-%d"), "Papel especial e selos holográficos", None)
+        ]
+
+        cursor.executemany("""
+            INSERT INTO finances (type, category, amount, date, description, member_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, finances)
+
+        print("Demo data seeded successfully!")
+
+if __name__ == "__main__":
+    seed()
+

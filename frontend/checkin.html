@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check-in de Presença - Liga Acadêmica</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="h-full flex items-center justify-center p-4 antialiased text-slate-800">
+    <div class="max-w-md w-full bg-white rounded-3xl p-6 md:p-8 shadow-2xl space-y-6 relative overflow-hidden">
+        <div class="text-center space-y-2">
+            <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+                <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+            </div>
+            <span class="inline-block px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold uppercase tracking-wider">
+                Check-in de Presença
+            </span>
+            <h1 class="text-xl font-extrabold text-slate-900" id="checkin-title">Registrando Presença</h1>
+            <p class="text-xs text-slate-500" id="checkin-desc">Carregando dados da aula...</p>
+        </div>
+
+        <div id="checkin-form-container" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Selecione seu nome na lista da Liga:</label>
+                <select id="checkin-member-select" class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <option value="">Carregando membros...</option>
+                </select>
+            </div>
+
+            <button onclick="confirmCheckin()" id="btn-checkin" class="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-sm shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+                <i data-lucide="check" class="w-5 h-5"></i>
+                <span>Confirmar Minha Presença</span>
+            </button>
+        </div>
+
+        <!-- Sucesso -->
+        <div id="checkin-success" class="hidden text-center py-6 space-y-3">
+            <div class="w-16 h-16 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto shadow-xl">
+                <i data-lucide="sparkles" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-xl font-bold text-slate-900">Presença Registrada!</h2>
+            <p class="text-sm text-slate-600" id="success-msg">Suas horas complementares já foram computadas no sistema da Liga.</p>
+            <div class="pt-4">
+                <a href="/" class="text-xs font-semibold text-emerald-600 hover:underline">Ir para a página inicial da Liga</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        async function init() {
+            lucide.createIcons();
+            if (!token) {
+                document.getElementById('checkin-title').innerText = 'Link Inválido';
+                document.getElementById('checkin-desc').innerText = 'Nenhum token de evento foi identificado. Escaneie o QR Code novamente.';
+                document.getElementById('checkin-form-container').classList.add('hidden');
+                return;
+            }
+
+            try {
+                // Carregar membros
+                const resMembers = await fetch('/api/members?status=Ativo');
+                const members = await resMembers.json();
+                
+                const select = document.getElementById('checkin-member-select');
+                select.innerHTML = '<option value="">-- Selecione seu nome --</option>';
+                members.forEach(m => {
+                    select.innerHTML += `<option value="${m.id}">${m.name} (${m.role})</option>`;
+                });
+
+                document.getElementById('checkin-desc').innerText = 'Selecione seu nome abaixo para confirmar sua participação.';
+            } catch (err) {
+                console.error(err);
+                document.getElementById('checkin-desc').innerText = 'Erro ao carregar dados. Verifique a conexão com o servidor.';
+            }
+        }
+
+        async function confirmCheckin() {
+            const memberId = document.getElementById('checkin-member-select').value;
+            if (!memberId) {
+                alert('Por favor, selecione seu nome na lista!');
+                return;
+            }
+
+            const btn = document.getElementById('btn-checkin');
+            btn.disabled = true;
+            btn.innerHTML = 'Gravando presença...';
+
+            try {
+                const res = await fetch('/api/attendance/checkin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        event_token: token,
+                        member_id: parseInt(memberId)
+                    })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.detail || 'Erro ao registrar presença');
+                }
+
+                document.getElementById('checkin-form-container').classList.add('hidden');
+                document.getElementById('checkin-success').classList.remove('hidden');
+                document.getElementById('success-msg').innerText = `${data.message} (${data.hours}h computadas na aula "${data.event_title}").`;
+                lucide.createIcons();
+            } catch (err) {
+                alert(err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i> Confirmar Minha Presença';
+                lucide.createIcons();
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
+

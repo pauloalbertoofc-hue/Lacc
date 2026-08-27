@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LigaHub - Gestão de Liga Acadêmica</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        },
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- QRCode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="h-full flex flex-col antialiased text-slate-800">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+    <div class="flex-1 flex overflow-hidden">
+        <!-- Sidebar Desktop -->
+        <aside class="hidden lg:flex flex-col w-64 bg-slate-900 text-white border-r border-slate-800 select-none">
+            <!-- Header / Logo -->
+            <div class="p-5 border-b border-slate-800 flex items-center gap-3">
+                <div class="w-11 h-11 rounded-xl bg-slate-800 flex items-center justify-center text-white shadow-lg overflow-hidden border border-slate-700/80 shrink-0 relative" id="sidebar-logo-container">
+                    <img id="sidebar-logo-img" src="" alt="Brasão da Liga" class="w-full h-full object-cover hidden">
+                    <span id="sidebar-sigla" class="font-extrabold text-sm tracking-wider text-emerald-400">LIGA</span>
+                </div>
+                <div class="overflow-hidden">
+                    <h1 class="font-bold text-sm leading-tight truncate text-white" id="sidebar-league-name">Liga Acadêmica</h1>
+                    <span class="text-xs text-emerald-400 font-medium flex items-center gap-1 mt-0.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Gestão <span id="sidebar-year">2026</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto" id="desktop-nav">
+                <button onclick="navigateTo('dashboard')" data-nav="dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button onclick="navigateTo('members')" data-nav="members" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                    <span>Membros & Diretoria</span>
+                </button>
+                <button onclick="navigateTo('attendance')" data-nav="attendance" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                    <span class="flex-1 text-left">Frequência & Aulas</span>
+                    <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-mono font-semibold">QR</span>
+                </button>
+                <button onclick="navigateTo('tasks')" data-nav="tasks" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i data-lucide="kanban-square" class="w-5 h-5"></i>
+                    <span>Quadro de Tarefas</span>
+                </button>
+                <button onclick="navigateTo('materials')" data-nav="materials" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i data-lucide="book-open" class="w-5 h-5"></i>
+                    <span>Biblioteca & Atas</span>
+                </button>
+                <button onclick="navigateTo('finances')" data-nav="finances" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i data-lucide="wallet" class="w-5 h-5"></i>
+                    <span>Caixa & Finanças</span>
+                </button>
+                <button onclick="navigateTo('settings')" data-nav="settings" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                    <span>Configurações</span>
+                </button>
+                <div class="pt-3 mt-2 border-t border-slate-800/80">
+                    <button onclick="openShareModal()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30">
+                        <i data-lucide="share-2" class="w-5 h-5"></i>
+                        <span>Compartilhar & Copiar</span>
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Sidebar Footer Quick Card -->
+            <div class="p-4 border-t border-slate-800">
+                <div class="bg-slate-800/80 rounded-xl p-3 border border-slate-700/60">
+                    <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                        <span>Saldo em Caixa</span>
+                        <i data-lucide="circle-dollar-sign" class="w-4 h-4 text-emerald-400"></i>
+                    </div>
+                    <div class="text-base font-bold text-emerald-400" id="sidebar-balance">R$ 0,00</div>
+                    <div class="text-[11px] text-slate-400 mt-1 flex justify-between">
+                        <span>Presença geral:</span>
+                        <span class="text-slate-200 font-semibold" id="sidebar-attendance-avg">0%</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <!-- Top Mobile Bar -->
+            <header class="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-10">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-800 font-bold text-xs overflow-hidden border border-slate-200 shrink-0" id="mobile-logo-container">
+                        <img id="mobile-logo-img" src="" alt="Brasão" class="w-full h-full object-cover hidden">
+                        <span id="mobile-sigla" class="font-extrabold text-xs text-brand-600">LIGA</span>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800 truncate max-w-[180px]" id="mobile-league-name">Liga Acadêmica</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openShareModal()" title="Compartilhar Site" class="p-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition">
+                        <i data-lucide="share-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Main Dynamic View Container -->
+            <main class="flex-1 overflow-y-auto mobile-nav-safe p-4 md:p-6 lg:p-8" id="view-container">
+
+                <!-- ================= 1. VIEW DASHBOARD ================= -->
+                <section id="view-dashboard" class="space-y-6">
+                    <!-- Banner de Boas-vindas -->
+                    <div class="bg-gradient-to-r from-brand-700 via-brand-800 to-slate-900 rounded-2xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+                        <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="space-y-2 z-10">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Gestão Acadêmica Integrada
+                            </span>
+                            <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight" id="dash-welcome-title">Painel de Controle da Liga</h2>
+                            <p class="text-slate-300 text-sm max-w-xl" id="dash-welcome-sub">
+                                Acompanhe frequência, atividades da diretoria, novos materiais e o caixa da liga em tempo real.
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap gap-2.5 z-10">
+                            <button onclick="openModal('modal-event')" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold shadow-lg shadow-emerald-500/20 transition">
+                                <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                                <span>Nova Aula / Evento</span>
+                            </button>
+                            <button onclick="openModal('modal-member')" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-medium border border-white/20 transition backdrop-blur-sm">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                <span>Novo Membro</span>
+                            </button>
+                            <button onclick="openShareModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 text-sm font-semibold border border-emerald-500/30 transition backdrop-blur-sm">
+                                <i data-lucide="share-2" class="w-4 h-4 text-emerald-300"></i>
+                                <span>Compartilhar & Copiar</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Métricas / KPIs -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+                        <div class="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/80 shadow-sm hover:shadow transition">
+                            <div class="flex items-center justify-between text-slate-500 mb-2">
+                                <span class="text-xs font-semibold uppercase tracking-wider">Membros Ativos</span>
+                                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                                    <i data-lucide="users" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <div class="text-2xl md:text-3xl font-bold text-slate-800" id="kpi-members">0</div>
+                            <div class="text-xs text-slate-400 mt-1" id="kpi-total-members">Total: 0 cadastrados</div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/80 shadow-sm hover:shadow transition">
+                            <div class="flex items-center justify-between text-slate-500 mb-2">
+                                <span class="text-xs font-semibold uppercase tracking-wider">Presença Média</span>
+                                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                    <i data-lucide="check-check" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <div class="text-2xl md:text-3xl font-bold text-emerald-600" id="kpi-attendance">0%</div>
+                            <div class="text-xs text-slate-400 mt-1">Média de comparecimento</div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/80 shadow-sm hover:shadow transition">
+                            <div class="flex items-center justify-between text-slate-500 mb-2">
+                                <span class="text-xs font-semibold uppercase tracking-wider">Saldo em Caixa</span>
+                                <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                    <i data-lucide="wallet" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <div class="text-2xl md:text-3xl font-bold text-slate-800" id="kpi-balance">R$ 0,00</div>
+                            <div class="text-xs text-slate-400 mt-1 flex gap-2">
+                                <span class="text-emerald-600 font-medium" id="kpi-income">+R$ 0</span>
+                                <span class="text-rose-500 font-medium" id="kpi-expense">-R$ 0</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/80 shadow-sm hover:shadow transition">
+                            <div class="flex items-center justify-between text-slate-500 mb-2">
+                                <span class="text-xs font-semibold uppercase tracking-wider">Tarefas Ativas</span>
+                                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                                    <i data-lucide="list-todo" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <div class="text-2xl md:text-3xl font-bold text-slate-800" id="kpi-tasks">0</div>
+                            <div class="text-xs text-slate-400 mt-1">No quadro da diretoria</div>
+                        </div>
+                    </div>
+
+                    <!-- Grade de Conteúdo do Dashboard -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Coluna 1 e 2: Próximas Aulas & Eventos -->
+                        <div class="lg:col-span-2 space-y-6">
+                            <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center">
+                                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-slate-800 text-base">Próximos Encontros & Aulas</h3>
+                                            <p class="text-xs text-slate-400">Projete o QR Code ou confirme presenças</p>
+                                        </div>
+                                    </div>
+                                    <button onclick="navigateTo('attendance')" class="text-xs font-semibold text-brand-600 hover:text-brand-700 transition flex items-center gap-1">
+                                        Ver cronograma <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </div>
+                                <div id="dash-upcoming-events" class="space-y-3">
+                                    <!-- Dinâmico -->
+                                </div>
+                            </div>
+
+                            <!-- Tarefas Prioritárias da Diretoria -->
+                            <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                                            <i data-lucide="trello" class="w-4 h-4"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-slate-800 text-base">Tarefas Prioritárias da Diretoria</h3>
+                                            <p class="text-xs text-slate-400">Prazos e entregas pendentes</p>
+                                        </div>
+                                    </div>
+                                    <button onclick="navigateTo('tasks')" class="text-xs font-semibold text-brand-600 hover:text-brand-700 transition flex items-center gap-1">
+                                        Abrir Kanban <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </div>
+                                <div id="dash-pending-tasks" class="space-y-2.5">
+                                    <!-- Dinâmico -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coluna 3: Documentos Recentes & Acesso Rápido -->
+                        <div class="space-y-6">
+                            <!-- Documentos Recentes -->
+                            <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                        <i data-lucide="file-text" class="w-4 h-4 text-slate-500"></i>
+                                        Materiais Recentes
+                                    </h3>
+                                    <button onclick="navigateTo('materials')" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Ver todos</button>
+                                </div>
+                                <div id="dash-recent-materials" class="space-y-3">
+                                    <!-- Dinâmico -->
+                                </div>
+                            </div>
+
+                            <!-- Atalhos Rápidos -->
+                            <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 text-white shadow-md">
+                                <h4 class="font-bold text-sm mb-3 flex items-center gap-2">
+                                    <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i> Ações Rápidas
+                                </h4>
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                    <button onclick="openModal('modal-task')" class="p-3 bg-white/10 hover:bg-white/15 rounded-xl text-left transition flex flex-col gap-1 border border-white/10">
+                                        <i data-lucide="check-square" class="w-4 h-4 text-emerald-400"></i>
+                                        <span class="font-medium">+ Nova Tarefa</span>
+                                    </button>
+                                    <button onclick="openModal('modal-finance')" class="p-3 bg-white/10 hover:bg-white/15 rounded-xl text-left transition flex flex-col gap-1 border border-white/10">
+                                        <i data-lucide="receipt" class="w-4 h-4 text-indigo-400"></i>
+                                        <span class="font-medium">+ Lançar Caixa</span>
+                                    </button>
+                                    <button onclick="openModal('modal-material')" class="p-3 bg-white/10 hover:bg-white/15 rounded-xl text-left transition flex flex-col gap-1 border border-white/10">
+                                        <i data-lucide="upload" class="w-4 h-4 text-blue-400"></i>
+                                        <span class="font-medium">+ Subir Arquivo</span>
+                                    </button>
+                                    <button onclick="exportMembersCSV()" class="p-3 bg-white/10 hover:bg-white/15 rounded-xl text-left transition flex flex-col gap-1 border border-white/10">
+                                        <i data-lucide="download" class="w-4 h-4 text-teal-400"></i>
+                                        <span class="font-medium">Exportar CSV</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= 2. VIEW MEMBROS ================= -->
+                <section id="view-members" class="space-y-6 hidden">
+                    <!-- Top Actions & Filters -->
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">Membros & Diretoria</h2>
+                            <p class="text-xs md:text-sm text-slate-500">Gerencie a composição, cargos, contatos e dados acadêmicos</p>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <button onclick="exportMembersCSV()" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-sm font-medium shadow-sm transition">
+                                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
+                                <span>Exportar CSV</span>
+                            </button>
+                            <button onclick="openModal('modal-member')" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-md shadow-brand-600/20 transition">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                <span>+ Novo Membro</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search & Filter Controls -->
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-center gap-3">
+                        <div class="relative flex-1 w-full">
+                            <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" id="member-search-input" oninput="debounceMemberSearch()" placeholder="Buscar por nome, e-mail ou curso..." class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                        </div>
+                        <div class="flex items-center gap-2 w-full md:w-auto">
+                            <select id="member-filter-role" onchange="loadMembers()" class="w-full md:w-44 px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <option value="Todos">Todos os Cargos</option>
+                                <option value="Presidente">Presidente</option>
+                                <option value="Vice-Presidente">Vice-Presidente</option>
+                                <option value="Diretor Científico">Diretor Científico</option>
+                                <option value="Diretor de Comunicação">Diretor de Comunicação</option>
+                                <option value="Diretor Financeiro">Diretor Financeiro</option>
+                                <option value="Membro Efetivo">Membro Efetivo</option>
+                                <option value="Ligante Trainee">Ligante Trainee</option>
+                                <option value="Egresso">Egresso</option>
+                            </select>
+                            <select id="member-filter-status" onchange="loadMembers()" class="w-full md:w-36 px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <option value="Todos">Status (Todos)</option>
+                                <option value="Ativo">Ativo</option>
+                                <option value="Licenciado">Licenciado</option>
+                                <option value="Egresso">Egresso</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Members List Container -->
+                    <div id="members-list-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <!-- Cards dinâmicos de membros -->
+                    </div>
+                </section>
+
+                <!-- ================= 3. VIEW FREQUÊNCIA & AULAS ================= -->
+                <section id="view-attendance" class="space-y-6 hidden">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">Frequência & Aulas</h2>
+                            <p class="text-xs md:text-sm text-slate-500">Crie encontros, gere QR Codes de presença e acompanhe o percentual dos membros</p>
+                        </div>
+                        <button onclick="openModal('modal-event')" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-md shadow-brand-600/20 transition">
+                            <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                            <span>+ Nova Aula / Encontro</span>
+                        </button>
+                    </div>
+
+                    <!-- Navigation Sub-tabs -->
+                    <div class="flex border-b border-slate-200 gap-6">
+                        <button onclick="switchAttendanceTab('events')" id="subtab-events" class="py-2.5 font-semibold text-sm border-b-2 border-brand-600 text-brand-600 transition">
+                            Cronograma de Aulas & Eventos
+                        </button>
+                        <button onclick="switchAttendanceTab('summary')" id="subtab-summary" class="py-2.5 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition">
+                            Relatório Geral de Horas & Frequência
+                        </button>
+                    </div>
+
+                    <!-- Sub-view 1: Eventos & Aulas -->
+                    <div id="attendance-events-panel" class="space-y-4">
+                        <div id="events-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Cards de Eventos -->
+                        </div>
+                    </div>
+
+                    <!-- Sub-view 2: Relatório Geral de Membros -->
+                    <div id="attendance-summary-panel" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden hidden">
+                        <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm">Resumo de Frequência por Membro</h3>
+                                <p class="text-xs text-slate-400">Meta mínima da liga: <span id="summary-meta-badge" class="font-semibold text-slate-700">75%</span></p>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-5 py-3.5">Membro</th>
+                                        <th class="px-4 py-3.5">Cargo</th>
+                                        <th class="px-4 py-3.5 text-center">Presenças / Total</th>
+                                        <th class="px-4 py-3.5">Frequência %</th>
+                                        <th class="px-4 py-3.5 text-center">Horas Acumuladas</th>
+                                        <th class="px-4 py-3.5 text-center">Certificado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendance-summary-tbody" class="divide-y divide-slate-100">
+                                    <!-- Dinâmico -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= 4. VIEW KANBAN TAREFAS ================= -->
+                <section id="view-tasks" class="space-y-6 hidden">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">Quadro de Tarefas (Kanban)</h2>
+                            <p class="text-xs md:text-sm text-slate-500">Organização das demandas entre as diretorias e comissões</p>
+                        </div>
+                        <button onclick="openModal('modal-task')" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-md shadow-brand-600/20 transition">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>+ Nova Tarefa</span>
+                        </button>
+                    </div>
+
+                    <!-- 3 Colunas Kanban -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <!-- Coluna A Fazer -->
+                        <div class="bg-slate-100/80 rounded-2xl p-4 border border-slate-200 kanban-col flex flex-col">
+                            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                                    <h3 class="font-bold text-slate-700 text-sm">A Fazer</h3>
+                                </div>
+                                <span class="text-xs bg-slate-200 text-slate-700 font-semibold px-2 py-0.5 rounded-full" id="task-cnt-todo">0</span>
+                            </div>
+                            <div id="kanban-todo" class="flex-1 space-y-3">
+                                <!-- Cards A Fazer -->
+                            </div>
+                        </div>
+
+                        <!-- Coluna Em Andamento -->
+                        <div class="bg-slate-100/80 rounded-2xl p-4 border border-slate-200 kanban-col flex flex-col">
+                            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                    <h3 class="font-bold text-slate-700 text-sm">Em Andamento</h3>
+                                </div>
+                                <span class="text-xs bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full" id="task-cnt-in_progress">0</span>
+                            </div>
+                            <div id="kanban-in_progress" class="flex-1 space-y-3">
+                                <!-- Cards Em Andamento -->
+                            </div>
+                        </div>
+
+                        <!-- Coluna Concluído -->
+                        <div class="bg-slate-100/80 rounded-2xl p-4 border border-slate-200 kanban-col flex flex-col">
+                            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                    <h3 class="font-bold text-slate-700 text-sm">Concluído</h3>
+                                </div>
+                                <span class="text-xs bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded-full" id="task-cnt-done">0</span>
+                            </div>
+                            <div id="kanban-done" class="flex-1 space-y-3">
+                                <!-- Cards Concluído -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= 5. VIEW MATERIAIS & BIBLIOTECA ================= -->
+                <section id="view-materials" class="space-y-6 hidden">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">Biblioteca & Materiais</h2>
+                            <p class="text-xs md:text-sm text-slate-500">Repositório de artigos científicos, slides de aulas, atas e regulamentos</p>
+                        </div>
+                        <button onclick="openModal('modal-material')" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-md shadow-brand-600/20 transition">
+                            <i data-lucide="upload" class="w-4 h-4"></i>
+                            <span>+ Adicionar Documento</span>
+                        </button>
+                    </div>
+
+                    <!-- Category Pills Filter -->
+                    <div class="flex flex-wrap gap-2" id="material-category-pills">
+                        <button onclick="filterMaterials('Todos')" class="mat-filter-btn px-4 py-1.5 rounded-full text-xs font-semibold bg-brand-600 text-white transition shadow-sm">Todos</button>
+                        <button onclick="filterMaterials('Artigos')" class="mat-filter-btn px-4 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 transition">Artigos Científicos</button>
+                        <button onclick="filterMaterials('Aulas')" class="mat-filter-btn px-4 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 transition">Aulas & Slides</button>
+                        <button onclick="filterMaterials('Atas')" class="mat-filter-btn px-4 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 transition">Atas de Reunião</button>
+                        <button onclick="filterMaterials('Estatuto')" class="mat-filter-btn px-4 py-1.5 rounded-full text-xs font-medium bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 transition">Estatuto & Editais</button>
+                    </div>
+
+                    <!-- Materials Grid -->
+                    <div id="materials-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Cards de Materiais -->
+                    </div>
+                </section>
+
+                <!-- ================= 6. VIEW FINANCEIRO ================= -->
+                <section id="view-finances" class="space-y-6 hidden">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">Controle Financeiro</h2>
+                            <p class="text-xs md:text-sm text-slate-500">Livro-caixa, controle de mensalidades e prestação de contas da liga</p>
+                        </div>
+                        <button onclick="openModal('modal-finance')" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-md shadow-brand-600/20 transition">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                            <span>+ Novo Lançamento</span>
+                        </button>
+                    </div>
+
+                    <!-- Cards de Saldo -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div class="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-5 text-white shadow-lg shadow-emerald-600/10">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-100">Saldo Atual em Caixa</span>
+                            <div class="text-3xl font-extrabold mt-1" id="fin-balance">R$ 0,00</div>
+                            <span class="text-xs text-emerald-100 mt-2 block">Disponível para custeio de atividades</span>
+                        </div>
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total de Entradas</span>
+                            <div class="text-3xl font-bold text-emerald-600 mt-1" id="fin-income">R$ 0,00</div>
+                            <span class="text-xs text-slate-400 mt-2 block">Mensalidades, inscrições e patrocínios</span>
+                        </div>
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total de Despesas</span>
+                            <div class="text-3xl font-bold text-rose-500 mt-1" id="fin-expense">R$ 0,00</div>
+                            <span class="text-xs text-slate-400 mt-2 block">Lanches, certificados, gráfica e eventos</span>
+                        </div>
+                    </div>
+
+                    <!-- Extrato de Movimentações -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                            <h3 class="font-bold text-slate-800 text-sm">Extrato de Movimentações</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-5 py-3">Data</th>
+                                        <th class="px-4 py-3">Tipo</th>
+                                        <th class="px-4 py-3">Categoria</th>
+                                        <th class="px-4 py-3">Descrição</th>
+                                        <th class="px-5 py-3 text-right">Valor</th>
+                                        <th class="px-4 py-3 text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="finances-tbody" class="divide-y divide-slate-100">
+                                    <!-- Extrato dinâmico -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= 7. VIEW CONFIGURAÇÕES ================= -->
+                <section id="view-settings" class="space-y-6 hidden">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Configurações da Liga</h2>
+                        <p class="text-xs md:text-sm text-slate-500">Personalize o nome da liga, sigla, universidade e parâmetros acadêmicos</p>
+                    </div>
+
+                    <!-- Card de Upload do Brasão Oficial -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm max-w-2xl">
+                        <h3 class="font-bold text-slate-800 text-base mb-1 flex items-center gap-2">
+                            <i data-lucide="shield" class="w-5 h-5 text-brand-600"></i>
+                            Brasão / Símbolo Oficial da Liga
+                        </h3>
+                        <p class="text-xs text-slate-500 mb-4">
+                            Anexe a imagem do brasão ou logotipo da sua liga. Ela será projetada automaticamente no lugar da sigla no menu lateral e no cabeçalho.
+                        </p>
+
+                        <div class="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-2xl bg-slate-50 border border-slate-200/60">
+                            <div class="w-20 h-20 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center overflow-hidden shrink-0 relative" id="setting-logo-preview-box">
+                                <img id="setting-logo-preview" src="" alt="Pré-visualização do Brasão" class="w-full h-full object-contain p-1 hidden">
+                                <div id="setting-logo-empty" class="flex flex-col items-center text-slate-400">
+                                    <i data-lucide="image" class="w-7 h-7 stroke-1"></i>
+                                    <span class="text-[10px] mt-0.5 font-medium">Sem imagem</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 text-center sm:text-left space-y-2">
+                                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                                    <label class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold shadow-sm cursor-pointer transition">
+                                        <i data-lucide="upload" class="w-4 h-4"></i>
+                                        <span>Anexar Imagem do Brasão</span>
+                                        <input type="file" id="setting-logo-file" accept="image/*" onchange="uploadLogoFile(event)" class="hidden">
+                                    </label>
+                                    <button type="button" id="btn-remove-logo" onclick="removeLogoFile()" class="hidden inline-flex items-center gap-1 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-medium transition">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                        <span>Remover Brasão</span>
+                                    </button>
+                                </div>
+                                <p class="text-[11px] text-slate-400">Recomendado: imagem PNG com fundo transparente ou JPG quadrado.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm max-w-2xl">
+                        <form id="form-settings" onsubmit="saveSettings(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Nome Completo da Liga Acadêmica</label>
+                                <input type="text" id="setting-league-name" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Sigla da Liga</label>
+                                    <input type="text" id="setting-league-sigla" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Ano da Gestão</label>
+                                    <input type="text" id="setting-management-year" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Universidade / Instituição de Ensino</label>
+                                <input type="text" id="setting-university" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Presença Mínima para Certificado (%)</label>
+                                    <input type="number" id="setting-min-attendance" min="1" max="100" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Valor Padrão da Mensalidade (R$)</label>
+                                    <input type="number" step="0.01" id="setting-monthly-fee" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                </div>
+                            </div>
+                            <div class="pt-2">
+                                <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-md shadow-brand-600/20 transition">
+                                    Salvar Alterações
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+            </main>
+
+            <!-- Bottom Navigation Bar for Mobile -->
+            <nav class="lg:hidden bg-white border-t border-slate-200 px-2 py-1.5 flex justify-around items-center z-10">
+                <button onclick="navigateTo('dashboard')" data-nav="dashboard" class="mobile-nav-btn flex flex-col items-center py-1 px-2 text-brand-600">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-medium mt-0.5">Início</span>
+                </button>
+                <button onclick="navigateTo('members')" data-nav="members" class="mobile-nav-btn flex flex-col items-center py-1 px-2 text-slate-400">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-medium mt-0.5">Membros</span>
+                </button>
+                <button onclick="navigateTo('attendance')" data-nav="attendance" class="mobile-nav-btn flex flex-col items-center py-1 px-2 text-slate-400">
+                    <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-medium mt-0.5">Presença</span>
+                </button>
+                <button onclick="navigateTo('tasks')" data-nav="tasks" class="mobile-nav-btn flex flex-col items-center py-1 px-2 text-slate-400">
+                    <i data-lucide="kanban-square" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-medium mt-0.5">Tarefas</span>
+                </button>
+                <button onclick="navigateTo('finances')" data-nav="finances" class="mobile-nav-btn flex flex-col items-center py-1 px-2 text-slate-400">
+                    <i data-lucide="wallet" class="w-5 h-5"></i>
+                    <span class="text-[10px] font-medium mt-0.5">Caixa</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- ================= MODAIS ================= -->
+
+    <!-- Modal Novo / Editar Membro -->
+    <div id="modal-member" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <h3 class="font-bold text-slate-800 text-lg" id="modal-member-title">Cadastrar Novo Membro</h3>
+                <button onclick="closeModal('modal-member')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="form-member" onsubmit="submitMember(event)" class="space-y-3.5">
+                <input type="hidden" id="member-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nome Completo *</label>
+                    <input type="text" id="member-name" required placeholder="Ex: Ana Clara Silva" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">E-mail *</label>
+                        <input type="email" id="member-email" required placeholder="ana@liga.edu.br" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">WhatsApp / Telefone</label>
+                        <input type="text" id="member-phone" placeholder="11999998888" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Cargo *</label>
+                        <select id="member-role" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="Presidente">Presidente</option>
+                            <option value="Vice-Presidente">Vice-Presidente</option>
+                            <option value="Diretor Científico">Diretor Científico</option>
+                            <option value="Diretor de Comunicação">Diretor de Comunicação</option>
+                            <option value="Diretor Financeiro">Diretor Financeiro</option>
+                            <option value="Membro Efetivo" selected>Membro Efetivo</option>
+                            <option value="Ligante Trainee">Ligante Trainee</option>
+                            <option value="Egresso">Egresso</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+                        <select id="member-status" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="Ativo" selected>Ativo</option>
+                            <option value="Licenciado">Licenciado</option>
+                            <option value="Egresso">Egresso</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Curso</label>
+                        <input type="text" id="member-course" value="Medicina" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Semestre / Período</label>
+                        <input type="text" id="member-semester" placeholder="Ex: 5º Período" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Observações ou Biografia</label>
+                    <textarea id="member-notes" rows="2" placeholder="Informações adicionais, projetos..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-member')" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-md shadow-brand-600/20">Salvar Membro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Nova / Editar Aula ou Evento -->
+    <div id="modal-event" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <h3 class="font-bold text-slate-800 text-lg">Criar Aula / Encontro</h3>
+                <button onclick="closeModal('modal-event')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="form-event" onsubmit="submitEvent(event)" class="space-y-3.5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Título da Aula / Encontro *</label>
+                    <input type="text" id="event-title" required placeholder="Ex: Aula Magna de Trauma Torácico" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Evento</label>
+                        <select id="event-type" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="Aula">Aula Teórica</option>
+                            <option value="Reunião Ordinária">Reunião Ordinária</option>
+                            <option value="Workshop">Workshop Prático</option>
+                            <option value="Simpósio">Simpósio / Jornada</option>
+                            <option value="Ação Social">Ação de Extensão</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Carga Horária (Horas)</label>
+                        <input type="number" step="0.5" id="event-hours" value="2.0" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Data *</label>
+                        <input type="date" id="event-date" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Horário *</label>
+                        <input type="time" id="event-time" value="19:00" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Local / Sala / Link</label>
+                    <input type="text" id="event-location" placeholder="Ex: Anfiteatro B / Google Meet" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição / Pauta</label>
+                    <textarea id="event-description" rows="2" placeholder="Conteúdo abordado, palestrante convidado..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-event')" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-md shadow-brand-600/20">Salvar Encontro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal QR Code de Presença -->
+    <div id="modal-qrcode" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl animate-fade-in border border-slate-100">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider">Check-in Ao Vivo</span>
+                <button onclick="closeModal('modal-qrcode')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <h3 class="font-extrabold text-xl text-slate-800" id="qr-event-title">Nome do Evento</h3>
+            <p class="text-xs text-slate-500 mt-1" id="qr-event-subtitle">Aponte a câmera do celular para confirmar sua presença</p>
+            
+            <div class="my-6 flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
+                <div id="qrcode-canvas" class="bg-white p-3 rounded-xl shadow-sm"></div>
+                <div class="mt-3 text-xs text-slate-500 font-mono" id="qr-token-display">Token: ...</div>
+            </div>
+
+            <div class="space-y-2">
+                <button onclick="openCheckinDirectly()" class="w-full py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-md transition flex items-center justify-center gap-2">
+                    <i data-lucide="external-link" class="w-4 h-4"></i> Abrir Link de Check-in em Nova Guia
+                </button>
+                <button onclick="closeModal('modal-qrcode')" class="w-full py-2 rounded-xl text-slate-500 text-xs hover:bg-slate-100 transition">
+                    Fechar Projeção
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Lista de Presença Manual do Evento -->
+    <div id="modal-attendance-list" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl animate-fade-in max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-base" id="att-modal-event-title">Lista de Presença</h3>
+                    <p class="text-xs text-slate-400">Marque quem esteve presente nesta aula</p>
+                </div>
+                <button onclick="closeModal('modal-attendance-list')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            
+            <div class="py-3 flex items-center justify-between border-b border-slate-100 text-xs">
+                <span class="text-slate-500 font-medium"><span id="att-present-count">0</span> membros marcados</span>
+                <div class="space-x-2">
+                    <button onclick="toggleAllAttendance(true)" class="text-brand-600 hover:underline font-semibold">Marcar Todos</button>
+                    <span class="text-slate-300">|</span>
+                    <button onclick="toggleAllAttendance(false)" class="text-slate-500 hover:underline">Desmarcar</button>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto py-2 divide-y divide-slate-100 space-y-1" id="att-members-checkboxes">
+                <!-- Checkboxes de membros dinâmicos -->
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex justify-end gap-2">
+                <button onclick="closeModal('modal-attendance-list')" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">Cancelar</button>
+                <button onclick="saveEventAttendance()" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-md shadow-brand-600/20">Salvar Presenças</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nova / Editar Tarefa -->
+    <div id="modal-task" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl animate-fade-in">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <h3 class="font-bold text-slate-800 text-lg">Nova Tarefa para a Diretoria</h3>
+                <button onclick="closeModal('modal-task')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="form-task" onsubmit="submitTask(event)" class="space-y-3.5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Título da Demanda *</label>
+                    <input type="text" id="task-title" required placeholder="Ex: Solicitar orçamento para camisetas" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição</label>
+                    <textarea id="task-desc" rows="2" placeholder="Detalhes do que precisa ser feito..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Comissão / Departamento</label>
+                        <select id="task-dept" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="Geral">Geral</option>
+                            <option value="Presidência">Presidência</option>
+                            <option value="Científico">Científico</option>
+                            <option value="Comunicação">Comunicação</option>
+                            <option value="Financeiro">Financeiro</option>
+                            <option value="Extensão">Extensão</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Prioridade</label>
+                        <select id="task-priority" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="baixa">Baixa</option>
+                            <option value="media" selected>Média</option>
+                            <option value="alta">Alta (Urgente)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Responsável</label>
+                        <select id="task-assignee" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="">Não atribuído</option>
+                            <!-- Membros preenchidos via JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Prazo de Entrega</label>
+                        <input type="date" id="task-due-date" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-task')" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-md shadow-brand-600/20">Adicionar Tarefa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Novo Documento / Material -->
+    <div id="modal-material" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl animate-fade-in">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <h3 class="font-bold text-slate-800 text-lg">Adicionar Material à Biblioteca</h3>
+                <button onclick="closeModal('modal-material')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="form-material" onsubmit="submitMaterial(event)" class="space-y-3.5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Título do Documento *</label>
+                    <input type="text" id="mat-title" required placeholder="Ex: Protocolo de Atendimento 2026" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Categoria *</label>
+                        <select id="mat-category" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="Artigos">Artigo Científico</option>
+                            <option value="Aulas">Slide / Aula</option>
+                            <option value="Atas">Ata de Reunião</option>
+                            <option value="Estatuto">Estatuto / Regulamento</option>
+                            <option value="Editais">Edital</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Autor / Palestrante</label>
+                        <input type="text" id="mat-author" placeholder="Ex: Prof. Dr. Silva" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                
+                <div class="border-t border-b border-slate-100 py-3 space-y-2">
+                    <div class="flex gap-4 text-xs font-medium text-slate-700">
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" name="mat-type" value="link" checked onchange="toggleMatType('link')" class="text-brand-600">
+                            <span>Link Externo (Drive/Web)</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" name="mat-type" value="upload" onchange="toggleMatType('upload')" class="text-brand-600">
+                            <span>Upload de Arquivo</span>
+                        </label>
+                    </div>
+
+                    <div id="mat-link-field">
+                        <input type="url" id="mat-url" placeholder="https://drive.google.com/..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+
+                    <div id="mat-file-field" class="hidden">
+                        <input type="file" id="mat-file" class="w-full text-xs file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição Breve</label>
+                    <textarea id="mat-desc" rows="2" placeholder="Resumo dos tópicos ou observações..." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-material')" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-md shadow-brand-600/20">Salvar Documento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Lançamento Financeiro -->
+    <div id="modal-finance" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl animate-fade-in">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <h3 class="font-bold text-slate-800 text-lg">Novo Lançamento Financeiro</h3>
+                <button onclick="closeModal('modal-finance')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="form-finance" onsubmit="submitFinance(event)" class="space-y-3.5">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Movimentação *</label>
+                        <select id="fin-type" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="income">🟢 Entrada (Receita)</option>
+                            <option value="expense">🔴 Saída (Despesa)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Valor (R$) *</label>
+                        <input type="number" step="0.01" id="fin-amount" required placeholder="0.00" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Categoria *</label>
+                        <select id="fin-category" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="Mensalidade">Mensalidade</option>
+                            <option value="Inscrição de Evento">Inscrição de Evento</option>
+                            <option value="Patrocínio">Patrocínio</option>
+                            <option value="Coffee Break">Coffee Break</option>
+                            <option value="Material/Gráfica">Material / Gráfica</option>
+                            <option value="Certificados">Certificados</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Data *</label>
+                        <input type="date" id="fin-date" required class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição / Justificativa *</label>
+                    <input type="text" id="fin-desc" required placeholder="Ex: Mensalidade de Setembro ou Coffee Break aula 2" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-finance')" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-md shadow-brand-600/20">Registrar no Caixa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalhes do Membro (Horas & Frequência) -->
+    <div id="modal-member-details" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl animate-fade-in max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div id="detail-avatar" class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"></div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base" id="detail-name">Nome do Membro</h3>
+                        <p class="text-xs text-slate-500" id="detail-role-course">Cargo • Curso</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('modal-member-details')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <!-- Resumo de Horas do Membro -->
+            <div class="grid grid-cols-2 gap-3 py-4">
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center">
+                    <span class="text-[11px] text-slate-500 font-semibold uppercase">Frequência</span>
+                    <div class="text-xl font-bold text-emerald-600" id="detail-frequence">0%</div>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center">
+                    <span class="text-[11px] text-slate-500 font-semibold uppercase">Horas Acumuladas</span>
+                    <div class="text-xl font-bold text-brand-600" id="detail-hours">0h</div>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto">
+                <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Histórico de Presenças em Aulas</h4>
+                <div id="detail-history-list" class="space-y-2 text-xs">
+                    <!-- Dinâmico -->
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex justify-end">
+                <button onclick="closeModal('modal-member-details')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Compartilhar & Copiar o Site -->
+    <div id="modal-share" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 md:p-7 shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <i data-lucide="share-2" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-800 text-lg">Compartilhar & Copiar</h3>
+                        <p class="text-xs text-slate-400">Divulgue o acesso à Liga ou baixe uma cópia dos dados</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('modal-share')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <div class="space-y-4">
+                <!-- 1. Copiar Link do Site -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        <i data-lucide="link" class="w-3.5 h-3.5 inline mr-1 text-emerald-600"></i> Link Direto da Plataforma
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="share-site-url" readonly class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono bg-white text-slate-700 focus:outline-none select-all">
+                        <button onclick="copySiteLink()" id="btn-copy-site" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold shadow-sm transition flex items-center gap-1.5 shrink-0">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                            <span id="btn-copy-text">Copiar Link</span>
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Clique em "Copiar Link" para enviar a página da Liga para quem você quiser.</p>
+                </div>
+
+                <!-- 2. Ações de Compartilhamento -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <button onclick="shareOnWhatsApp()" class="p-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-md shadow-emerald-500/20 transition flex items-center justify-center gap-2">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        <span>Enviar no WhatsApp</span>
+                    </button>
+                    <button onclick="triggerNativeShare()" id="btn-native-share" class="p-3.5 rounded-2xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold shadow-md transition flex items-center justify-center gap-2">
+                        <i data-lucide="share" class="w-4 h-4"></i>
+                        <span>Mais Opções de Envio</span>
+                    </button>
+                </div>
+
+                <!-- 3. QR Code para Acesso Rápido com o Celular -->
+                <div class="p-4 rounded-2xl bg-white border border-slate-200/80 text-center space-y-3">
+                    <span class="text-xs font-bold text-slate-700 flex items-center justify-center gap-1.5">
+                        <i data-lucide="qr-code" class="w-4 h-4 text-brand-600"></i> Escanear com a Câmera do Celular
+                    </span>
+                    <div class="flex justify-center">
+                        <div id="share-qrcode-box" class="p-3 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner inline-block"></div>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Aponte a câmera do seu celular para abrir o site instantaneamente no navegador do telefone.</p>
+                </div>
+
+                <!-- 4. Fazer Cópia / Backup do Banco de Dados -->
+                <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h4 class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                                <i data-lucide="database" class="w-4 h-4 text-amber-600"></i> Baixar Cópia do Site (Backup)
+                            </h4>
+                            <p class="text-[11px] text-amber-700 mt-0.5">Faça o download de todos os membros, presenças e finanças em um arquivo seguro (.db).</p>
+                        </div>
+                        <a href="/api/backup" download class="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition flex items-center justify-center gap-1.5 shrink-0">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>Baixar Cópia</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 mt-5 flex justify-end">
+                <button onclick="closeModal('modal-share')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts da Aplicação -->
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
+
