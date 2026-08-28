@@ -205,7 +205,7 @@
      * Construção Progressiva da Rede, Conexões e Momento de Contemplação
      */
     function setupInterdisciplinaryTimeline() {
-        const container = document.getElementById('scene-interdisciplinary-container');
+        const container = document.getElementById('scene-interdisciplinary-container') || document.getElementById('areas');
         const pinStage = document.getElementById('scene-interdisciplinary-pin');
         if (!container || !pinStage) return;
 

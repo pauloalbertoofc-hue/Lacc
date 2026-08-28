@@ -87,7 +87,13 @@ function checkAuthState() {
 function toggleLandingDrawer() {
     const drawer = document.getElementById('landing-drawer');
     if (drawer) {
+        const isCurrentlyHidden = drawer.classList.contains('hidden');
         drawer.classList.toggle('hidden');
+        if (isCurrentlyHidden) {
+            document.body.classList.add('overflow-hidden');
+        } else {
+            document.body.classList.remove('overflow-hidden');
+        }
         initIcons();
     }
 }
