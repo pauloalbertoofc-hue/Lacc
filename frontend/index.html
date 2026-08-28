@@ -120,6 +120,13 @@
                             <i data-lucide="scale" class="w-4 h-4 text-blue-400"></i>
                             <span>Sobre a Liga</span>
                         </a>
+                        <a href="/noticias" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 border-l-2 border-transparent hover:border-amber-400 transition group">
+                            <span class="flex items-center gap-3">
+                                <i data-lucide="newspaper" class="w-4 h-4 text-amber-400"></i>
+                                <span>Notícias & Imprensa</span>
+                            </span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">Portal</span>
+                        </a>
                         <a href="#landing-events" data-drawer-nav="landing-events" onclick="toggleLandingDrawer()" class="nav-item-drawer flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 border-l-2 border-transparent transition">
                             <i data-lucide="calendar" class="w-4 h-4 text-amber-400"></i>
                             <span>Eventos & Atividades</span>
@@ -129,6 +136,22 @@
                             <span>Check-in de Presença (QR)</span>
                         </a>
                     </nav>
+
+                    <!-- Acesso Rápido Destacado às Notícias no Menu Lateral -->
+                    <div class="mt-3">
+                        <a href="/noticias" class="flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-slate-900/40 border border-amber-500/30 hover:border-amber-500/60 transition group shadow-sm">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center group-hover:scale-110 transition shrink-0">
+                                    <i data-lucide="newspaper" class="w-4 h-4"></i>
+                                </div>
+                                <div class="text-left">
+                                    <span class="text-xs font-bold text-white block group-hover:text-amber-300 transition leading-tight">Portal de Notícias</span>
+                                    <span class="text-[10px] text-slate-400 block leading-tight">Jornalismo Científico</span>
+                                </div>
+                            </div>
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-amber-400 group-hover:translate-x-1 transition shrink-0"></i>
+                        </a>
+                    </div>
 
                     <!-- Portas de Entrada Distintas no Menu Lateral -->
                     <div class="mt-6 pt-5 border-t border-slate-800 space-y-4">
@@ -363,6 +386,8 @@
                     <span class="block text-[11px] text-slate-600 mt-0.5" id="landing-footer-uni">Faculdade Serra Dourada</span>
                 </div>
                 <div class="flex items-center gap-4">
+                    <a href="/noticias" class="text-slate-400 hover:text-amber-400 font-semibold flex items-center gap-1 transition"><i data-lucide="newspaper" class="w-3.5 h-3.5 text-amber-400"></i><span>Notícias</span></a>
+                    <span>•</span>
                     <button onclick="openCommunityLoginModal()" class="text-cyan-400 hover:underline font-semibold flex items-center gap-1"><i data-lucide="globe" class="w-3.5 h-3.5"></i><span>Comunidade Aberta</span></button>
                     <span>•</span>
                     <button onclick="openLoginModal()" class="text-amber-400 hover:underline font-semibold flex items-center gap-1"><i data-lucide="shield" class="w-3.5 h-3.5"></i><span>Área de Membros</span></button>
@@ -371,6 +396,18 @@
                 </div>
             </div>
         </footer>
+
+        <!-- Botão Lateral Flutuante de Acesso Rápido às Notícias (Home) -->
+        <a href="/noticias" id="landing-floating-news-btn" class="fixed right-4 bottom-6 z-40 px-3.5 py-2.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-amber-400 border border-amber-500/40 hover:border-amber-400 shadow-2xl backdrop-blur-md font-bold text-xs flex items-center gap-2.5 transition-all hover:scale-105 group" title="Acessar Portal de Notícias da LACC">
+            <div class="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center group-hover:scale-110 transition">
+                <i data-lucide="newspaper" class="w-3.5 h-3.5"></i>
+            </div>
+            <div class="text-left leading-tight hidden sm:block">
+                <span class="text-[11px] font-extrabold text-white block group-hover:text-amber-300">Notícias LACC</span>
+                <span class="text-[9px] text-slate-400 block">Jornalismo Científico</span>
+            </div>
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+        </a>
     </div>
 
     <!-- ================= 2.0.1 MODAL DE LOGIN (COMUNIDADE PÚBLICA) ================= -->
