@@ -1046,7 +1046,12 @@
                         <h2 class="text-sm font-bold text-slate-800 truncate max-w-[180px]" id="mobile-league-name">Liga Acadêmica</h2>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                    <!-- Botão Super Admin Mobile (Exclusivo Superadmin Paulo Alberto) -->
+                    <a id="mobile-superadmin-btn" href="/admin" title="Painel Super Admin da LACC" class="hidden items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-800 border border-amber-500/40 transition text-xs font-bold shadow-sm">
+                        <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-600"></i>
+                        <span class="text-[11px] font-extrabold tracking-tight">Super Admin</span>
+                    </a>
                     <button onclick="openShareModal()" title="Compartilhar Site" class="p-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition">
                         <i data-lucide="share-2" class="w-5 h-5"></i>
                     </button>
@@ -2142,6 +2147,11 @@
                     <i data-lucide="wallet" class="w-5 h-5"></i>
                     <span class="text-[10px] font-medium mt-0.5">Caixa</span>
                 </button>
+                <!-- Botão Super Admin na barra inferior mobile (exclusivo para quem tem permissão de super admin) -->
+                <a id="mobile-bottom-superadmin-btn" href="/admin" class="mobile-nav-btn hidden flex-col items-center py-1 px-2 text-amber-600 hover:text-amber-700">
+                    <i data-lucide="shield-alert" class="w-5 h-5 text-amber-500"></i>
+                    <span class="text-[10px] font-bold mt-0.5">Admin</span>
+                </a>
             </nav>
         </div>
     </div>

@@ -628,19 +628,49 @@ async function submitMyPassword(e) {
 
 function updateAdminVisibility() {
     const adminEntry = document.getElementById('admin-platform-entry');
+    const mobileSuperAdminBtn = document.getElementById('mobile-superadmin-btn');
+    const mobileBottomSuperAdmin = document.getElementById('mobile-bottom-superadmin-btn');
     const commBtn = document.getElementById('nav-btn-communication');
 
     try {
         const userStr = localStorage.getItem('lacc_user');
         if (userStr) {
             const user = JSON.parse(userStr);
+            // Checagem estrita de Super Admin (Paulo Alberto)
+            const isSuperAdmin = !!user.is_superadmin;
+            const isAdmin = !!(user.is_admin || user.is_superadmin);
+
+            // Entrada desktop (Admin ou Superadmin)
             if (adminEntry) {
-                if (user.is_admin || user.is_superadmin) {
+                if (isAdmin) {
                     adminEntry.classList.remove('hidden');
                 } else {
                     adminEntry.classList.add('hidden');
                 }
             }
+
+            // Botões Mobile liberados exclusivamente para Super Admin (Paulo Alberto)
+            if (mobileSuperAdminBtn) {
+                if (isSuperAdmin) {
+                    mobileSuperAdminBtn.classList.remove('hidden');
+                    mobileSuperAdminBtn.classList.add('inline-flex');
+                } else {
+                    mobileSuperAdminBtn.classList.add('hidden');
+                    mobileSuperAdminBtn.classList.remove('inline-flex');
+                }
+            }
+
+            if (mobileBottomSuperAdmin) {
+                if (isSuperAdmin) {
+                    mobileBottomSuperAdmin.classList.remove('hidden');
+                    mobileBottomSuperAdmin.classList.add('flex');
+                } else {
+                    mobileBottomSuperAdmin.classList.add('hidden');
+                    mobileBottomSuperAdmin.classList.remove('flex');
+                }
+            }
+
+            // Entrada de Comunicação
             if (commBtn) {
                 const perms = Array.isArray(user.permissions) ? user.permissions : [];
                 const roles = Array.isArray(user.roles) ? user.roles.map(r => String(r).toLowerCase()) : [];
@@ -652,10 +682,21 @@ function updateAdminVisibility() {
                     commBtn.classList.add('hidden');
                 }
             }
+            initIcons();
             return;
         }
-    } catch (e) {}
+    } catch (e) {
+        console.error('Erro em updateAdminVisibility:', e);
+    }
     if (adminEntry) adminEntry.classList.add('hidden');
+    if (mobileSuperAdminBtn) {
+        mobileSuperAdminBtn.classList.add('hidden');
+        mobileSuperAdminBtn.classList.remove('inline-flex');
+    }
+    if (mobileBottomSuperAdmin) {
+        mobileBottomSuperAdmin.classList.add('hidden');
+        mobileBottomSuperAdmin.classList.remove('flex');
+    }
     if (commBtn) commBtn.classList.add('hidden');
 }
 
@@ -1393,6 +1434,7 @@ async function saveSettings(e) {
 // 1. DASHBOARD
 // ==========================================
 async function loadDashboard() {
+    updateAdminVisibility();
     try {
         const stats = await api.getDashboardStats();
 
