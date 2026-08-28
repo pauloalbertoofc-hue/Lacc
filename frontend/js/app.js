@@ -98,6 +98,32 @@ function toggleLandingDrawer() {
     }
 }
 
+function toggleMobileSidebar() {
+    const backdrop = document.getElementById('mobile-sidebar-backdrop');
+    const drawer = document.getElementById('mobile-sidebar-drawer');
+    if (backdrop && drawer) {
+        const isClosed = drawer.classList.contains('-translate-x-full');
+        if (isClosed) {
+            backdrop.classList.remove('hidden');
+            drawer.classList.remove('-translate-x-full');
+            document.body.classList.add('overflow-hidden');
+        } else {
+            closeMobileSidebar();
+        }
+        initIcons();
+    }
+}
+
+function closeMobileSidebar() {
+    const backdrop = document.getElementById('mobile-sidebar-backdrop');
+    const drawer = document.getElementById('mobile-sidebar-drawer');
+    if (backdrop && drawer) {
+        backdrop.classList.add('hidden');
+        drawer.classList.add('-translate-x-full');
+        document.body.classList.remove('overflow-hidden');
+    }
+}
+
 function getCurrentUser() {
     try {
         return JSON.parse(localStorage.getItem('lacc_user') || 'null');
@@ -631,14 +657,35 @@ function updateAdminVisibility() {
     const mobileSuperAdminBtn = document.getElementById('mobile-superadmin-btn');
     const mobileBottomSuperAdmin = document.getElementById('mobile-bottom-superadmin-btn');
     const commBtn = document.getElementById('nav-btn-communication');
+    const athenaBtn = document.getElementById('nav-btn-athena');
+
+    const isAuth = localStorage.getItem('lacc_auth') === 'true' || !!localStorage.getItem('lacc_token');
 
     try {
         const userStr = localStorage.getItem('lacc_user');
-        if (userStr) {
-            const user = JSON.parse(userStr);
-            // Checagem estrita de Super Admin (Paulo Alberto)
-            const isSuperAdmin = !!user.is_superadmin;
-            const isAdmin = !!(user.is_admin || user.is_superadmin);
+        let user = userStr ? JSON.parse(userStr) : null;
+
+        // Se estiver autenticado e não tiver o objeto de usuário completo salvo em cache, usa o email em localStorage
+        if (!user && isAuth) {
+            const savedEmail = localStorage.getItem('lacc_user_email') || 'paulo.alberto.ofc@gmail.com';
+            user = {
+                email: savedEmail,
+                is_superadmin: savedEmail.toLowerCase() === 'paulo.alberto.ofc@gmail.com',
+                is_admin: true,
+                roles: ['superadmin', 'diretor', 'comunicacao']
+            };
+        }
+
+        if (user) {
+            const emailStr = String(user.email || '').toLowerCase();
+            const roleStr = String(user.role || '').toLowerCase();
+            const perms = Array.isArray(user.permissions) ? user.permissions : [];
+            const roles = Array.isArray(user.roles) 
+                ? user.roles.map(r => (typeof r === 'object' && r ? (r.slug || r.name || '') : String(r)).toLowerCase()) 
+                : [];
+
+            const isSuperAdmin = user.is_superadmin || emailStr === 'paulo.alberto.ofc@gmail.com' || roleStr === 'superadmin' || roles.includes('superadmin') || roles.includes('super_admin');
+            const isAdmin = user.is_admin || isSuperAdmin;
 
             // Entrada desktop (Admin ou Superadmin)
             if (adminEntry) {
@@ -670,12 +717,32 @@ function updateAdminVisibility() {
                 }
             }
 
+            // Entrada de Athena IA (Exclusivo para Diretoria e Administração da LACC)
+            if (athenaBtn) {
+                const directorRoles = [
+                    'director', 'diretor', 'diretoria', 'presidente', 'presidencia',
+                    'vice_presidente', 'vice_presidencia', 'comunicacao', 'pesquisa',
+                    'eventos', 'tesouraria', 'tesoureiro', 'secretaria', 'secretario',
+                    'admin', 'superadmin', 'super_admin'
+                ];
+                const isDirector = isAdmin || isSuperAdmin ||
+                    roles.some(r => directorRoles.includes(r)) ||
+                    directorRoles.includes(roleStr) ||
+                    perms.includes('athena.access') ||
+                    perms.includes('*');
+
+                if (isDirector) {
+                    athenaBtn.classList.remove('hidden');
+                    athenaBtn.classList.add('flex');
+                } else {
+                    athenaBtn.classList.add('hidden');
+                    athenaBtn.classList.remove('flex');
+                }
+            }
+
             // Entrada de Comunicação
             if (commBtn) {
-                const perms = Array.isArray(user.permissions) ? user.permissions : [];
-                const roles = Array.isArray(user.roles) ? user.roles.map(r => String(r).toLowerCase()) : [];
-                const roleStr = String(user.role || '').toLowerCase();
-                const canComm = user.is_admin || user.is_superadmin || perms.includes('communication.view') || roles.includes('comunicacao') || roleStr === 'comunicacao';
+                const canComm = isAdmin || perms.includes('communication.view') || roles.includes('comunicacao') || roleStr === 'comunicacao';
                 if (canComm) {
                     commBtn.classList.remove('hidden');
                 } else {
@@ -688,6 +755,7 @@ function updateAdminVisibility() {
     } catch (e) {
         console.error('Erro em updateAdminVisibility:', e);
     }
+
     if (adminEntry) adminEntry.classList.add('hidden');
     if (mobileSuperAdminBtn) {
         mobileSuperAdminBtn.classList.add('hidden');
@@ -696,6 +764,10 @@ function updateAdminVisibility() {
     if (mobileBottomSuperAdmin) {
         mobileBottomSuperAdmin.classList.add('hidden');
         mobileBottomSuperAdmin.classList.remove('flex');
+    }
+    if (athenaBtn) {
+        athenaBtn.classList.add('hidden');
+        athenaBtn.classList.remove('flex');
     }
     if (commBtn) commBtn.classList.add('hidden');
 }
@@ -1200,6 +1272,9 @@ async function submitEditCommunityProfile(e) {
 // NAVEGAÇÃO ENTRE ABAS
 // ==========================================
 function navigateTo(viewId) {
+    if (typeof closeMobileSidebar === 'function') {
+        closeMobileSidebar();
+    }
     if (viewId === 'community') {
         switchEnvironment('community');
         return;
@@ -1210,6 +1285,36 @@ function navigateTo(viewId) {
         showToast('Acesso restrito: Este recurso exige vínculo institucional ativo de membro da LACC.', 'warning');
         switchEnvironment('community');
         return;
+    }
+
+    if (viewId === 'athena') {
+        const directorRoles = [
+            'director', 'diretor', 'diretoria', 'presidente', 'presidencia',
+            'vice_presidente', 'vice_presidencia', 'comunicacao', 'pesquisa',
+            'eventos', 'tesouraria', 'tesoureiro', 'secretaria', 'secretario',
+            'admin', 'superadmin', 'super_admin'
+        ];
+        const perms = Array.isArray(u?.permissions) ? u.permissions : [];
+        const roles = Array.isArray(u?.roles) 
+            ? u.roles.map(r => (typeof r === 'object' && r ? (r.slug || r.name || '') : String(r)).toLowerCase()) 
+            : [];
+        const roleStr = String(u?.role || '').toLowerCase();
+        const emailStr = String(u?.email || '').toLowerCase();
+
+        const isSuper = u?.is_superadmin || emailStr === 'paulo.alberto.ofc@gmail.com' || roleStr === 'superadmin' || roles.includes('superadmin') || roles.includes('super_admin');
+        const isAdm = u?.is_admin || isSuper;
+
+        const isDirector = isAdm || isSuper ||
+            roles.some(r => directorRoles.includes(r)) ||
+            directorRoles.includes(roleStr) ||
+            perms.includes('athena.access') ||
+            perms.includes('*');
+
+        if (!isDirector) {
+            showToast('Acesso restrito: O sistema cognitivo Athena é de uso exclusivo da Diretoria e Administração da LACC.', 'warning');
+            navigateTo('dashboard');
+            return;
+        }
     }
 
     currentView = viewId;
@@ -1255,6 +1360,7 @@ function navigateTo(viewId) {
     else if (viewId === 'settings') fillSettingsForm();
     else if (viewId === 'profile') loadMyProfile();
     else if (viewId === 'communication') loadCommunicationView();
+    else if (viewId === 'athena') loadAthenaView();
 
     initIcons();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3569,5 +3675,456 @@ async function deleteSubscriberAction(id) {
         showToast(err.message, 'error');
     }
 }
+
+// ==========================================
+// ATHENA COGNITIVE MULTI-AGENT CORE - CLIENT
+// ==========================================
+let athenaCurrentTab = 'chat';
+let athenaCurrentSessionId = null;
+
+function loadAthenaView() {
+    initIcons();
+    const promptInput = document.getElementById('athena-prompt-input');
+    if (promptInput) {
+        promptInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('form-athena-chat')?.requestSubmit();
+            }
+        });
+    }
+    if (athenaCurrentTab === 'studio') loadAthenaStudioProjects();
+    else if (athenaCurrentTab === 'projects') loadAthenaProjects();
+    else if (athenaCurrentTab === 'status') loadAthenaHardwareStatus();
+}
+
+function switchAthenaTab(tabName) {
+    athenaCurrentTab = tabName;
+    ['chat', 'studio', 'projects', 'status'].forEach(t => {
+        const btn = document.getElementById(`athena-tab-btn-${t}`);
+        const panel = document.getElementById(`athena-panel-${t}`);
+        if (btn) {
+            if (t === tabName) {
+                btn.className = 'px-4 py-2.5 rounded-t-xl border-b-2 border-amber-600 text-amber-700 font-bold transition flex items-center gap-2';
+            } else {
+                btn.className = 'px-4 py-2.5 rounded-t-xl border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition flex items-center gap-2';
+            }
+        }
+        if (panel) {
+            if (t === tabName) panel.classList.remove('hidden');
+            else panel.classList.add('hidden');
+        }
+    });
+
+    if (tabName === 'studio') loadAthenaStudioProjects();
+    else if (tabName === 'projects') loadAthenaProjects();
+    else if (tabName === 'status') loadAthenaHardwareStatus();
+    initIcons();
+}
+
+function sendQuickAthenaPrompt(promptText) {
+    const input = document.getElementById('athena-prompt-input');
+    if (input) {
+        input.value = promptText;
+        switchAthenaTab('chat');
+        document.getElementById('form-athena-chat')?.requestSubmit();
+    }
+}
+
+function resetAthenaChat() {
+    const list = document.getElementById('athena-messages-list');
+    if (list) {
+        list.innerHTML = `
+            <div class="flex gap-4 max-w-4xl">
+                <div class="w-9 h-9 rounded-2xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0 shadow-lg mt-1">
+                    <i data-lucide="bot" class="w-5 h-5"></i>
+                </div>
+                <div class="space-y-3 flex-1">
+                    <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl rounded-tl-sm p-5 text-slate-100 shadow-md">
+                        <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-700/60">
+                            <span class="font-bold text-amber-300 text-xs flex items-center gap-1.5">
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Athena Cognitive Core
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-mono">Conselho LACC</span>
+                        </div>
+                        <p class="text-sm leading-relaxed text-slate-200">
+                            Nova sessão iniciada. O Kernel Cognitivo e os 7 especialistas do Conselho estão prontos para deliberar.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+        initIcons();
+    }
+    const input = document.getElementById('athena-prompt-input');
+    if (input) input.value = '';
+    athenaCurrentSessionId = null;
+    showToast('Nova sessão iniciada com a Athena.');
+}
+
+async function submitAthenaPrompt(event) {
+    event.preventDefault();
+    const input = document.getElementById('athena-prompt-input');
+    const prompt = input?.value.trim();
+    if (!prompt) return;
+
+    const dutySelect = document.getElementById('athena-select-duty');
+    const dutyScope = dutySelect?.value || null;
+
+    const btn = document.getElementById('btn-athena-submit');
+    const thinking = document.getElementById('athena-thinking-indicator');
+    const thinkingText = document.getElementById('athena-thinking-text');
+    const messagesList = document.getElementById('athena-messages-list');
+
+    // 1. Renderiza o balão do Usuário
+    const userBubble = document.createElement('div');
+    userBubble.className = 'flex justify-end gap-3';
+    userBubble.innerHTML = `
+        <div class="max-w-2xl bg-gradient-to-r from-amber-600 to-amber-700 text-slate-950 font-medium rounded-2xl rounded-tr-sm p-4 shadow-lg text-sm">
+            <div class="flex items-center justify-between pb-1 mb-1 border-b border-amber-500/40 text-[11px] font-bold text-slate-900">
+                <span>Diretoria</span>
+                <span class="text-[10px] opacity-80">${new Date().toLocaleTimeString().slice(0, 5)}</span>
+            </div>
+            <div class="whitespace-pre-wrap">${escapeHtml(prompt)}</div>
+        </div>
+        <div class="w-8 h-8 rounded-full bg-slate-800 text-amber-300 font-bold text-xs flex items-center justify-center shrink-0 border border-slate-700">
+            VOCÊ
+        </div>
+    `;
+    messagesList.appendChild(userBubble);
+    messagesList.scrollTop = messagesList.scrollHeight;
+
+    // Limpa o input
+    input.value = '';
+    if (btn) btn.disabled = true;
+    if (thinking) {
+        thinking.classList.remove('hidden');
+        thinkingText.innerText = 'Kernel acionando Percepção e Agente de Encargo...';
+    }
+
+    // Efeito de pulso de etapas cognitivas
+    const stageTimer1 = setTimeout(() => {
+        if (thinkingText) thinkingText.innerText = 'Logos & Justitia deliberando fundamentação científica e dogmática...';
+    }, 400);
+    const stageTimer2 = setTimeout(() => {
+        if (thinkingText) thinkingText.innerText = 'Sophia & Musa construindo narrativa, roteiro e ritmo visual...';
+    }, 900);
+    const stageTimer3 = setTimeout(() => {
+        if (thinkingText) thinkingText.innerText = 'Critias realizando auditoria anti-alucinação e validação de fontes...';
+    }, 1400);
+
+    if (!athenaCurrentSessionId) {
+        athenaCurrentSessionId = 'session_' + Date.now();
+    }
+
+    try {
+        const resp = await api.athenaExecute(prompt, dutyScope, athenaCurrentSessionId);
+        clearTimeout(stageTimer1);
+        clearTimeout(stageTimer2);
+        clearTimeout(stageTimer3);
+
+        const data = resp.data || {};
+        const task = data.task || {};
+        if (task.session_id) athenaCurrentSessionId = task.session_id;
+        const result = task.result || {};
+        const workflow = data.workflow || {};
+        const steps = workflow.steps || [];
+
+        // 2. Renderiza o balão de resposta da Athena
+        const athenaBubble = document.createElement('div');
+        athenaBubble.className = 'flex gap-4 max-w-4xl animate-fade-in';
+
+        // Especialistas utilizados
+        const agentsPills = steps.map(s => {
+            const name = s.agent_id.replace('duty_', '').replace('council_', '').replace('exec_', '').toUpperCase();
+            return `<span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] text-amber-300 font-mono">${name}</span>`;
+        }).join(' ');
+
+        // Referências verificadas
+        let refsHtml = '';
+        const refs = result.references || [];
+        if (refs.length > 0) {
+            refsHtml = `
+                <div class="mt-4 pt-3 border-t border-slate-700/60">
+                    <h5 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i> Fontes & Referências Verificadas
+                    </h5>
+                    <div class="space-y-1.5">
+                        ${refs.map(r => `
+                            <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-xs flex items-start justify-between gap-3">
+                                <div>
+                                    <div class="font-bold text-slate-100">${escapeHtml(r.title)}</div>
+                                    <div class="text-[11px] text-slate-400">${escapeHtml(r.author_or_institution || r.source_type)}</div>
+                                    ${r.notes ? `<div class="text-[10px] text-slate-500 mt-0.5 italic">${escapeHtml(r.notes)}</div>` : ''}
+                                </div>
+                                ${r.url ? `
+                                    <a href="${r.url}" target="_blank" class="px-2 py-1 rounded bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-[10px] font-bold shrink-0">
+                                        Abrir Fonte ↗
+                                    </a>
+                                ` : '<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] font-mono shrink-0">VERIFICADO</span>'}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Avisos (se houver)
+        let warningsHtml = '';
+        const warnings = result.warnings || [];
+        if (warnings.length > 0) {
+            warningsHtml = `
+                <div class="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-2">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+                    <div>
+                        ${warnings.map(w => `<div>${escapeHtml(w)}</div>`).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Renderização formatada do markdown
+        const formattedBody = formatAthenaMarkdown(result.content || 'Resultado concluído.');
+
+        athenaBubble.innerHTML = `
+            <div class="w-9 h-9 rounded-2xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0 shadow-lg mt-1">
+                <i data-lucide="bot" class="w-5 h-5"></i>
+            </div>
+            <div class="space-y-2 flex-1">
+                <div class="bg-slate-800/95 border border-slate-700/80 rounded-2xl rounded-tl-sm p-5 text-slate-100 shadow-xl space-y-3">
+                    
+                    <!-- Header do Card de Resposta -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-700/60 text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="font-extrabold text-amber-300 flex items-center gap-1.5">
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> ${escapeHtml(task.title || 'Proposta Athena')}
+                            </span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30">DRAFT</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] text-slate-400 font-mono">${data.execution_time_ms || 0}ms</span>
+                        </div>
+                    </div>
+
+                    <!-- Agentes Coordenados -->
+                    <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-400">
+                        <span>Especialistas:</span>
+                        ${agentsPills}
+                    </div>
+
+                    <!-- Conteúdo Principal Formatado -->
+                    <div class="athena-markdown-body text-sm leading-relaxed text-slate-200 space-y-3">
+                        ${formattedBody}
+                    </div>
+
+                    <!-- Referências e Avisos -->
+                    ${refsHtml}
+                    ${warningsHtml}
+
+                    <!-- Ações Rápidas de Rodapé -->
+                    <div class="pt-3 border-t border-slate-700/60 flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <button onclick="copyAthenaText(this)" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold transition flex items-center gap-1.5">
+                                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                <span>Copiar Proposta</span>
+                            </button>
+                            ${data.project_id ? `
+                                <button onclick="switchAthenaTab('studio')" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold transition flex items-center gap-1.5">
+                                    <i data-lucide="film" class="w-3.5 h-3.5"></i>
+                                    <span>Ver no Studio</span>
+                                </button>
+                            ` : ''}
+                        </div>
+                        <span class="text-[10px] text-slate-400 italic">Athena Cognitive Core • LACC</span>
+                    </div>
+
+                </div>
+            </div>
+        `;
+        messagesList.appendChild(athenaBubble);
+        messagesList.scrollTop = messagesList.scrollHeight;
+        initIcons();
+
+    } catch (err) {
+        clearTimeout(stageTimer1);
+        clearTimeout(stageTimer2);
+        clearTimeout(stageTimer3);
+        showToast(err.message || 'Falha ao processar requisição na Athena.', 'error');
+        
+        const errBubble = document.createElement('div');
+        errBubble.className = 'flex gap-4 max-w-4xl';
+        errBubble.innerHTML = `
+            <div class="w-9 h-9 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30 mt-1">
+                <i data-lucide="alert-circle" class="w-5 h-5"></i>
+            </div>
+            <div class="bg-rose-950/40 border border-rose-800 rounded-2xl p-4 text-rose-200 text-xs space-y-1">
+                <div class="font-bold text-rose-300">Falha no Processamento Cognitivo</div>
+                <div>${escapeHtml(err.message || 'Erro de comunicação.')}</div>
+            </div>
+        `;
+        messagesList.appendChild(errBubble);
+        messagesList.scrollTop = messagesList.scrollHeight;
+        initIcons();
+    } finally {
+        if (btn) btn.disabled = false;
+        if (thinking) thinking.classList.add('hidden');
+    }
+}
+
+function copyAthenaText(btn) {
+    const card = btn.closest('.bg-slate-800\\/95') || btn.closest('.bg-slate-800');
+    const body = card?.querySelector('.athena-markdown-body');
+    if (body) {
+        navigator.clipboard.writeText(body.innerText).then(() => {
+            showToast('Texto da proposta copiado para a área de transferência!');
+            btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i><span>Copiado!</span>';
+            initIcons();
+            setTimeout(() => {
+                btn.innerHTML = '<i data-lucide="copy" class="w-3.5 h-3.5"></i><span>Copiar Proposta</span>';
+                initIcons();
+            }, 2500);
+        });
+    }
+}
+
+function formatAthenaMarkdown(text) {
+    if (!text) return '';
+    let html = escapeHtml(text);
+    
+    // Títulos
+    html = html.replace(/^### (.*$)/gim, '<h3 class="text-base font-bold text-amber-300 mt-3 mb-1">$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2 class="text-lg font-extrabold text-white mt-4 mb-2 pb-1 border-b border-slate-700">$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1 class="text-xl font-extrabold text-amber-400 mt-4 mb-2 pb-1 border-b border-slate-700">$1</h1>');
+    
+    // Negrito e Itálico
+    html = html.replace(/\*\*(.*?)\*\*/gim, '<strong class="font-bold text-white">$1</strong>');
+    html = html.replace(/\*(.*?)\*/gim, '<em class="italic text-slate-300">$1</em>');
+    html = html.replace(/`([^`]+)`/gim, '<code class="bg-slate-900 px-1.5 py-0.5 rounded text-amber-300 font-mono text-xs border border-slate-700">$1</code>');
+    
+    // Alertas GitHub
+    html = html.replace(/&gt; \[!NOTE\]\n&gt; (.*)/gim, '<div class="p-3 my-2 rounded-xl bg-blue-950/50 border border-blue-800 text-blue-200 text-xs">💡 $1</div>');
+    html = html.replace(/&gt; (.*)/gim, '<blockquote class="border-l-4 border-amber-500 pl-3 my-2 text-slate-300 italic text-xs">$1</blockquote>');
+    
+    // Linhas horizontais
+    html = html.replace(/^---$/gim, '<hr class="border-slate-700 my-4">');
+
+    // Quebras de linha normais
+    html = html.replace(/\n\n/g, '<br><br>');
+    return html;
+}
+
+// ==========================================
+// ATHENA STUDIO & PROJETOS
+// ==========================================
+async function loadAthenaStudioProjects() {
+    const list = document.getElementById('athena-studio-projects-list');
+    if (!list) return;
+    list.innerHTML = '<div class="col-span-2 text-center py-8 text-slate-400 text-xs">Buscando projetos audiovisuais da Athena...</div>';
+
+    try {
+        const resp = await api.athenaListProjects('comunicacao');
+        const projs = (resp.projects || []).filter(p => p.project_type === 'video' || p.project_type === 'script');
+
+        if (projs.length === 0) {
+            list.innerHTML = `
+                <div class="col-span-2 text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-6 space-y-3">
+                    <i data-lucide="film" class="w-10 h-10 text-slate-300 mx-auto"></i>
+                    <h4 class="font-bold text-slate-700 text-sm">Nenhum projeto de vídeo ativo</h4>
+                    <p class="text-xs text-slate-500 max-w-md mx-auto">Peça no chat da Athena para gerar um roteiro de Reel e ele será automaticamente catalogado aqui.</p>
+                    <button onclick="sendQuickAthenaPrompt('Crie um Reel de 60 segundos sobre cadeia de custódia digital.')" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow transition">
+                        Criar Primeiro Reel
+                    </button>
+                </div>
+            `;
+            initIcons();
+            return;
+        }
+
+        list.innerHTML = projs.map(p => `
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 text-white shadow-lg space-y-3 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-1.5">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase">
+                            ${p.project_type === 'video' ? '🎬 Reel 9:16' : '📜 Roteiro'}
+                        </span>
+                        <span class="text-[10px] text-slate-400 font-mono">${p.status.toUpperCase()}</span>
+                    </div>
+                    <h4 class="font-extrabold text-sm text-white">${escapeHtml(p.title)}</h4>
+                    <p class="text-xs text-slate-400 line-clamp-3 mt-1.5">${escapeHtml(p.content_text ? p.content_text.slice(0, 140) + '...' : 'Sem descrição.')}</p>
+                </div>
+                <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
+                    <span class="text-[11px] text-slate-500">${p.created_at ? p.created_at.slice(0, 10) : ''}</span>
+                    <button onclick="triggerAthenaRender('${p.id}')" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition flex items-center gap-1.5">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        <span>Gerar Pacote</span>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+        initIcons();
+    } catch (err) {
+        list.innerHTML = `<div class="col-span-2 text-center py-6 text-rose-500 text-xs">Erro ao carregar studio: ${escapeHtml(err.message)}</div>`;
+    }
+}
+
+async function triggerAthenaRender(projectId) {
+    try {
+        showToast('Preparando pacote local de cartelas e manifesto...');
+        const res = await api.athenaRenderVideo(projectId, [
+            { scene_number: 1, title: 'Gancho', duration_seconds: 5 },
+            { scene_number: 2, title: 'Desenvolvimento', duration_seconds: 40 },
+            { scene_number: 3, title: 'Conclusão', duration_seconds: 15 }
+        ]);
+        showToast('Pacote de vídeo gerado com sucesso no acervo local!');
+    } catch (err) {
+        showToast(err.message || 'Erro na renderização.', 'error');
+    }
+}
+
+async function loadAthenaProjects() {
+    const tbody = document.getElementById('athena-projects-table-body');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400 text-xs">Carregando projetos da Athena...</td></tr>';
+
+    try {
+        const resp = await api.athenaListProjects();
+        const projs = resp.projects || [];
+        if (projs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400 text-xs">Nenhum projeto salvo no histórico.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = projs.map(p => `
+            <tr class="hover:bg-slate-50 transition text-xs">
+                <td class="p-3.5 font-bold text-slate-800">${escapeHtml(p.title)}</td>
+                <td class="p-3.5"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[10px]">${p.project_type}</span></td>
+                <td class="p-3.5 text-slate-500 capitalize">${p.department || 'Geral'}</td>
+                <td class="p-3.5 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 uppercase">${p.status}</span></td>
+                <td class="p-3.5 text-center text-slate-400">${p.created_at ? p.created_at.slice(0, 10) : '-'}</td>
+                <td class="p-3.5 text-right whitespace-nowrap">
+                    <button onclick="alert('Visualização do Projeto: ' + ${JSON.stringify(p.title)})" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold">
+                        Ver Detalhes
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-rose-500 text-xs">Erro: ${escapeHtml(err.message)}</td></tr>`;
+    }
+}
+
+async function loadAthenaHardwareStatus() {
+    const jsonBox = document.getElementById('athena-status-json');
+    if (!jsonBox) return;
+    jsonBox.innerText = 'Consultando diagnósticos de hardware e modelos locais...';
+
+    try {
+        const resp = await api.athenaGetStatus();
+        jsonBox.innerText = JSON.stringify(resp, null, 2);
+    } catch (err) {
+        jsonBox.innerText = `Erro ao obter status: ${err.message}`;
+    }
+}
+
 
 

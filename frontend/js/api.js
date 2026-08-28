@@ -567,6 +567,57 @@ const api = {
             method: 'POST',
             body: JSON.stringify({ email, consent })
         });
+    },
+
+    // ==========================================
+    // ATHENA COGNITIVE MULTI-AGENT CORE
+    // ==========================================
+    athenaExecute(prompt, dutyScope = null, sessionId = null) {
+        return this.request('/athena/execute', {
+            method: 'POST',
+            body: JSON.stringify({
+                prompt,
+                duty_scope: dutyScope || null,
+                session_id: sessionId || null
+            })
+        });
+    },
+    athenaGetStatus() {
+        return this.request('/athena/status');
+    },
+    athenaListSessions() {
+        return this.request('/athena/sessions');
+    },
+    athenaCreateSession(title = 'Nova Sessão Athena', dutyScope = 'geral') {
+        return this.request('/athena/sessions', {
+            method: 'POST',
+            body: JSON.stringify({ title, duty_scope: dutyScope })
+        });
+    },
+    athenaGetSessionMessages(sessionId) {
+        return this.request(`/athena/sessions/${sessionId}/messages`);
+    },
+    athenaListTasks() {
+        return this.request('/athena/tasks');
+    },
+    athenaGetTask(taskId) {
+        return this.request(`/athena/tasks/${taskId}`);
+    },
+    athenaListProjects(department = null) {
+        const q = department ? `?department=${encodeURIComponent(department)}` : '';
+        return this.request(`/athena/projects${q}`);
+    },
+    athenaGetProject(projectId) {
+        return this.request(`/athena/projects/${projectId}`);
+    },
+    athenaGetStudioProject(videoId) {
+        return this.request(`/athena/studio/projects/${videoId}`);
+    },
+    athenaRenderVideo(videoId, scenes) {
+        return this.request('/athena/studio/render', {
+            method: 'POST',
+            body: JSON.stringify({ video_id: videoId, scenes })
+        });
     }
 };
 

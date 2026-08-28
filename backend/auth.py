@@ -284,6 +284,39 @@ def require_superadmin(current_user: dict = Depends(get_current_user)):
         )
     return current_user
 
+def require_director_or_admin(current_user: dict = Depends(get_current_user)):
+    """
+    Exige que o usuário seja Membro Ativo E componha a Diretoria ou Administração da Liga.
+    Membros gerais (ligantes comuns) e usuários da comunidade não têm acesso.
+    """
+    if current_user.get("is_superadmin") or current_user.get("is_admin"):
+        return current_user
+
+    roles = [r["slug"].lower() if isinstance(r, dict) else str(r).lower() for r in current_user.get("roles", [])]
+    role_str = str(current_user.get("role", "")).lower()
+    perms = set(current_user.get("permissions", []))
+
+    director_roles = {
+        "director", "diretor", "diretoria", "presidente", "presidencia",
+        "vice_presidente", "vice_presidencia", "comunicacao", "pesquisa",
+        "eventos", "tesouraria", "tesoureiro", "secretaria", "secretario",
+        "admin", "superadmin", "super_admin"
+    }
+
+    is_director = bool(
+        set(roles).intersection(director_roles) or
+        role_str in director_roles or
+        "athena.access" in perms or
+        "*" in perms
+    )
+
+    if not current_user.get("has_member_access") or not is_director:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso restrito: O sistema cognitivo Athena é de uso exclusivo da Diretoria e Administração da LACC."
+        )
+    return current_user
+
 def has_permission(user: dict, permission_slug: str) -> bool:
     if not user:
         return False

@@ -34,6 +34,8 @@ from backend.auth_router import router as auth_router, community_router
 from backend.admin_users_router import router as admin_users_router
 from backend.rbac_router import router as rbac_router
 from backend.communication_router import router as communication_router
+from athena.api import athena_router
+from athena.persistence import run_athena_migrations
 
 app = FastAPI(title="LigaHub - Gestão de Liga Acadêmica", version="1.0.0")
 
@@ -63,12 +65,14 @@ app.include_router(community_router)
 app.include_router(admin_users_router)
 app.include_router(rbac_router)
 app.include_router(communication_router)
+app.include_router(athena_router)
 
 # Inicializar banco, migrações de segurança e dados de exemplo ao iniciar
 @app.on_event("startup")
 def on_startup():
     init_db()
     run_migrations()
+    run_athena_migrations()
     seed()
 
 # ==========================================
