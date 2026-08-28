@@ -11,7 +11,7 @@ import json
 
 from backend.database import get_db
 from backend.auth import (
-    get_current_user, require_permission, log_audit_event
+    get_current_user, get_optional_current_user, require_permission, log_audit_event
 )
 
 router = APIRouter(prefix="/api", tags=["Conteúdo Estruturado"])
@@ -228,14 +228,24 @@ def delete_scientific_area(
 # ==========================================
 
 @router.get("/researches/public")
-def get_public_researches():
-    """Retorna pesquisas em andamento ou em destaque para o público."""
+def get_public_researches(current_user: Optional[dict] = Depends(get_optional_current_user)):
+    """Retorna pesquisas acadêmicas respeitando os níveis de visibilidade."""
     with get_db() as conn:
-        rows = conn.execute("""
+        if not current_user:
+            vis_clause = "(r.visibility = 'public' OR r.visibility IS NULL)"
+        elif current_user.get("has_member_access") or current_user.get("is_superadmin"):
+            vis_clause = "(r.visibility IN ('public', 'community', 'members') OR r.visibility IS NULL)"
+        elif current_user.get("has_community_access"):
+            vis_clause = "(r.visibility IN ('public', 'community') OR r.visibility IS NULL)"
+        else:
+            vis_clause = "(r.visibility = 'public' OR r.visibility IS NULL)"
+
+        rows = conn.execute(f"""
             SELECT r.id, r.title, r.line_of_research, r.status, r.description, r.keywords,
-                   r.start_date, r.is_featured, m.name as coordinator_name
+                   r.start_date, r.is_featured, r.visibility, m.name as coordinator_name
             FROM researches r
             LEFT JOIN members m ON r.coordinator_id = m.id
+            WHERE {vis_clause}
             ORDER BY r.is_featured DESC, r.id DESC
         """).fetchall()
 
@@ -392,13 +402,22 @@ def delete_research(
 # ==========================================
 
 @router.get("/publications/public")
-def get_public_publications():
-    """Retorna publicações científicas ativas ordenadas por ano decrescente."""
+def get_public_publications(current_user: Optional[dict] = Depends(get_optional_current_user)):
+    """Retorna publicações científicas ativas respeitando níveis de visibilidade."""
     with get_db() as conn:
-        rows = conn.execute("""
-            SELECT id, title, publication_type, authors, journal_or_event, year, abstract, doi_or_url
+        if not current_user:
+            vis_clause = "(visibility = 'public' OR visibility IS NULL)"
+        elif current_user.get("has_member_access") or current_user.get("is_superadmin"):
+            vis_clause = "(visibility IN ('public', 'community', 'members') OR visibility IS NULL)"
+        elif current_user.get("has_community_access"):
+            vis_clause = "(visibility IN ('public', 'community') OR visibility IS NULL)"
+        else:
+            vis_clause = "(visibility = 'public' OR visibility IS NULL)"
+
+        rows = conn.execute(f"""
+            SELECT id, title, publication_type, authors, journal_or_event, year, abstract, doi_or_url, visibility
             FROM publications
-            WHERE is_published = 1
+            WHERE is_published = 1 AND {vis_clause}
             ORDER BY year DESC, id DESC
         """).fetchall()
 

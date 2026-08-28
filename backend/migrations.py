@@ -573,6 +573,96 @@ def run_migrations():
             ))
             print("[+] Publicações científicas semeadas com sucesso.")
 
+        # =========================================================================
+        # 14. ARQUITETURA DE IDENTIDADE UNIFICADA & COMUNIDADE DE CIÊNCIAS CRIMINAIS
+        # =========================================================================
+        print("[*] Aplicando migrações de Identidade Unificada e Comunidade...")
+
+        # 14.1 Colunas de vínculo na tabela members (Identidade Core)
+        member_cols = [r["name"] for r in cursor.execute("PRAGMA table_info(members)").fetchall()]
+        if "community_access" not in member_cols:
+            cursor.execute("ALTER TABLE members ADD COLUMN community_access INTEGER DEFAULT 0")
+            print("[+] Coluna members.community_access adicionada.")
+        if "member_access" not in member_cols:
+            cursor.execute("ALTER TABLE members ADD COLUMN member_access INTEGER DEFAULT 0")
+            print("[+] Coluna members.member_access adicionada.")
+
+        # Garantir que todos os membros existentes possuam member_access = 1 e community_access = 0 (respeitando privacidade)
+        cursor.execute("UPDATE members SET member_access = 1 WHERE member_access IS NULL OR member_access = 0")
+
+        # 14.2 Tabela de Perfis Comunitários (Isolada dos dados internos acadêmicos)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS community_profiles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER UNIQUE NOT NULL,
+                display_name TEXT NOT NULL,
+                avatar_url TEXT,
+                bio TEXT,
+                interests TEXT,
+                institution TEXT,
+                city TEXT,
+                state TEXT,
+                community_role TEXT DEFAULT 'participant',
+                status TEXT DEFAULT 'active',
+                suspension_reason TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES members(id) ON DELETE CASCADE
+            )
+        """)
+        print("[+] Tabela community_profiles configurada.")
+
+        # 14.3 Níveis de Visibilidade em Conteúdos (public, community, members, department, private)
+        for tbl in ["events", "researches", "publications"]:
+            cols = [r["name"] for r in cursor.execute(f"PRAGMA table_info({tbl})").fetchall()]
+            if "visibility" not in cols:
+                cursor.execute(f"ALTER TABLE {tbl} ADD COLUMN visibility TEXT DEFAULT 'public'")
+                print(f"[+] Coluna {tbl}.visibility adicionada.")
+
+        # 14.4 Permissões do Domínio Comunitário (Prefixo 'community.')
+        community_perms = [
+            ("community.access", "Acesso ao Portal da Comunidade", "Comunidade"),
+            ("community.profile.edit", "Editar Perfil Comunitário", "Comunidade"),
+            ("community.discussions.view", "Visualizar Discussões Comunitárias", "Comunidade"),
+            ("community.discussions.create", "Criar Tópicos e Comentar na Comunidade", "Comunidade"),
+            ("community.moderate", "Moderar Conteúdos e Discussões da Comunidade", "Comunidade")
+        ]
+        for p_slug, p_name, p_module in community_perms:
+            cursor.execute("""
+                INSERT OR IGNORE INTO permissions (slug, name, module)
+                VALUES (?, ?, ?)
+            """, (p_slug, p_name, p_module))
+
+        # 14.5 Roles Canônicas do Domínio Comunitário
+        cursor.execute("""
+            INSERT OR IGNORE INTO roles (slug, name, description, is_system)
+            VALUES 
+            ('community_user', 'Usuário da Comunidade', 'Participante registrado da Comunidade de Ciências Criminais', 1),
+            ('community_moderator', 'Moderador da Comunidade', 'Moderação de conteúdo e discussões públicas da Comunidade', 1)
+        """)
+
+        # 14.6 Vincular Permissões aos Papéis Comunitários
+        role_map = {r["slug"]: r["id"] for r in cursor.execute("SELECT id, slug FROM roles").fetchall()}
+        perm_map = {p["slug"]: p["id"] for p in cursor.execute("SELECT id, slug FROM permissions").fetchall()}
+
+        comm_user_perms = ["community.access", "community.profile.edit", "community.discussions.view", "community.discussions.create"]
+        if "community_user" in role_map:
+            for p_slug in comm_user_perms:
+                if p_slug in perm_map:
+                    cursor.execute("""
+                        INSERT OR IGNORE INTO role_permissions (role_id, permission_id)
+                        VALUES (?, ?)
+                    """, (role_map["community_user"], perm_map[p_slug]))
+
+        comm_mod_perms = comm_user_perms + ["community.moderate"]
+        if "community_moderator" in role_map:
+            for p_slug in comm_mod_perms:
+                if p_slug in perm_map:
+                    cursor.execute("""
+                        INSERT OR IGNORE INTO role_permissions (role_id, permission_id)
+                        VALUES (?, ?)
+                    """, (role_map["community_moderator"], perm_map[p_slug]))
+
         print("[+] Migrações concluídas com sucesso!")
 
 if __name__ == "__main__":

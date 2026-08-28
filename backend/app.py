@@ -5,7 +5,7 @@ import io
 from datetime import datetime
 from typing import Optional, List
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, Response, Request, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, Response, Request, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, StreamingResponse
@@ -23,13 +23,16 @@ from backend.seed_data import seed
 from backend.migrations import run_migrations
 from backend.auth import (
     hash_password, verify_password, create_access_token,
-    get_current_user, require_admin, require_permission, log_audit_event,
-    get_user_permissions, get_user_roles
+    get_current_user, get_optional_current_user, require_admin,
+    require_permission, require_member_access, require_community_access,
+    require_community_moderator, log_audit_event, get_user_permissions,
+    get_user_roles, has_permission
 )
 from backend.cms_router import router as cms_router
 from backend.content_router import router as content_router
-from backend.auth_router import router as auth_router
+from backend.auth_router import router as auth_router, community_router
 from backend.admin_users_router import router as admin_users_router
+from backend.rbac_router import router as rbac_router
 
 app = FastAPI(title="LigaHub - Gestão de Liga Acadêmica", version="1.0.0")
 
@@ -55,7 +58,9 @@ async def disable_browser_cache(request: Request, call_next):
 app.include_router(cms_router)
 app.include_router(content_router)
 app.include_router(auth_router)
+app.include_router(community_router)
 app.include_router(admin_users_router)
+app.include_router(rbac_router)
 
 # Inicializar banco, migrações de segurança e dados de exemplo ao iniciar
 @app.on_event("startup")
@@ -125,24 +130,30 @@ def download_backup():
     )
 
 # ==========================================
-# DASHBOARD
+# DASHBOARD INSTITUCIONAL
 # ==========================================
 @app.get("/api/dashboard/stats")
-def get_dashboard_stats():
+def get_dashboard_stats(current_user: dict = Depends(require_member_access)):
     with get_db() as conn:
         # Total de membros
-        total_members = conn.execute("SELECT COUNT(*) as count FROM members WHERE status = 'Ativo'").fetchone()["count"]
-        all_members_count = conn.execute("SELECT COUNT(*) as count FROM members").fetchone()["count"]
+        total_members = conn.execute("SELECT COUNT(*) as count FROM members WHERE status = 'active' OR status = 'Ativo'").fetchone()["count"]
+        all_members_count = conn.execute("SELECT COUNT(*) as count FROM members WHERE member_access = 1").fetchone()["count"]
 
-        # Finanças
+        # Finanças - Saldo estritamente protegido
+        can_view_balance = has_permission(current_user, "finance.view_balance")
         income = conn.execute("SELECT COALESCE(SUM(amount), 0) as total FROM finances WHERE type = 'income'").fetchone()["total"]
         expense = conn.execute("SELECT COALESCE(SUM(amount), 0) as total FROM finances WHERE type = 'expense'").fetchone()["total"]
-        balance = income - expense
+        balance = (income - expense) if can_view_balance else None
 
         # Presença Média
         total_attendances = conn.execute("SELECT COUNT(*) as count FROM attendance WHERE status = 'Presente'").fetchone()["count"]
         total_possible = conn.execute("SELECT COUNT(*) as count FROM attendance").fetchone()["count"]
         avg_attendance = round((total_attendances / total_possible * 100), 1) if total_possible > 0 else 100.0
+
+        # Minha frequência individual
+        my_attendances = conn.execute("SELECT COUNT(*) as c FROM attendance WHERE member_id = ? AND status = 'Presente'", (current_user["id"],)).fetchone()["c"]
+        my_total = conn.execute("SELECT COUNT(*) as c FROM attendance WHERE member_id = ?", (current_user["id"],)).fetchone()["c"]
+        my_attendance_pct = round((my_attendances / my_total * 100), 1) if my_total > 0 else 100.0
 
         # Próximos Eventos
         today = datetime.now().strftime("%Y-%m-%d")
@@ -171,10 +182,16 @@ def get_dashboard_stats():
         return {
             "total_active_members": total_members,
             "total_members": all_members_count,
-            "balance": round(balance, 2),
-            "income": round(income, 2),
-            "expense": round(expense, 2),
+            "can_view_balance": can_view_balance,
+            "balance": round(balance, 2) if balance is not None else None,
+            "income": round(income, 2) if can_view_balance else None,
+            "expense": round(expense, 2) if can_view_balance else None,
             "avg_attendance": avg_attendance,
+            "my_attendance": {
+                "present": my_attendances,
+                "total": my_total,
+                "percent": my_attendance_pct
+            },
             "upcoming_events": [dict(r) for r in upcoming_events],
             "pending_tasks": [dict(r) for r in pending_tasks],
             "recent_materials": [dict(r) for r in recent_materials]
@@ -190,7 +207,7 @@ def list_members(
     status: Optional[str] = None
 ):
     with get_db() as conn:
-        query = "SELECT * FROM members WHERE 1=1"
+        query = "SELECT * FROM members WHERE (member_access = 1 OR member_access IS NULL)"
         params = []
         if search:
             query += " AND (name LIKE ? OR email LIKE ? OR course LIKE ?)"
@@ -301,9 +318,18 @@ def export_members_csv():
 # EVENTOS E AULAS
 # ==========================================
 @app.get("/api/events")
-def list_events():
+def list_events(current_user: Optional[dict] = Depends(get_optional_current_user)):
     with get_db() as conn:
-        events = conn.execute("SELECT * FROM events ORDER BY date DESC, time DESC").fetchall()
+        if not current_user:
+            query = "SELECT * FROM events WHERE is_active = 1 AND (visibility = 'public' OR visibility IS NULL) ORDER BY date DESC, time DESC"
+        elif current_user.get("has_member_access") or current_user.get("is_superadmin"):
+            query = "SELECT * FROM events WHERE (visibility IN ('public', 'community', 'members') OR visibility IS NULL) ORDER BY date DESC, time DESC"
+        elif current_user.get("has_community_access"):
+            query = "SELECT * FROM events WHERE is_active = 1 AND (visibility IN ('public', 'community') OR visibility IS NULL) ORDER BY date DESC, time DESC"
+        else:
+            query = "SELECT * FROM events WHERE is_active = 1 AND (visibility = 'public' OR visibility IS NULL) ORDER BY date DESC, time DESC"
+
+        events = conn.execute(query).fetchall()
         result = []
         for e in events:
             ev = dict(e)
@@ -374,10 +400,10 @@ def delete_event(event_id: int):
 # FREQUÊNCIA / CHECK-IN
 # ==========================================
 @app.post("/api/events/{event_id}/attendance")
-def update_event_attendance(event_id: int, payload: AttendanceBulkUpdate):
+def update_event_attendance(event_id: int, payload: AttendanceBulkUpdate, current_user: dict = Depends(require_member_access)):
     with get_db() as conn:
         # Primeiro, marcar todos os membros ativos do evento como Ausente
-        active_members = conn.execute("SELECT id FROM members WHERE status = 'Ativo'").fetchall()
+        active_members = conn.execute("SELECT id FROM members WHERE status = 'Ativo' OR status = 'active'").fetchall()
         for m in active_members:
             m_id = m["id"]
             if m_id in payload.member_ids:
@@ -395,13 +421,13 @@ def update_event_attendance(event_id: int, payload: AttendanceBulkUpdate):
         return {"message": "Presenças salvas com sucesso!"}
 
 @app.post("/api/attendance/checkin")
-def checkin_via_qr(payload: AttendanceCheckin):
+def checkin_via_qr(payload: AttendanceCheckin, current_user: dict = Depends(require_member_access)):
     with get_db() as conn:
         event = conn.execute("SELECT * FROM events WHERE qr_code_token = ? AND is_active = 1", (payload.event_token,)).fetchone()
         if not event:
             raise HTTPException(status_code=400, detail="Token de presença inválido ou evento encerrado.")
         
-        member = conn.execute("SELECT * FROM members WHERE id = ? AND status = 'Ativo'", (payload.member_id,)).fetchone()
+        member = conn.execute("SELECT * FROM members WHERE id = ? AND (status = 'Ativo' OR status = 'active')", (payload.member_id,)).fetchone()
         if not member:
             raise HTTPException(status_code=400, detail="Membro não encontrado ou inativo.")
 
@@ -418,7 +444,7 @@ def checkin_via_qr(payload: AttendanceCheckin):
         }
 
 @app.get("/api/attendance/summary")
-def get_attendance_summary():
+def get_attendance_summary(current_user: dict = Depends(require_member_access)):
     with get_db() as conn:
         total_events = conn.execute("SELECT COUNT(*) as count FROM events WHERE is_active = 1").fetchone()["count"]
         
@@ -450,7 +476,7 @@ def get_attendance_summary():
 # KANBAN / TAREFAS
 # ==========================================
 @app.get("/api/tasks")
-def list_tasks():
+def list_tasks(current_user: dict = Depends(require_member_access)):
     with get_db() as conn:
         tasks = conn.execute("""
             SELECT t.*, m.name as assignee_name, m.avatar_color as assignee_avatar
@@ -461,7 +487,7 @@ def list_tasks():
         return [dict(t) for t in tasks]
 
 @app.post("/api/tasks")
-def create_task(task: TaskCreate):
+def create_task(task: TaskCreate, current_user: dict = Depends(require_member_access)):
     with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -475,7 +501,7 @@ def create_task(task: TaskCreate):
         return {"id": cursor.lastrowid, "message": "Tarefa criada com sucesso!"}
 
 @app.patch("/api/tasks/{task_id}/status")
-def update_task_status(task_id: int, status: str = Query(...)):
+def update_task_status(task_id: int, status: str = Query(...), current_user: dict = Depends(require_member_access)):
     if status not in ["todo", "in_progress", "done"]:
         raise HTTPException(status_code=400, detail="Status inválido.")
     with get_db() as conn:
@@ -483,7 +509,7 @@ def update_task_status(task_id: int, status: str = Query(...)):
         return {"message": "Status da tarefa atualizado!"}
 
 @app.put("/api/tasks/{task_id}")
-def update_task(task_id: int, task: TaskUpdate):
+def update_task(task_id: int, task: TaskUpdate, current_user: dict = Depends(require_member_access)):
     with get_db() as conn:
         updates = []
         values = []
@@ -497,7 +523,7 @@ def update_task(task_id: int, task: TaskUpdate):
         return {"message": "Tarefa atualizada com sucesso!"}
 
 @app.delete("/api/tasks/{task_id}")
-def delete_task(task_id: int):
+def delete_task(task_id: int, current_user: dict = Depends(require_member_access)):
     with get_db() as conn:
         conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
         return {"message": "Tarefa removida com sucesso."}
@@ -572,10 +598,15 @@ def delete_material(material_id: int):
         return {"message": "Material removido com sucesso."}
 
 # ==========================================
-# CONTROLE FINANCEIRO
+# CONTROLE FINANCEIRO INSTITUCIONAL
 # ==========================================
 @app.get("/api/finances")
-def list_finances():
+def list_finances(current_user: dict = Depends(require_member_access)):
+    if not (has_permission(current_user, "finance.view_transactions") or has_permission(current_user, "finance.view_balance") or current_user.get("is_admin")):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado: Você não possui a permissão 'finance.view_transactions' para consultar o livro caixa."
+        )
     with get_db() as conn:
         transactions = conn.execute("""
             SELECT f.*, m.name as member_name
@@ -604,8 +635,41 @@ def list_finances():
             "by_category": [dict(c) for c in by_category]
         }
 
+@app.get("/api/finances/transparency")
+def get_financial_transparency(current_user: dict = Depends(require_member_access)):
+    """
+    Endpoint Institucional de Transparência Financeira:
+    Acessível para qualquer membro com 'finance.view_transparency'.
+    NUNCA expõe saldo de conta corrente, dados bancários nem comprovantes restritos.
+    """
+    if not (has_permission(current_user, "finance.view_transparency") or has_permission(current_user, "finance.view_transactions") or current_user.get("is_admin")):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado: Exige permissão 'finance.view_transparency'."
+        )
+    with get_db() as conn:
+        income = conn.execute("SELECT COALESCE(SUM(amount), 0) as total FROM finances WHERE type = 'income'").fetchone()["total"]
+        expense = conn.execute("SELECT COALESCE(SUM(amount), 0) as total FROM finances WHERE type = 'expense'").fetchone()["total"]
+        by_category = conn.execute("""
+            SELECT category, type, SUM(amount) as total, COUNT(*) as count
+            FROM finances
+            GROUP BY category, type
+            ORDER BY total DESC
+        """).fetchall()
+
+        return {
+            "can_view_transparency": True,
+            "total_income": round(income, 2),
+            "total_expense": round(expense, 2),
+            "categories_summary": [dict(c) for c in by_category],
+            "report_notice": "Prestação de contas institucional homologada em assembleia ordinária da LACC."
+        }
+
 @app.post("/api/finances")
-def create_finance_entry(entry: FinanceCreate):
+def create_finance_entry(entry: FinanceCreate, request: Request, current_user: dict = Depends(require_member_access)):
+    if not (has_permission(current_user, "finance.create_transaction") or current_user.get("is_admin")):
+        raise HTTPException(status_code=403, detail="Acesso negado: Você não possui a permissão 'finance.create_transaction'.")
+    client_ip = request.client.host if request.client else "unknown"
     with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -614,25 +678,50 @@ def create_finance_entry(entry: FinanceCreate):
         """, (
             entry.type, entry.category, entry.amount, entry.date, entry.description, entry.member_id
         ))
-        return {"id": cursor.lastrowid, "message": "Lançamento registrado com sucesso!"}
+        new_id = cursor.lastrowid
+        log_audit_event(
+            user_id=current_user["id"],
+            action="CREATE_FINANCE_TRANSACTION",
+            target_entity=f"finances:{new_id}",
+            ip_address=client_ip,
+            details={"type": entry.type, "amount": entry.amount, "category": entry.category, "description": entry.description},
+            conn=conn
+        )
+        return {"id": new_id, "message": "Lançamento registrado com sucesso!"}
 
 @app.delete("/api/finances/{finance_id}")
-def delete_finance_entry(finance_id: int):
+def delete_finance_entry(finance_id: int, request: Request, current_user: dict = Depends(require_member_access)):
+    if not (has_permission(current_user, "finance.delete_transaction") or current_user.get("is_admin")):
+        raise HTTPException(status_code=403, detail="Acesso negado: Você não possui a permissão 'finance.delete_transaction'.")
+    client_ip = request.client.host if request.client else "unknown"
     with get_db() as conn:
+        tx = conn.execute("SELECT * FROM finances WHERE id = ?", (finance_id,)).fetchone()
+        if not tx:
+            raise HTTPException(status_code=404, detail="Lançamento financeiro não encontrado.")
         conn.execute("DELETE FROM finances WHERE id = ?", (finance_id,))
+        log_audit_event(
+            user_id=current_user["id"],
+            action="DELETE_FINANCE_TRANSACTION",
+            target_entity=f"finances:{finance_id}",
+            ip_address=client_ip,
+            details={"type": tx["type"], "amount": tx["amount"], "category": tx["category"]},
+            conn=conn
+        )
         return {"message": "Lançamento removido com sucesso."}
 
 # ==========================================
-# AUTENTICAÇÃO E SESSÃO (RBAC)
+# AUTENTICAÇÃO E SESSÃO (RBAC UNIFICADO)
 # ==========================================
 @app.post("/api/auth/login")
 def auth_login(data: LoginRequest, request: Request):
     client_ip = request.client.host if request.client else "unknown"
     with get_db() as conn:
-        member = conn.execute(
-            "SELECT id, name, email, role, status, password_hash, is_active, mfa_enabled FROM members WHERE LOWER(email) = LOWER(?)",
-            (data.email.strip(),)
-        ).fetchone()
+        member = conn.execute("""
+            SELECT id, name, email, role, status, password_hash, is_active, mfa_enabled,
+                   COALESCE(community_access, 0) as community_access,
+                   COALESCE(member_access, 0) as member_access
+            FROM members WHERE LOWER(email) = LOWER(?)
+        """, (data.email.strip(),)).fetchone()
 
         if not member:
             log_audit_event(None, "FAILED_LOGIN", f"email:{data.email}", client_ip, {"reason": "User not found"}, conn=conn)
@@ -643,30 +732,55 @@ def auth_login(data: LoginRequest, request: Request):
             raise HTTPException(status_code=403, detail="Esta conta está desativada no sistema. Contate a diretoria.")
 
         user_status = (member["status"] or "").lower()
-        if user_status == "pending":
-            log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "Registration pending"}, conn=conn)
-            raise HTTPException(
-                status_code=403,
-                detail="Sua solicitação de cadastro está aguardando aprovação da administração da LACC."
-            )
-        elif user_status == "suspended":
-            log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "Account suspended"}, conn=conn)
-            raise HTTPException(
-                status_code=403,
-                detail="Sua conta está suspensa temporariamente. Entre em contato com a diretoria."
-            )
-        elif user_status in ("inactive", "inativo"):
-            log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "Account inactive"}, conn=conn)
-            raise HTTPException(
-                status_code=403,
-                detail="Seu vínculo institucional com a LACC foi encerrado."
-            )
-        elif user_status == "rejected":
-            log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "Request rejected"}, conn=conn)
-            raise HTTPException(
-                status_code=403,
-                detail="Sua solicitação de acesso não foi homologada pela administração da LACC."
-            )
+        has_community = bool(member["community_access"])
+        has_member = bool(member["member_access"]) and (user_status in ("active", "ativo"))
+
+        # Carregar perfil comunitário se possuir acesso à Comunidade
+        community_profile = None
+        community_status = "inactive"
+        if has_community:
+            cp_row = conn.execute("SELECT * FROM community_profiles WHERE user_id = ?", (member["id"],)).fetchone()
+            if cp_row:
+                community_profile = dict(cp_row)
+                community_status = cp_row["status"] or "active"
+
+        # Se não tem nem acesso de membro ativo nem acesso comunitário ativo:
+        if not has_member and (not has_community or community_status != "active"):
+            if user_status == "pending":
+                log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "Registration pending"}, conn=conn)
+                raise HTTPException(
+                    status_code=403,
+                    detail="Sua solicitação de cadastro à Área de Membros está aguardando aprovação da administração da LACC."
+                )
+            elif user_status == "suspended":
+                log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "Account suspended"}, conn=conn)
+                raise HTTPException(
+                    status_code=403,
+                    detail="Sua conta está suspensa temporariamente. Entre em contato com a diretoria."
+                )
+            elif user_status in ("inactive", "inativo"):
+                log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "Account inactive"}, conn=conn)
+                raise HTTPException(
+                    status_code=403,
+                    detail="Seu vínculo institucional com a LACC foi encerrado."
+                )
+            elif user_status == "rejected":
+                log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "Request rejected"}, conn=conn)
+                raise HTTPException(
+                    status_code=403,
+                    detail="Sua solicitação de acesso não foi homologada pela administração da LACC."
+                )
+            elif community_status == "suspended":
+                log_audit_event(member["id"], "FAILED_LOGIN", f"member:{member['id']}", client_ip, {"reason": "Community suspended"}, conn=conn)
+                raise HTTPException(
+                    status_code=403,
+                    detail="Sua conta na Comunidade de Ciências Criminais está suspensa."
+                )
+            else:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Conta não autorizada para acesso neste momento."
+                )
 
         # Validação segura da senha
         if not verify_password(data.password, member["password_hash"]):
@@ -678,8 +792,9 @@ def auth_login(data: LoginRequest, request: Request):
         perms = list(get_user_permissions(member["id"]))
         roles = get_user_roles(member["id"])
         role_slugs = [r["slug"] for r in roles]
-        is_admin = "admin:access" in perms or any(r in ("superadmin", "super_admin", "admin", "presidencia") for r in role_slugs)
-        is_superadmin = any(r in ("superadmin", "super_admin") for r in role_slugs) and member["email"] == "paulo.alberto.ofc@gmail.com"
+        is_admin = has_member and ("admin:access" in perms or any(r in ("superadmin", "super_admin", "admin", "presidencia") for r in role_slugs))
+        is_superadmin = has_member and (any(r in ("superadmin", "super_admin") for r in role_slugs) and member["email"] == "paulo.alberto.ofc@gmail.com")
+        is_community_mod = "community.moderate" in perms or is_superadmin
 
         log_audit_event(member["id"], "LOGIN", f"member:{member['id']}", client_ip, {"success": True}, conn=conn)
 
@@ -691,7 +806,14 @@ def auth_login(data: LoginRequest, request: Request):
                 "name": member["name"],
                 "email": member["email"],
                 "role": member["role"],
+                "has_community_access": has_community,
+                "has_member_access": has_member,
+                "institutional_status": user_status,
+                "community_status": community_status,
+                "community_profile": community_profile,
                 "is_admin": is_admin,
+                "is_superadmin": is_superadmin,
+                "is_community_moderator": is_community_mod,
                 "roles": roles,
                 "permissions": perms
             }

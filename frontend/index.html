@@ -74,15 +74,20 @@
                 <a href="#landing-events" data-nav="landing-events" class="nav-item-desktop py-1 text-slate-300 hover:text-amber-400 border-b-2 border-transparent transition">Eventos</a>
             </nav>
 
-            <!-- Botão das Três Barrinhas (Menu Hambúrguer) & Acesso Rápido -->
-            <div class="flex items-center gap-2.5">
-                <button onclick="openLoginModal()" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 transition">
-                    <i data-lucide="user-check" class="w-4 h-4 text-slate-950"></i>
-                    <span>Área de Membros</span>
+            <!-- Duas Portas de Entrada: Comunidade & Área de Membros + Menu Hambúrguer -->
+            <div class="flex items-center gap-2">
+                <button onclick="openCommunityLoginModal()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-cyan-300 hover:text-cyan-200 border border-cyan-500/30 hover:border-cyan-400 font-semibold text-xs transition shadow-sm">
+                    <i data-lucide="globe" class="w-4 h-4 text-cyan-400"></i>
+                    <span>Comunidade</span>
+                </button>
+                <button onclick="openLoginModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 transition">
+                    <i data-lucide="shield" class="w-4 h-4 text-slate-950"></i>
+                    <span class="hidden sm:inline">Área de Membros</span>
+                    <span class="sm:hidden">Membros</span>
                 </button>
                 <!-- O Botão das Três Barrinhas -->
-                <button onclick="toggleLandingDrawer()" aria-label="Abrir Menu" title="Menu" class="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white border border-slate-800 transition flex items-center justify-center hover:border-slate-700 focus:ring-2 focus:ring-amber-500">
-                    <i data-lucide="menu" class="w-6 h-6"></i>
+                <button onclick="toggleLandingDrawer()" aria-label="Abrir Menu" title="Menu" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white border border-slate-800 transition flex items-center justify-center hover:border-slate-700 focus:ring-2 focus:ring-amber-500">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
             </div>
         </header>
@@ -124,21 +129,43 @@
                         </a>
                     </nav>
 
-                    <!-- Seção Solicitada: Botão Membros que direciona para a tela de login -->
-                    <div class="mt-8 pt-6 border-t border-slate-800 space-y-2.5">
-                        <span class="text-[11px] uppercase tracking-wider font-semibold text-slate-500 block px-2">Acesso Exclusivo</span>
-                        <button onclick="toggleLandingDrawer(); openLoginModal();" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/25 transition flex items-center justify-between group">
-                            <span class="flex items-center gap-2.5">
-                                <i data-lucide="users" class="w-5 h-5"></i>
-                                <span>Membros</span>
-                            </span>
-                            <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
-                        </button>
-                        <button onclick="toggleLandingDrawer(); openRegisterModal();" class="w-full py-2.5 px-4 rounded-xl bg-slate-800/90 hover:bg-slate-800 text-amber-300 font-semibold text-xs border border-amber-500/30 transition flex items-center justify-center gap-2">
-                            <i data-lucide="user-plus" class="w-4 h-4 text-amber-400"></i>
-                            <span>Solicitar Cadastro (Novo Membro)</span>
-                        </button>
-                        <p class="text-[11px] text-slate-400 text-center">Cadastros novos passarão por aprovação institucional</p>
+                    <!-- Portas de Entrada Distintas no Menu Lateral -->
+                    <div class="mt-6 pt-5 border-t border-slate-800 space-y-4">
+                        <!-- Porta 1: Comunidade Aberta -->
+                        <div>
+                            <span class="text-[10px] uppercase tracking-wider font-bold text-cyan-400 block px-1 mb-2">1. Comunidade Pública (Aberto)</span>
+                            <div class="space-y-2">
+                                <button onclick="toggleLandingDrawer(); openCommunityLoginModal();" class="w-full py-2.5 px-3.5 rounded-xl bg-cyan-950/40 hover:bg-cyan-900/50 text-cyan-200 font-semibold text-xs border border-cyan-500/30 transition flex items-center justify-between">
+                                    <span class="flex items-center gap-2">
+                                        <i data-lucide="globe" class="w-4 h-4 text-cyan-400"></i>
+                                        <span>Entrar na Comunidade</span>
+                                    </span>
+                                    <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                </button>
+                                <button onclick="toggleLandingDrawer(); openCommunityRegisterModal();" class="w-full py-1.5 px-3 rounded-xl text-[11px] text-slate-400 hover:text-cyan-300 transition text-left flex items-center gap-1.5">
+                                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                    <span>Cadastrar-se na Comunidade (Aberto)</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Porta 2: Área Institucional LACC -->
+                        <div>
+                            <span class="text-[10px] uppercase tracking-wider font-bold text-amber-400 block px-1 mb-2">2. Área Institucional (Exclusivo LACC)</span>
+                            <div class="space-y-2">
+                                <button onclick="toggleLandingDrawer(); openLoginModal();" class="w-full py-3 px-3.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 transition flex items-center justify-between">
+                                    <span class="flex items-center gap-2">
+                                        <i data-lucide="shield" class="w-4 h-4 text-slate-950"></i>
+                                        <span>Área de Membros da LACC</span>
+                                    </span>
+                                    <i data-lucide="lock" class="w-3.5 h-3.5 text-slate-950"></i>
+                                </button>
+                                <button onclick="toggleLandingDrawer(); openRegisterModal();" class="w-full py-1.5 px-3 rounded-xl text-[11px] text-slate-400 hover:text-amber-300 transition text-left flex items-center gap-1.5">
+                                    <i data-lucide="user-plus" class="w-3.5 h-3.5 text-amber-400"></i>
+                                    <span>Solicitar Admissão na LACC</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -178,16 +205,18 @@
                     Espaço de excelência para o aprofundamento científico, debate dogmático e extensão prática do Direito Penal, Processo Penal e Criminologia Crítica.
                 </p>
 
-                <!-- Botões de Ação -->
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
-                    <button onclick="openLoginModal()" class="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold text-sm shadow-xl shadow-amber-900/30 transition flex items-center justify-center gap-2.5 hover:scale-[1.02] active:scale-[0.98]">
-                        <i data-lucide="user-check" class="w-4 h-4 text-slate-950"></i>
-                        <span>Acessar Área de Membros</span>
+                <!-- Botões de Ação: Duas Portas de Entrada Claras -->
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                    <!-- Porta 1: Comunidade Aberta (Público Geral) -->
+                    <button onclick="openCommunityLoginModal()" class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-cyan-950/80 hover:bg-cyan-900/90 text-cyan-200 hover:text-white font-bold text-sm border border-cyan-500/40 shadow-xl shadow-cyan-950/40 backdrop-blur-sm transition flex items-center justify-center gap-2.5 hover:scale-[1.02] active:scale-[0.98]">
+                        <i data-lucide="globe" class="w-4 h-4 text-cyan-400"></i>
+                        <span>Entrar na Comunidade</span>
                     </button>
-                    <a href="#areas" class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 text-sm font-semibold border border-slate-700/70 backdrop-blur-sm transition flex items-center justify-center gap-2">
-                        <span>Explorar a Rede</span>
-                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
-                    </a>
+                    <!-- Porta 2: Área de Membros (Exclusivo LACC) -->
+                    <button onclick="openLoginModal()" class="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold text-sm shadow-xl shadow-amber-900/30 transition flex items-center justify-center gap-2.5 hover:scale-[1.02] active:scale-[0.98]">
+                        <i data-lucide="shield" class="w-4 h-4 text-slate-950"></i>
+                        <span>Área de Membros da LACC</span>
+                    </button>
                 </div>
 
                 <!-- Indicação Discreta de Conteúdo Abaixo -->
@@ -312,12 +341,168 @@
                     <span class="block text-[11px] text-slate-600 mt-0.5" id="landing-footer-uni">Faculdade Serra Dourada</span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <button onclick="openLoginModal()" class="text-emerald-400 hover:underline font-semibold">Área de Membros</button>
+                    <button onclick="openCommunityLoginModal()" class="text-cyan-400 hover:underline font-semibold flex items-center gap-1"><i data-lucide="globe" class="w-3.5 h-3.5"></i><span>Comunidade Aberta</span></button>
+                    <span>•</span>
+                    <button onclick="openLoginModal()" class="text-amber-400 hover:underline font-semibold flex items-center gap-1"><i data-lucide="shield" class="w-3.5 h-3.5"></i><span>Área de Membros</span></button>
                     <span>•</span>
                     <a href="/checkin.html" class="hover:underline">Check-in QR</a>
                 </div>
             </div>
         </footer>
+    </div>
+
+    <!-- ================= 2.0.1 MODAL DE LOGIN (COMUNIDADE PÚBLICA) ================= -->
+    <div id="modal-community-login" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-cyan-500/30 rounded-3xl max-w-md w-full p-6 md:p-8 shadow-2xl animate-fade-in text-white relative">
+            <button onclick="closeModal('modal-community-login')" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="text-center space-y-3 mb-6">
+                <div class="w-16 h-16 rounded-2xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-400 mx-auto flex items-center justify-center shadow-lg">
+                    <i data-lucide="globe" class="w-8 h-8"></i>
+                </div>
+                <div>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 uppercase tracking-wider mb-1">
+                        Portal Aberto
+                    </span>
+                    <h3 class="text-xl font-bold text-white">Comunidade de Ciências Criminais</h3>
+                    <p class="text-xs text-slate-400 mt-1">Acesso para estudantes, juristas, peritos e pesquisadores</p>
+                </div>
+            </div>
+
+            <form id="form-community-login" onsubmit="submitCommunityLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">E-mail Cadastrado</label>
+                    <div class="relative">
+                        <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="email" id="comm-login-email" required placeholder="seu.email@exemplo.com" class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-300">Sua Senha</label>
+                        <button type="button" onclick="closeModal('modal-community-login'); openForgotPasswordModal();" class="text-[11px] text-cyan-400 hover:text-cyan-300 hover:underline">
+                            Esqueci minha senha
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <i data-lucide="lock" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                        <input type="password" id="comm-login-password" required placeholder="••••••••" class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="btn-comm-login-submit" class="w-full py-3.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 active:scale-[0.98] text-white font-bold text-sm shadow-lg shadow-cyan-600/25 transition flex items-center justify-center gap-2">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                        <span>Entrar na Comunidade</span>
+                    </button>
+                </div>
+
+                <!-- Divisor Visual -->
+                <div class="relative my-4">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-800"></div></div>
+                    <div class="relative flex justify-center text-xs uppercase"><span class="bg-slate-900 px-3 text-slate-400 font-mono text-[10px] tracking-wider font-semibold">Novo na Comunidade?</span></div>
+                </div>
+
+                <div>
+                    <button type="button" onclick="openCommunityRegisterModal()" class="w-full py-3 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 hover:text-cyan-200 text-xs font-bold border border-cyan-500/30 transition flex items-center justify-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-cyan-400"></i>
+                        <span>Criar Conta na Comunidade (Cadastro Imediato)</span>
+                    </button>
+                    <p class="text-[11px] text-slate-500 text-center mt-2 leading-relaxed">
+                        Acesso aberto a publicações, eventos e debates científicos sem aprovação prévia.
+                    </p>
+                </div>
+
+                <!-- Chaveador Rápido para Membro LACC -->
+                <div class="pt-3 border-t border-slate-800/80 text-center">
+                    <button type="button" onclick="closeModal('modal-community-login'); openLoginModal();" class="text-xs text-amber-400 hover:text-amber-300 hover:underline flex items-center justify-center gap-1.5 mx-auto">
+                        <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+                        <span>É membro oficial da LACC? Acesse a Área de Membros</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= 2.0.2 MODAL DE CADASTRO ABERTO (COMUNIDADE) ================= -->
+    <div id="modal-community-register" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-cyan-500/30 rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl animate-fade-in text-white relative max-h-[92vh] overflow-y-auto">
+            <button onclick="closeModal('modal-community-register')" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="text-center space-y-2 mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 mx-auto flex items-center justify-center">
+                    <i data-lucide="sparkles" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white">Criar Conta na Comunidade</h3>
+                <p class="text-xs text-slate-400">Junte-se à rede aberta de Ciências Criminais da LACC</p>
+            </div>
+
+            <!-- Aviso de Cadastro Aberto -->
+            <div class="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/25 mb-5 flex items-start gap-3">
+                <i data-lucide="info" class="w-4 h-4 text-cyan-400 shrink-0 mt-0.5"></i>
+                <p class="text-xs text-cyan-200/90 leading-relaxed">
+                    <strong>Acesso Aberto:</strong> O cadastro na Comunidade é liberado imediatamente para participação científica. Não confere cargo nem acesso à gestão interna da Liga.
+                </p>
+            </div>
+
+            <form id="form-community-register" onsubmit="submitCommunityRegister(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Nome Completo *</label>
+                    <input type="text" id="comm-reg-name" required placeholder="Seu nome completo" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">E-mail Principal *</label>
+                        <input type="email" id="comm-reg-email" required placeholder="seu.email@exemplo.com" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Nome de Exibição Público</label>
+                        <input type="text" id="comm-reg-display" placeholder="Como quer aparecer nos debates" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Instituição / Atuação</label>
+                        <input type="text" id="comm-reg-institution" placeholder="Ex: Faculdade, OAB, Perícia" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Áreas de Interesse</label>
+                        <input type="text" id="comm-reg-interests" placeholder="Ex: Perícia Digital, Tribunal do Júri" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Criar Senha (Mín. 8 caracteres) *</label>
+                        <input type="password" id="comm-reg-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Confirmar Senha *</label>
+                        <input type="password" id="comm-reg-confirm-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="btn-comm-reg-submit" class="w-full py-3.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm shadow-lg shadow-cyan-600/25 transition flex items-center justify-center gap-2">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i>
+                        <span>Concluir Cadastro na Comunidade</span>
+                    </button>
+                </div>
+
+                <div class="pt-2 text-center">
+                    <button type="button" onclick="closeModal('modal-community-register'); openCommunityLoginModal();" class="text-xs text-slate-400 hover:text-white transition">
+                        Já tem conta na Comunidade? Fazer login
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- ================= 2. MODAL DE LOGIN (ÁREA DE MEMBROS) ================= -->
@@ -384,8 +569,13 @@
                     </p>
                 </div>
 
-                <div class="pt-2 text-center">
-                    <button type="button" onclick="closeModal('modal-login')" class="text-xs text-slate-500 hover:text-slate-300 transition">
+                <!-- Chaveador Rápido para a Comunidade Aberta -->
+                <div class="pt-3 border-t border-slate-800/80 text-center flex flex-col gap-2">
+                    <button type="button" onclick="closeModal('modal-login'); openCommunityLoginModal();" class="text-xs text-cyan-400 hover:text-cyan-300 hover:underline flex items-center justify-center gap-1.5 mx-auto">
+                        <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+                        <span>Procura a Comunidade Aberta? Entrar na Comunidade</span>
+                    </button>
+                    <button type="button" onclick="closeModal('modal-login')" class="text-xs text-slate-500 hover:text-slate-300 transition mt-1">
                         Voltar para a página inicial
                     </button>
                 </div>
@@ -683,8 +873,29 @@
                 </div>
             </div>
 
+            <!-- Seletor de Ambiente: LACC vs Comunidade -->
+            <div class="px-3 pt-3 pb-2" id="sidebar-env-selector-container">
+                <div class="flex items-center p-1 bg-slate-950/80 rounded-xl border border-slate-800 text-xs">
+                    <button id="btn-env-member" onclick="switchEnvironment('member')" class="flex-1 py-1.5 px-2 rounded-lg font-semibold transition flex items-center justify-center gap-1.5 bg-emerald-600 text-white shadow-sm">
+                        <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+                        <span>LACC</span>
+                    </button>
+                    <button id="btn-env-community" onclick="switchEnvironment('community')" class="flex-1 py-1.5 px-2 rounded-lg font-semibold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-cyan-300">
+                        <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+                        <span>Comunidade</span>
+                    </button>
+                </div>
+            </div>
+
             <!-- Navigation Links -->
-            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto" id="desktop-nav">
+            <nav class="flex-1 px-3 py-2 space-y-1 overflow-y-auto" id="desktop-nav">
+                <!-- Botão Comunidade integrado -->
+                <button onclick="navigateTo('community')" data-nav="community" class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition text-cyan-300 hover:bg-cyan-950/40 hover:text-cyan-200 border border-cyan-500/20 mb-2">
+                    <i data-lucide="globe" class="w-5 h-5 text-cyan-400"></i>
+                    <span class="flex-1 text-left font-semibold">Comunidade Aberta</span>
+                    <span class="text-[9px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded font-mono">HUB</span>
+                </button>
+
                 <button onclick="navigateTo('dashboard')" data-nav="dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
                     <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
                     <span>Dashboard</span>
@@ -1379,6 +1590,116 @@
                     </div>
                 </section>
 
+                <!-- ================= VIEW COMUNIDADE DE CIÊNCIAS CRIMINAIS ================= -->
+                <section id="view-community" class="space-y-6 hidden">
+                    <!-- Banner de Contexto do Ambiente Comunitário -->
+                    <div class="bg-gradient-to-r from-slate-900 via-cyan-950 to-slate-900 rounded-2xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 border border-cyan-500/30 relative overflow-hidden">
+                        <div class="space-y-2 z-10">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                                <i data-lucide="globe" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                Espaço Aberto & Colaborativo
+                            </span>
+                            <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white">Comunidade de Ciências Criminais</h2>
+                            <p class="text-slate-300 text-sm max-w-2xl leading-relaxed">
+                                Plataforma aberta dedicada ao diálogo entre estudantes, advogados, peritos e pesquisadores. Debata teses, acesse produções e conecte-se à rede de ciências criminais da LACC.
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap gap-2.5 z-10" id="community-action-buttons">
+                            <button onclick="openModal('modal-edit-community-profile')" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold shadow-lg shadow-cyan-600/20 transition">
+                                <i data-lucide="user-pen" class="w-4 h-4"></i>
+                                <span>Editar Perfil Comunitário</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Cartão de Perfil Comunitário do Usuário -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm" id="community-profile-card">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 rounded-2xl bg-cyan-500/15 text-cyan-600 border border-cyan-500/30 flex items-center justify-center font-bold text-2xl" id="comm-profile-avatar">
+                                    C
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2.5">
+                                        <h3 class="text-lg font-bold text-slate-800" id="comm-profile-display-name">Carregando...</h3>
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-700 border border-cyan-500/30" id="comm-profile-role-badge">Participante</span>
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200" id="comm-profile-status-badge">Ativo</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 mt-0.5" id="comm-profile-inst">Instituição não informada</p>
+                                    <p class="text-xs text-slate-600 mt-1 italic" id="comm-profile-bio">Sem biografia cadastrada.</p>
+                                </div>
+                            </div>
+                            <div class="text-right sm:self-start">
+                                <span class="text-[11px] font-mono text-slate-400 block" id="comm-profile-interests">Interesses: Geral</span>
+                            </div>
+                        </div>
+
+                        <!-- Banner Especial caso o membro institucional ainda não tenha ativado perfil comunitário -->
+                        <div id="comm-activate-prompt" class="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hidden">
+                            <div class="flex items-start gap-3">
+                                <i data-lucide="shield-alert" class="w-5 h-5 text-amber-600 shrink-0 mt-0.5"></i>
+                                <div>
+                                    <h4 class="text-xs font-bold text-amber-900">Seu perfil comunitário público está inativo</h4>
+                                    <p class="text-xs text-amber-700 mt-0.5">
+                                        Como membro da LACC, seus dados internos não são publicados automaticamente. Ative seu perfil comunitário para participar dos debates públicos com seu nome acadêmico.
+                                    </p>
+                                </div>
+                            </div>
+                            <button onclick="activateMyCommunityProfile()" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow transition shrink-0">
+                                Ativar Meu Perfil Comunitário
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Módulos e Espaços da Comunidade -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Módulo 1: Debates & Jurisprudência -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm hover:border-cyan-500/40 transition">
+                            <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-4">
+                                <i data-lucide="messages-square" class="w-5 h-5"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm">Fórum de Ciências Criminais</h4>
+                            <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                                Espaço de intercâmbio sobre standard probatório, cadeia de custódia e jurisprudência criminal dos Tribunais Superiores.
+                            </p>
+                            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-cyan-600 font-semibold">
+                                <span>Espaço Aberto</span>
+                                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+
+                        <!-- Módulo 2: Pesquisas & Publicações -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm hover:border-cyan-500/40 transition">
+                            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
+                                <i data-lucide="book-marked" class="w-5 h-5"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm">Produção Científica Aberta</h4>
+                            <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                                Artigos revisados por pares, cartilhas práticas de local de crime e anais de eventos acadêmicos disponibilizados para a sociedade.
+                            </p>
+                            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-amber-600 font-semibold">
+                                <span>Acesso Livre</span>
+                                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+
+                        <!-- Módulo 3: Grupos de Estudo & Networking -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm hover:border-cyan-500/40 transition">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                                <i data-lucide="network" class="w-5 h-5"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm">Grupos de Estudo Integrados</h4>
+                            <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                                Conexão direta entre graduandos de Direito, peritos oficiais, advogados criminalistas e pesquisadores das ciências forenses.
+                            </p>
+                            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-emerald-600 font-semibold">
+                                <span>Interdisciplinar</span>
+                                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
             </main>
 
             <!-- Bottom Navigation Bar for Mobile -->
@@ -1875,6 +2196,57 @@
             <div class="pt-4 border-t border-slate-100 mt-5 flex justify-end">
                 <button onclick="closeModal('modal-share')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">Fechar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL EDITAR PERFIL COMUNITÁRIO ================= -->
+    <div id="modal-edit-community-profile" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-cyan-500/30 rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl animate-fade-in text-white relative max-h-[92vh] overflow-y-auto">
+            <button onclick="closeModal('modal-edit-community-profile')" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="text-center space-y-2 mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 mx-auto flex items-center justify-center">
+                    <i data-lucide="user-pen" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white">Editar Perfil Comunitário</h3>
+                <p class="text-xs text-slate-400">Personalize como você aparece na rede de Ciências Criminais</p>
+            </div>
+
+            <form id="form-edit-comm-profile" onsubmit="submitEditCommunityProfile(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Nome de Exibição Público *</label>
+                    <input type="text" id="comm-edit-display-name" required placeholder="Como deseja ser chamado na comunidade" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Instituição / Atuação</label>
+                        <input type="text" id="comm-edit-institution" placeholder="Ex: OAB, Faculdade, Perícia" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Cidade / Estado</label>
+                        <input type="text" id="comm-edit-city" placeholder="Ex: Goiânia - GO" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Áreas de Interesse Forense</label>
+                    <input type="text" id="comm-edit-interests" placeholder="Ex: Direito Penal, Perícia Digital, Criminologia" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Biografia Curta</label>
+                    <textarea id="comm-edit-bio" rows="3" placeholder="Compartilhe suas linhas de estudo ou atuação prática..." class="w-full px-3.5 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"></textarea>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="btn-save-comm-profile" class="w-full py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-lg shadow-cyan-600/25 transition">
+                        Salvar Perfil Comunitário
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

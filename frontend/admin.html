@@ -1534,26 +1534,71 @@
                     statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-900/20 text-rose-400 border border-rose-800/30">❌ ${u.status}</span>`;
                 }
 
+                // Badges de Vínculos Separados (LACC vs Comunidade)
+                const isMember = u.member_access === 1;
+                const isCommunity = u.community_access === 1;
+                const commStatus = (u.community_status || 'active').toLowerCase();
+
+                const envBadges = `
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        ${isMember 
+                            ? '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">🏛️ LACC</span>' 
+                            : '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-800 text-slate-400 border border-slate-700">Sem Vínculo LACC</span>'}
+                        ${isCommunity 
+                            ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold ${commStatus === 'suspended' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'}">🌐 Comunidade${commStatus === 'suspended' ? ' (Suspensa)' : ''}</span>` 
+                            : ''}
+                    </div>
+                `;
+
                 // Opções de governança de status
                 let statusActions = '';
                 const isPaulo = u.email === 'paulo.alberto.ofc@gmail.com';
 
                 if (!isPaulo) {
-                    if (st === 'active' || st === 'ativo') {
-                        statusActions = `
-                            <button onclick="changeMemberStatus(${u.id}, 'suspended')" title="Suspender acesso temporariamente" class="p-1.5 rounded-lg bg-slate-800 hover:bg-amber-900/30 text-slate-400 hover:text-amber-300 border border-slate-700 transition">
-                                <i data-lucide="user-minus" class="w-3.5 h-3.5"></i>
-                            </button>
-                            <button onclick="changeMemberStatus(${u.id}, 'inactive')" title="Encerrar vínculo institucional (preserva histórico)" class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/30 text-slate-400 hover:text-rose-300 border border-slate-700 transition">
-                                <i data-lucide="user-x" class="w-3.5 h-3.5"></i>
-                            </button>
-                        `;
-                    } else if (st === 'suspended' || st === 'inactive' || st === 'inativo') {
-                        statusActions = `
-                            <button onclick="changeMemberStatus(${u.id}, 'active')" title="Reativar membro" class="p-1.5 rounded-lg bg-slate-800 hover:bg-emerald-900/30 text-slate-400 hover:text-emerald-300 border border-slate-700 transition">
-                                <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+                    // Se não for membro da LACC, oferecer botão para conceder vínculo institucional
+                    if (!isMember) {
+                        statusActions += `
+                            <button onclick="grantMembershipModal(${u.id}, '${u.name}')" title="Conceder vínculo institucional na LACC" class="px-2 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[10px] font-bold border border-emerald-500/30 transition flex items-center gap-1">
+                                <i data-lucide="award" class="w-3.5 h-3.5"></i>
+                                <span>+ LACC</span>
                             </button>
                         `;
+                    }
+
+                    // Se for participante da comunidade, permitir suspender/reativar comunidade separadamente
+                    if (isCommunity) {
+                        if (commStatus === 'suspended') {
+                            statusActions += `
+                                <button onclick="toggleCommunityStatus(${u.id}, 'active')" title="Reativar acesso na Comunidade" class="p-1.5 rounded-lg bg-slate-800 hover:bg-cyan-900/30 text-slate-400 hover:text-cyan-300 border border-slate-700 transition">
+                                    <i data-lucide="globe-2" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                </button>
+                            `;
+                        } else {
+                            statusActions += `
+                                <button onclick="toggleCommunityStatus(${u.id}, 'suspended')" title="Suspender apenas na Comunidade" class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/30 text-slate-400 hover:text-rose-300 border border-slate-700 transition">
+                                    <i data-lucide="globe-2" class="w-3.5 h-3.5 text-rose-400"></i>
+                                </button>
+                            `;
+                        }
+                    }
+
+                    if (isMember) {
+                        if (st === 'active' || st === 'ativo') {
+                            statusActions += `
+                                <button onclick="changeMemberStatus(${u.id}, 'suspended')" title="Suspender acesso LACC" class="p-1.5 rounded-lg bg-slate-800 hover:bg-amber-900/30 text-slate-400 hover:text-amber-300 border border-slate-700 transition">
+                                    <i data-lucide="user-minus" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button onclick="changeMemberStatus(${u.id}, 'inactive')" title="Encerrar vínculo LACC (preserva histórico)" class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/30 text-slate-400 hover:text-rose-300 border border-slate-700 transition">
+                                    <i data-lucide="user-x" class="w-3.5 h-3.5"></i>
+                                </button>
+                            `;
+                        } else if (st === 'suspended' || st === 'inactive' || st === 'inativo') {
+                            statusActions += `
+                                <button onclick="changeMemberStatus(${u.id}, 'active')" title="Reativar membro LACC" class="p-1.5 rounded-lg bg-slate-800 hover:bg-emerald-900/30 text-slate-400 hover:text-emerald-300 border border-slate-700 transition">
+                                    <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+                                </button>
+                            `;
+                        }
                     }
                 }
 
@@ -1567,6 +1612,7 @@
                                 <div>
                                     <span class="block text-white font-bold leading-snug">${u.name}</span>
                                     <span class="block text-[10px] text-slate-400 font-normal">${u.course || 'Direito'} • ${u.semester || 'Semestre'}</span>
+                                    ${envBadges}
                                 </div>
                             </div>
                         </td>
@@ -1633,6 +1679,51 @@
                 if (!res.ok) throw new Error(data.detail || 'Falha ao atualizar status.');
 
                 showToastNotification(data.message || 'Status atualizado com sucesso!', 'success');
+                await loadUsers();
+            } catch (err) {
+                showToastNotification(err.message, 'error');
+            }
+        }
+
+        async function grantMembershipModal(userId, userName) {
+            const role = prompt(`Conceder vínculo institucional da LACC para "${userName}".\nInforme o cargo inicial (ex: membro, diretoria, tesouraria, pesquisa):`, 'membro');
+            if (!role) return;
+
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch(`/api/admin/users/${userId}/grant-membership`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ role_slug: role.trim().toLowerCase() })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Erro ao conceder vínculo.');
+                showToastNotification(data.message || 'Vínculo concedido com sucesso!', 'success');
+                await loadUsers();
+            } catch (err) {
+                showToastNotification(err.message, 'error');
+            }
+        }
+
+        async function toggleCommunityStatus(userId, newStatus) {
+            if (!confirm(`Deseja alterar o status comunitário deste usuário para "${newStatus}"?`)) return;
+
+            const token = localStorage.getItem('lacc_token');
+            try {
+                const res = await fetch(`/api/admin/users/${userId}/community-status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Erro ao atualizar status comunitário.');
+                showToastNotification(data.message || 'Status comunitário atualizado com sucesso!', 'success');
                 await loadUsers();
             } catch (err) {
                 showToastNotification(err.message, 'error');

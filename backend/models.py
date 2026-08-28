@@ -161,5 +161,39 @@ class MemberStatusUpdate(BaseModel):
     status: str
     reason: Optional[str] = None
 
+class CommunityRegisterRequest(BaseModel):
+    name: str
+    email: str
+    display_name: Optional[str] = None
+    institution: Optional[str] = None
+    interests: Optional[str] = None
+    password: str
+    password_confirm: str
 
+class CommunityProfileUpdate(BaseModel):
+    display_name: Optional[str] = None
+    bio: Optional[str] = None
+    interests: Optional[str] = None
+    institution: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    avatar_url: Optional[str] = None
 
+class CommunityActivateProfileRequest(BaseModel):
+    display_name: Optional[str] = None
+    bio: Optional[str] = None
+    interests: Optional[str] = None
+    institution: Optional[str] = None
+
+class GrantMembershipRequest(BaseModel):
+    role_slug: Optional[str] = "member"
+    course: Optional[str] = "Direito"
+    semester: Optional[str] = "1º Período"
+    registration_number: Optional[str] = None
+
+class CommunityStatusUpdate(BaseModel):
+    status: str # 'active', 'suspended', 'muted'
+    reason: Optional[str] = None
+
+class ContentVisibilityUpdate(BaseModel):
+    visibility: str # 'public', 'community', 'members', 'department', 'private'

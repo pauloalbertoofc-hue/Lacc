@@ -124,6 +124,27 @@ def init_db():
             )
         """)
 
+        # Tabela de Perfis Comunitários (Comunidade Aberta de Ciências Criminais)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS community_profiles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER UNIQUE NOT NULL,
+                display_name TEXT NOT NULL,
+                avatar_url TEXT,
+                bio TEXT,
+                interests TEXT,
+                institution TEXT,
+                city TEXT,
+                state TEXT,
+                community_role TEXT DEFAULT 'participant',
+                status TEXT DEFAULT 'active',
+                suspension_reason TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES members(id) ON DELETE CASCADE
+            )
+        """)
+
         # Configurações gerais da Liga
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS league_settings (

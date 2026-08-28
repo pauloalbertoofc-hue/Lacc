@@ -91,23 +91,55 @@ function toggleLandingDrawer() {
     }
 }
 
+function getCurrentUser() {
+    try {
+        return JSON.parse(localStorage.getItem('lacc_user') || 'null');
+    } catch (e) {
+        return null;
+    }
+}
+
 function openLoginModal() {
     const isAuth = localStorage.getItem('lacc_auth') === 'true';
     if (isAuth) {
-        // Se já está logado, entra direto no Dashboard!
-        goToDashboard();
+        const u = getCurrentUser();
+        if (u && u.has_member_access) {
+            goToDashboard('member');
+        } else {
+            goToDashboard('community');
+        }
     } else {
         openModal('modal-login');
     }
 }
 
-function goToDashboard() {
+function openCommunityLoginModal() {
+    const isAuth = localStorage.getItem('lacc_auth') === 'true';
+    if (isAuth) {
+        goToDashboard('community');
+    } else {
+        openModal('modal-community-login');
+    }
+}
+
+function openCommunityRegisterModal() {
+    closeModal('modal-community-login');
+    openModal('modal-community-register');
+}
+
+function goToDashboard(initialEnv = null) {
     const landing = document.getElementById('app-landing');
     const dashboard = document.getElementById('app-dashboard');
     if (landing) landing.classList.add('hidden');
     if (dashboard) dashboard.classList.remove('hidden');
-    window.location.hash = '#dashboard';
-    loadDashboard();
+
+    const u = getCurrentUser();
+    let targetEnv = initialEnv;
+    if (!targetEnv) {
+        targetEnv = (u && !u.has_member_access && u.has_community_access) ? 'community' : 'member';
+    }
+
+    switchEnvironment(targetEnv);
     initIcons();
 }
 
@@ -142,14 +174,124 @@ async function submitLogin(e) {
 
         updateAdminVisibility();
         closeModal('modal-login');
-        goToDashboard();
-        showToast(`Bem-vindo(a), ${res.user.name}!`);
+
+        if (res.user.has_member_access) {
+            goToDashboard('member');
+            showToast(`Bem-vindo(a) à Área de Membros, ${res.user.name}!`);
+        } else if (res.user.has_community_access) {
+            goToDashboard('community');
+            showToast(`Bem-vindo(a) à Comunidade LACC, ${res.user.name}!`);
+        } else {
+            goToDashboard();
+            showToast(`Bem-vindo(a), ${res.user.name}!`);
+        }
     } catch (err) {
         showToast(err.message || 'Falha na autenticação.', 'error');
     } finally {
         if (submitBtn) {
             submitBtn.disabled = false;
-            submitBtn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i><span>Entrar no Dashboard</span>`;
+            submitBtn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i><span>Entrar na Área de Membros</span>`;
+            initIcons();
+        }
+    }
+}
+
+async function submitCommunityLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('comm-login-email')?.value.trim();
+    const password = document.getElementById('comm-login-password')?.value;
+
+    if (!email || !password) {
+        showToast('Informe seu e-mail e senha.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-comm-login-submit');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-spin mr-2">⏳</span> Entrando...`;
+    }
+
+    try {
+        const res = await api.login(email, password);
+        localStorage.setItem('lacc_token', res.access_token);
+        localStorage.setItem('lacc_user', JSON.stringify(res.user));
+        localStorage.setItem('lacc_auth', 'true');
+        localStorage.setItem('lacc_user_email', res.user.email);
+
+        updateAdminVisibility();
+        closeModal('modal-community-login');
+        goToDashboard('community');
+        showToast(`Bem-vindo(a) à Comunidade, ${res.user.name}!`);
+    } catch (err) {
+        showToast(err.message || 'Falha no login comunitário.', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4"></i><span>Entrar na Comunidade</span>`;
+            initIcons();
+        }
+    }
+}
+
+async function submitCommunityRegister(e) {
+    e.preventDefault();
+    const name = document.getElementById('comm-reg-name')?.value.trim();
+    const email = document.getElementById('comm-reg-email')?.value.trim();
+    const displayName = document.getElementById('comm-reg-display')?.value.trim();
+    const institution = document.getElementById('comm-reg-institution')?.value.trim();
+    const interests = document.getElementById('comm-reg-interests')?.value.trim();
+    const password = document.getElementById('comm-reg-password')?.value;
+    const confirmPassword = document.getElementById('comm-reg-confirm-password')?.value;
+
+    if (!name || !email || !password || !confirmPassword) {
+        showToast('Preencha os campos obrigatórios (*).', 'error');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showToast('A confirmação de senha não confere.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-comm-reg-submit');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="animate-spin mr-2">⏳</span> Criando conta...`;
+    }
+
+    try {
+        const payload = {
+            name,
+            email,
+            display_name: displayName || name,
+            institution: institution || null,
+            interests: interests || null,
+            password,
+            password_confirm: confirmPassword
+        };
+        const res = await api.registerCommunity(payload);
+        closeModal('modal-community-register');
+        showToast(res.message || 'Conta criada na Comunidade com sucesso!');
+
+        // Tentar autenticação automática ou abrir modal de login
+        try {
+            const loginRes = await api.login(email, password);
+            localStorage.setItem('lacc_token', loginRes.access_token);
+            localStorage.setItem('lacc_user', JSON.stringify(loginRes.user));
+            localStorage.setItem('lacc_auth', 'true');
+            localStorage.setItem('lacc_user_email', loginRes.user.email);
+            updateAdminVisibility();
+            goToDashboard('community');
+        } catch (authErr) {
+            openCommunityLoginModal();
+        }
+    } catch (err) {
+        showToast(err.message || 'Falha ao criar conta na Comunidade.', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="user-plus" class="w-4 h-4"></i><span>Concluir Cadastro na Comunidade</span>`;
             initIcons();
         }
     }
@@ -778,9 +920,176 @@ function showToast(message, type = 'success') {
 }
 
 // ==========================================
+// CHAVEAMENTO DE AMBIENTE & COMUNIDADE
+// ==========================================
+let currentEnvironment = 'member'; // 'member' | 'community'
+
+function switchEnvironment(env) {
+    const u = getCurrentUser();
+    const btnMember = document.getElementById('btn-env-member');
+    const btnCommunity = document.getElementById('btn-env-community');
+    const viewCommunity = document.getElementById('view-community');
+
+    if (env === 'member') {
+        if (u && !u.has_member_access && !u.is_superadmin) {
+            showToast('Acesso restrito: Sua conta possui acesso apenas à Comunidade Aberta. Solicite admissão para a Área de Membros.', 'warning');
+            switchEnvironment('community');
+            return;
+        }
+
+        currentEnvironment = 'member';
+        window.location.hash = '#dashboard';
+
+        if (btnMember) {
+            btnMember.className = 'flex-1 py-1.5 px-2 rounded-lg font-semibold transition flex items-center justify-center gap-1.5 bg-emerald-600 text-white shadow-sm';
+        }
+        if (btnCommunity) {
+            btnCommunity.className = 'flex-1 py-1.5 px-2 rounded-lg font-semibold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-cyan-300';
+        }
+
+        if (viewCommunity) viewCommunity.classList.add('hidden');
+        navigateTo('dashboard');
+    } else {
+        currentEnvironment = 'community';
+        window.location.hash = '#community';
+
+        if (btnMember) {
+            btnMember.className = 'flex-1 py-1.5 px-2 rounded-lg font-semibold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-emerald-300';
+        }
+        if (btnCommunity) {
+            btnCommunity.className = 'flex-1 py-1.5 px-2 rounded-lg font-semibold transition flex items-center justify-center gap-1.5 bg-cyan-600 text-white shadow-sm';
+        }
+
+        // Esconder seções institucionais de membros e exibir Comunidade
+        document.querySelectorAll('#view-container > section').forEach(sec => {
+            if (sec.id === 'view-community') {
+                sec.classList.remove('hidden');
+            } else {
+                sec.classList.add('hidden');
+            }
+        });
+
+        // Atualizar destaque na sidebar
+        document.querySelectorAll('#desktop-nav .nav-btn').forEach(btn => {
+            if (btn.getAttribute('data-nav') === 'community') {
+                btn.className = 'nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold transition bg-cyan-600 text-white shadow-sm mb-2';
+            } else {
+                btn.className = 'nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white';
+            }
+        });
+
+        loadCommunityProfile();
+    }
+    initIcons();
+}
+
+async function loadCommunityProfile() {
+    const u = getCurrentUser();
+    if (!u) return;
+
+    const nameEl = document.getElementById('comm-profile-display-name');
+    const avatarEl = document.getElementById('comm-profile-avatar');
+    const instEl = document.getElementById('comm-profile-inst');
+    const bioEl = document.getElementById('comm-profile-bio');
+    const roleBadge = document.getElementById('comm-profile-role-badge');
+    const statusBadge = document.getElementById('comm-profile-status-badge');
+    const interestsEl = document.getElementById('comm-profile-interests');
+    const promptEl = document.getElementById('comm-activate-prompt');
+
+    if (!u.has_community_access) {
+        if (nameEl) nameEl.innerText = u.name;
+        if (avatarEl) avatarEl.innerText = (u.name || 'M')[0].toUpperCase();
+        if (instEl) instEl.innerText = 'Liga Acadêmica de Ciências Criminais (LACC)';
+        if (bioEl) bioEl.innerText = 'Perfil comunitário público ainda não ativado.';
+        if (roleBadge) roleBadge.innerText = 'Membro Institucional';
+        if (statusBadge) statusBadge.innerText = 'Inativo na Comunidade';
+        if (promptEl) promptEl.classList.remove('hidden');
+        return;
+    }
+
+    if (promptEl) promptEl.classList.add('hidden');
+
+    try {
+        const profile = await api.getMyCommunityProfile();
+        if (nameEl) nameEl.innerText = profile.display_name || u.name;
+        if (avatarEl) avatarEl.innerText = (profile.display_name || u.name)[0].toUpperCase();
+        if (instEl) instEl.innerText = profile.institution || 'Instituição não informada';
+        if (bioEl) bioEl.innerText = profile.bio || 'Sem biografia cadastrada.';
+        if (roleBadge) roleBadge.innerText = profile.community_role === 'moderator' ? 'Moderador' : 'Participante';
+        if (statusBadge) statusBadge.innerText = profile.status === 'active' ? 'Ativo' : profile.status;
+        if (interestsEl) interestsEl.innerText = `Interesses: ${profile.interests || 'Geral'}`;
+
+        const editName = document.getElementById('comm-edit-display-name');
+        const editInst = document.getElementById('comm-edit-institution');
+        const editCity = document.getElementById('comm-edit-city');
+        const editInterests = document.getElementById('comm-edit-interests');
+        const editBio = document.getElementById('comm-edit-bio');
+        if (editName) editName.value = profile.display_name || '';
+        if (editInst) editInst.value = profile.institution || '';
+        if (editCity) editCity.value = profile.city ? `${profile.city}${profile.state ? ' - ' + profile.state : ''}` : '';
+        if (editInterests) editInterests.value = profile.interests || '';
+        if (editBio) editBio.value = profile.bio || '';
+    } catch (e) {
+        console.warn('Erro ao carregar perfil comunitário:', e);
+    }
+}
+
+async function activateMyCommunityProfile() {
+    const u = getCurrentUser();
+    if (!u) return;
+
+    try {
+        await api.activateCommunityProfile({ display_name: u.name });
+        u.has_community_access = true;
+        localStorage.setItem('lacc_user', JSON.stringify(u));
+        showToast('Perfil na Comunidade ativado com sucesso!');
+        loadCommunityProfile();
+    } catch (err) {
+        showToast(err.message || 'Erro ao ativar perfil comunitário.', 'error');
+    }
+}
+
+async function submitEditCommunityProfile(e) {
+    e.preventDefault();
+    const displayName = document.getElementById('comm-edit-display-name')?.value.trim();
+    const institution = document.getElementById('comm-edit-institution')?.value.trim();
+    const city = document.getElementById('comm-edit-city')?.value.trim();
+    const interests = document.getElementById('comm-edit-interests')?.value.trim();
+    const bio = document.getElementById('comm-edit-bio')?.value.trim();
+
+    try {
+        const payload = {
+            display_name: displayName,
+            institution: institution || null,
+            city: city || null,
+            interests: interests || null,
+            bio: bio || null
+        };
+        await api.updateMyCommunityProfile(payload);
+        closeModal('modal-edit-community-profile');
+        showToast('Perfil comunitário atualizado com sucesso!');
+        loadCommunityProfile();
+    } catch (err) {
+        showToast(err.message || 'Falha ao atualizar perfil comunitário.', 'error');
+    }
+}
+
+// ==========================================
 // NAVEGAÇÃO ENTRE ABAS
 // ==========================================
 function navigateTo(viewId) {
+    if (viewId === 'community') {
+        switchEnvironment('community');
+        return;
+    }
+
+    const u = getCurrentUser();
+    if (viewId !== 'profile' && u && !u.has_member_access && !u.is_superadmin) {
+        showToast('Acesso restrito: Este recurso exige vínculo institucional ativo de membro da LACC.', 'warning');
+        switchEnvironment('community');
+        return;
+    }
+
     currentView = viewId;
 
     // Esconder todas as seções

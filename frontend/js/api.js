@@ -344,6 +344,49 @@ const api = {
     },
     getAdminAudit(limit = 50) {
         return this.request(`/admin/audit?limit=${limit}`);
+    },
+
+    // Transparência Financeira Institucional
+    getFinancialTransparency() {
+        return this.request('/finances/transparency');
+    },
+
+    // Comunidade de Ciências Criminais
+    registerCommunity(data) {
+        return this.request('/auth/community/register', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+    activateCommunityProfile(data = {}) {
+        return this.request('/auth/community/activate-profile', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+    getMyCommunityProfile() {
+        return this.request('/auth/community/profile/me');
+    },
+    updateMyCommunityProfile(data) {
+        return this.request('/auth/community/profile/me', {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    },
+    getPublicCommunityProfile(userId) {
+        return this.request(`/auth/community/profile/${userId}`);
+    },
+    grantInstitutionalMembership(userId, data) {
+        return this.request(`/admin/users/${userId}/grant-membership`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+    updateCommunityStatus(userId, status, reason = null) {
+        return this.request(`/admin/users/${userId}/community-status`, {
+            method: 'PUT',
+            body: JSON.stringify({ status, reason })
+        });
     }
 };
 

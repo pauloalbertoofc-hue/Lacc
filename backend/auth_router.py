@@ -9,11 +9,13 @@ from backend.database import get_db
 from backend.models import (
     RegisterRequest, VerifyEmailRequest, ForgotPasswordRequest,
     ResetPasswordRequest, AcceptInviteRequest, MemberProfileUpdate,
-    MemberPasswordChange
+    MemberPasswordChange, CommunityRegisterRequest, CommunityProfileUpdate,
+    CommunityActivateProfileRequest
 )
 from backend.auth import (
     hash_password, verify_password, create_access_token,
-    get_current_user, log_audit_event, get_user_permissions, get_user_roles
+    get_current_user, require_community_access, log_audit_event,
+    get_user_permissions, get_user_roles
 )
 from backend.mailer import (
     send_verification_email, send_password_reset_email, APP_BASE_URL
@@ -422,4 +424,254 @@ def change_password(req: MemberPasswordChange, current_user: dict = Depends(get_
         )
 
         return {"success": True, "message": "Senha alterada com sucesso!"}
+
+# =======================================================
+# 5. COMUNIDADE DE CIÊNCIAS CRIMINAIS (CADASTRO ABERTO & PERFIS)
+# =======================================================
+@router.post("/community/register")
+def register_community_user(req: CommunityRegisterRequest, request: Request):
+    """
+    Cadastro aberto para a Comunidade de Ciências Criminais.
+    Concede acesso imediato à Comunidade sem conceder vínculo ou permissões da LACC.
+    """
+    client_ip = request.client.host if request.client else "unknown"
+    state = check_rate_limit(register_attempts, client_ip, limit=6, block_seconds=600, action_label="Cadastro Comunitário")
+
+    clean_name = req.name.strip()
+    clean_email = req.email.strip().lower()
+    clean_display = (req.display_name or clean_name).strip()
+    clean_inst = (req.institution or "").strip() or None
+    clean_interests = (req.interests or "").strip() or None
+
+    if len(clean_name) < 3:
+        raise HTTPException(status_code=400, detail="Por favor, informe seu nome completo.")
+    if "@" not in clean_email or "." not in clean_email:
+        raise HTTPException(status_code=400, detail="Endereço de e-mail inválido.")
+
+    if req.password != req.password_confirm:
+        raise HTTPException(status_code=400, detail="A confirmação de senha não confere com a senha informada.")
+
+    if len(req.password) < 8:
+        raise HTTPException(status_code=400, detail="A senha deve conter no mínimo 8 caracteres.")
+
+    if not any(c.isdigit() for c in req.password) and not any(not c.isalnum() for c in req.password):
+        raise HTTPException(status_code=400, detail="A senha deve conter pelo menos um número ou caractere especial.")
+
+    with get_db() as conn:
+        existing = conn.execute("SELECT id, community_access, member_access, status FROM members WHERE LOWER(email) = ?", (clean_email,)).fetchone()
+        
+        if existing:
+            if existing["community_access"]:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Este e-mail já possui uma conta ativa na Comunidade. Utilize o login para acessar."
+                )
+            else:
+                # O usuário já é membro da LACC ou tem cadastro pendente, mas ainda não ativou a Comunidade!
+                # Conectar a conta comunitária à identidade existente
+                pwd_hash = hash_password(req.password)
+                conn.execute("""
+                    UPDATE members 
+                    SET community_access = 1, password_hash = COALESCE(password_hash, ?)
+                    WHERE id = ?
+                """, (pwd_hash, existing["id"]))
+                user_id = existing["id"]
+
+                # Criar perfil comunitário
+                conn.execute("""
+                    INSERT OR REPLACE INTO community_profiles (
+                        user_id, display_name, institution, interests, status, community_role
+                    )
+                    VALUES (?, ?, ?, ?, 'active', 'participant')
+                """, (user_id, clean_display, clean_inst, clean_interests))
+
+                # Atribuir papel 'community_user'
+                role_comm = conn.execute("SELECT id FROM roles WHERE slug = 'community_user' LIMIT 1").fetchone()
+                if role_comm:
+                    conn.execute("INSERT OR IGNORE INTO member_roles (member_id, role_id) VALUES (?, ?)", (user_id, role_comm["id"]))
+
+                log_audit_event(
+                    user_id=user_id,
+                    action="LINK_COMMUNITY_ACCOUNT",
+                    target_entity=f"member:{user_id}",
+                    ip_address=client_ip,
+                    details={"email": clean_email, "mode": "existing_identity_linked"},
+                    conn=conn
+                )
+
+                base_url = str(request.base_url).rstrip("/")
+                return {
+                    "success": True,
+                    "user_id": user_id,
+                    "message": "Vínculo comunitário associado à sua identidade com sucesso! Você já pode entrar na Comunidade.",
+                    "dev_verification_url": f"{base_url}/"
+                }
+
+        # Novo usuário na plataforma
+        pwd_hash = hash_password(req.password)
+        cursor = conn.execute("""
+            INSERT INTO members (
+                name, email, role, status, email_verified, is_active,
+                community_access, member_access, password_hash
+            )
+            VALUES (?, ?, 'Comunidade', 'active', 0, 1, 1, 0, ?)
+        """, (clean_name, clean_email, pwd_hash))
+        user_id = cursor.lastrowid
+
+        # Criar perfil comunitário associado
+        conn.execute("""
+            INSERT INTO community_profiles (
+                user_id, display_name, institution, interests, status, community_role
+            )
+            VALUES (?, ?, ?, ?, 'active', 'participant')
+        """, (user_id, clean_display, clean_inst, clean_interests))
+
+        # Atribuir papel 'community_user'
+        role_comm = conn.execute("SELECT id FROM roles WHERE slug = 'community_user' LIMIT 1").fetchone()
+        if role_comm:
+            conn.execute("INSERT OR IGNORE INTO member_roles (member_id, role_id) VALUES (?, ?)", (user_id, role_comm["id"]))
+
+        # Gerar token criptográfico para confirmação de e-mail
+        token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(hours=48)
+        conn.execute("""
+            INSERT INTO email_verifications (member_id, token_hash, expires_at)
+            VALUES (?, ?, ?)
+        """, (user_id, token, expires_at))
+
+        log_audit_event(
+            user_id=user_id,
+            action="REGISTER_COMMUNITY_USER",
+            target_entity=f"community_user:{user_id}",
+            ip_address=client_ip,
+            details={"email": clean_email, "display_name": clean_display},
+            conn=conn
+        )
+
+    base_url = str(request.base_url).rstrip("/")
+    send_verification_email(clean_email, clean_display, token, base_url)
+
+    return {
+        "success": True,
+        "user_id": user_id,
+        "message": "Conta criada com sucesso na Comunidade de Ciências Criminais! Confirme seu e-mail para aproveitar todos os recursos.",
+        "dev_verification_url": f"{base_url}/?verify_email={token}"
+    }
+
+@router.post("/community/activate-profile")
+def activate_community_profile(req: CommunityActivateProfileRequest, current_user: dict = Depends(get_current_user)):
+    """
+    Permite a um membro da LACC ativar voluntariamente seu perfil na Comunidade.
+    Respeita a privacidade do membro sem publicar dados internos.
+    """
+    user_id = current_user["id"]
+    clean_display = (req.display_name or current_user["name"]).strip()
+    clean_bio = (req.bio or "").strip() or None
+    clean_interests = (req.interests or "").strip() or None
+    clean_institution = (req.institution or "Liga Acadêmica de Ciências Criminais").strip()
+
+    with get_db() as conn:
+        conn.execute("UPDATE members SET community_access = 1 WHERE id = ?", (user_id,))
+
+        conn.execute("""
+            INSERT INTO community_profiles (user_id, display_name, bio, interests, institution, status, community_role)
+            VALUES (?, ?, ?, ?, ?, 'active', 'participant')
+            ON CONFLICT(user_id) DO UPDATE SET
+                display_name = excluded.display_name,
+                bio = excluded.bio,
+                interests = excluded.interests,
+                institution = excluded.institution,
+                status = 'active',
+                updated_at = CURRENT_TIMESTAMP
+        """, (user_id, clean_display, clean_bio, clean_interests, clean_institution))
+
+        role_comm = conn.execute("SELECT id FROM roles WHERE slug = 'community_user' LIMIT 1").fetchone()
+        if role_comm:
+            conn.execute("INSERT OR IGNORE INTO member_roles (member_id, role_id) VALUES (?, ?)", (user_id, role_comm["id"]))
+
+        log_audit_event(
+            user_id=user_id,
+            action="ACTIVATE_COMMUNITY_PROFILE",
+            target_entity=f"member:{user_id}",
+            details={"display_name": clean_display},
+            conn=conn
+        )
+
+        return {"success": True, "message": "Perfil comunitário ativado com sucesso!"}
+
+@router.get("/community/profile/me")
+def get_my_community_profile(current_user: dict = Depends(require_community_access)):
+    """Retorna o perfil comunitário do usuário autenticado."""
+    with get_db() as conn:
+        row = conn.execute("SELECT * FROM community_profiles WHERE user_id = ?", (current_user["id"],)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Perfil comunitário não encontrado.")
+        return dict(row)
+
+@router.put("/community/profile/me")
+def update_my_community_profile(req: CommunityProfileUpdate, current_user: dict = Depends(require_community_access)):
+    """Atualiza o perfil comunitário do próprio usuário."""
+    user_id = current_user["id"]
+    with get_db() as conn:
+        profile = conn.execute("SELECT id FROM community_profiles WHERE user_id = ?", (user_id,)).fetchone()
+        if not profile:
+            raise HTTPException(status_code=404, detail="Perfil comunitário não encontrado.")
+
+        fields = []
+        params = []
+        if req.display_name is not None:
+            fields.append("display_name = ?")
+            params.append(req.display_name.strip())
+        if req.bio is not None:
+            fields.append("bio = ?")
+            params.append(req.bio.strip() or None)
+        if req.interests is not None:
+            fields.append("interests = ?")
+            params.append(req.interests.strip() or None)
+        if req.institution is not None:
+            fields.append("institution = ?")
+            params.append(req.institution.strip() or None)
+        if req.city is not None:
+            fields.append("city = ?")
+            params.append(req.city.strip() or None)
+        if req.state is not None:
+            fields.append("state = ?")
+            params.append(req.state.strip() or None)
+        if req.avatar_url is not None:
+            fields.append("avatar_url = ?")
+            params.append(req.avatar_url.strip() or None)
+
+        if fields:
+            fields.append("updated_at = CURRENT_TIMESTAMP")
+            params.append(user_id)
+            conn.execute(f"UPDATE community_profiles SET {', '.join(fields)} WHERE user_id = ?", params)
+
+        updated = conn.execute("SELECT * FROM community_profiles WHERE user_id = ?", (user_id,)).fetchone()
+        return {"success": True, "message": "Perfil comunitário atualizado com sucesso!", "profile": dict(updated)}
+
+@router.get("/community/profile/{target_user_id}")
+def get_public_community_profile(target_user_id: int):
+    """
+    Retorna a visualização pública sanitizada do perfil comunitário.
+    NUNCA expõe frequência, notas regimentais, tarefas, dados bancários ou matrículas internas.
+    """
+    with get_db() as conn:
+        row = conn.execute("""
+            SELECT id, user_id, display_name, avatar_url, bio, interests, institution,
+                   city, state, community_role, created_at
+            FROM community_profiles
+            WHERE user_id = ? AND status = 'active'
+        """, (target_user_id,)).fetchone()
+
+        if not row:
+            raise HTTPException(status_code=404, detail="Perfil comunitário não encontrado ou não público.")
+        return dict(row)
+
+# Router com prefixo direto /api/community
+community_router = APIRouter(prefix="/api/community", tags=["Comunidade Pública"])
+community_router.add_api_route("/profile/me", get_my_community_profile, methods=["GET"])
+community_router.add_api_route("/profile/me", update_my_community_profile, methods=["PUT"])
+community_router.add_api_route("/profile/{target_user_id}", get_public_community_profile, methods=["GET"])
+
+
 

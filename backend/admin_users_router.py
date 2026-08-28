@@ -6,7 +6,8 @@ from fastapi import APIRouter, HTTPException, Request, Depends, status
 
 from backend.database import get_db
 from backend.models import (
-    AccessRequestAction, CreateInviteRequest, MemberStatusUpdate, UserRolesUpdate
+    AccessRequestAction, CreateInviteRequest, MemberStatusUpdate, UserRolesUpdate,
+    GrantMembershipRequest, CommunityStatusUpdate
 )
 from backend.auth import (
     get_current_user, require_admin, require_permission, log_audit_event,
@@ -105,8 +106,9 @@ def reject_access_request(member_id: int, action_data: AccessRequestAction, requ
     return {"success": True, "message": f"Solicitação de {member['name']} recusada e arquivada."}
 
 # =======================================================
-# 2. GERENCIAMENTO COMPLETO DE MEMBROS E STATUS
+# 2. GESTÃO DE USUÁRIOS E MEMBROS (RBAC & IDENTIDADE)
 # =======================================================
+@router.get("/users")
 @router.get("/members")
 def list_all_members(
     q: Optional[str] = None,
@@ -118,16 +120,22 @@ def list_all_members(
     with get_db() as conn:
         query = """
             SELECT m.id, m.name, m.email, m.phone, m.course, m.semester, m.registration_number,
-                   m.role, m.status, m.email_verified, m.is_active, m.created_at, m.admission_date
+                   m.role, m.status, m.email_verified, m.is_active, m.created_at, m.admission_date,
+                   COALESCE(m.community_access, 0) as community_access,
+                   COALESCE(m.member_access, 0) as member_access,
+                   cp.display_name as community_display_name,
+                   cp.status as community_status,
+                   cp.community_role
             FROM members m
+            LEFT JOIN community_profiles cp ON m.id = cp.user_id
             WHERE 1=1
         """
         params = []
 
         if q:
-            query += " AND (LOWER(m.name) LIKE ? OR LOWER(m.email) LIKE ? OR LOWER(m.registration_number) LIKE ?)"
+            query += " AND (LOWER(m.name) LIKE ? OR LOWER(m.email) LIKE ? OR LOWER(m.registration_number) LIKE ? OR LOWER(cp.display_name) LIKE ?)"
             term = f"%{q.strip().lower()}%"
-            params.extend([term, term, term])
+            params.extend([term, term, term, term])
 
         if status_filter:
             query += " AND LOWER(m.status) = LOWER(?)"
@@ -338,4 +346,97 @@ def revoke_member_invite(invite_id: int, request: Request, current_user: dict = 
         )
 
         return {"success": True, "message": "Convite revogado com sucesso."}
+
+# =======================================================
+# 4. VÍNCULOS INSTITUCIONAIS & MODERAÇÃO COMUNITÁRIA
+# =======================================================
+@router.post("/users/{user_id}/grant-membership")
+def grant_institutional_membership(
+    user_id: int,
+    req: GrantMembershipRequest,
+    request: Request,
+    current_user: dict = Depends(require_permission("members:manage"))
+):
+    """
+    Associa vínculo institucional da LACC a uma identidade existente (ex: usuário da Comunidade aprovado).
+    Não duplica contas nem exige novo e-mail ou senha.
+    """
+    client_ip = request.client.host if request.client else "unknown"
+    with get_db() as conn:
+        user = conn.execute("SELECT id, name, email FROM members WHERE id = ?", (user_id,)).fetchone()
+        if not user:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+        now_str = datetime.utcnow().isoformat()
+        admission_date = datetime.utcnow().strftime("%Y-%m-%d")
+
+        conn.execute("""
+            UPDATE members
+            SET member_access = 1, status = 'active', role = 'Membro',
+                course = COALESCE(?, course, 'Direito'),
+                semester = COALESCE(?, semester, '1º Período'),
+                registration_number = COALESCE(?, registration_number),
+                admission_date = COALESCE(admission_date, ?),
+                reviewed_by = ?, reviewed_at = ?
+            WHERE id = ?
+        """, (req.course, req.semester, req.registration_number, admission_date, current_user["id"], now_str, user_id))
+
+        target_role = req.role_slug or "member"
+        role_row = conn.execute("SELECT id FROM roles WHERE slug = ? LIMIT 1", (target_role,)).fetchone()
+        if not role_row:
+            role_row = conn.execute("SELECT id FROM roles WHERE slug = 'member' LIMIT 1").fetchone()
+        if role_row:
+            conn.execute("INSERT OR IGNORE INTO member_roles (member_id, role_id) VALUES (?, ?)", (user_id, role_row["id"]))
+
+        log_audit_event(
+            user_id=current_user["id"],
+            action="GRANT_INSTITUTIONAL_MEMBERSHIP",
+            target_entity=f"member:{user_id}",
+            ip_address=client_ip,
+            details={"email": user["email"], "granted_role": target_role},
+            conn=conn
+        )
+
+    base_url = str(request.base_url).rstrip("/")
+    send_approval_email(user["email"], user["name"], base_url)
+
+    return {
+        "success": True,
+        "message": f"Vínculo institucional concedido a {user['name']} com sucesso! Agora tem acesso à Área de Membros."
+    }
+
+@router.put("/users/{user_id}/community-status")
+def update_community_status(
+    user_id: int,
+    req: CommunityStatusUpdate,
+    request: Request,
+    current_user: dict = Depends(require_permission("community.moderate"))
+):
+    """
+    Altera o status comunitário de forma estritamente independente do status institucional.
+    Suspender na comunidade NÃO altera o vínculo do membro na LACC.
+    """
+    client_ip = request.client.host if request.client else "unknown"
+    with get_db() as conn:
+        profile = conn.execute("SELECT id FROM community_profiles WHERE user_id = ?", (user_id,)).fetchone()
+        if not profile:
+            raise HTTPException(status_code=404, detail="Perfil comunitário não encontrado.")
+
+        conn.execute("""
+            UPDATE community_profiles 
+            SET status = ?, suspension_reason = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ?
+        """, (req.status, req.reason, user_id))
+
+        log_audit_event(
+            user_id=current_user["id"],
+            action="UPDATE_COMMUNITY_STATUS",
+            target_entity=f"community_profile:{user_id}",
+            ip_address=client_ip,
+            details={"new_status": req.status, "reason": req.reason},
+            conn=conn
+        )
+
+    return {"success": True, "message": f"Status comunitário atualizado para '{req.status}' com sucesso."}
+
 
