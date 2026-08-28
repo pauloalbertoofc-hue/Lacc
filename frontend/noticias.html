@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notícias & Produção Editorial — LACC</title>
+    <meta name="description" content="Portal de Notícias e Jornalismo Científico da Liga Acadêmica de Ciências Criminais (LACC). Análises, jurisprudência, perícia e produção acadêmica com fontes verificáveis.">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fbf8ed',
+                            100: '#f5edd3',
+                            200: '#ecdaa8',
+                            300: '#e0c175',
+                            400: '#d7ab4e',
+                            500: '#c79332',
+                            600: '#ab7526',
+                            700: '#895721',
+                            800: '#714620',
+                            900: '#603b1f',
+                            950: '#371e0e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .news-prose p { margin-bottom: 1.25rem; line-height: 1.75; color: #cbd5e1; font-size: 1.05rem; }
+        .news-prose h2 { font-size: 1.5rem; font-weight: 800; color: #ffffff; margin-top: 2rem; margin-bottom: 1rem; }
+        .news-prose h3 { font-size: 1.25rem; font-weight: 700; color: #f59e0b; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .news-prose blockquote { border-left: 4px solid #f59e0b; padding-left: 1.25rem; margin: 1.5rem 0; font-style: italic; color: #e2e8f0; background: rgba(245, 158, 11, 0.05); padding-top: 0.75rem; padding-bottom: 0.75rem; border-radius: 0 0.5rem 0.5rem 0; }
+        .news-prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1.25rem; color: #cbd5e1; }
+        .news-prose ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1.25rem; color: #cbd5e1; }
+        .news-prose li { margin-bottom: 0.5rem; }
+        .news-prose strong { color: #ffffff; font-weight: 700; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-amber-500 selection:text-slate-950">
+
+    <!-- Header / Barra Superior -->
+    <header class="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-md border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <a href="/" class="flex items-center gap-2.5 group">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center font-black text-slate-950 shadow-md shadow-amber-500/20 group-hover:scale-105 transition">
+                        L
+                    </div>
+                    <div>
+                        <span class="font-extrabold text-sm tracking-tight text-white block leading-none">LACC</span>
+                        <span class="text-[10px] text-amber-400 font-semibold tracking-wider uppercase block mt-0.5">Notícias & Imprensa</span>
+                    </div>
+                </a>
+            </div>
+
+            <nav class="hidden md:flex items-center gap-6 text-xs font-medium text-slate-300">
+                <a href="/" class="hover:text-amber-400 transition">Início</a>
+                <a href="/noticias" class="text-amber-400 font-bold">Todas as Matérias</a>
+                <a href="/#ciencias" class="hover:text-amber-400 transition">Áreas Forenses</a>
+                <a href="/#contato" class="hover:text-amber-400 transition">Sobre a Liga</a>
+            </nav>
+
+            <div class="flex items-center gap-2.5">
+                <a href="/?open=community" class="px-3 py-1.5 rounded-lg bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">Comunidade</span>
+                </a>
+                <a href="/?open=members" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition flex items-center gap-1.5 shadow-sm shadow-amber-500/20">
+                    <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+                    <span>Área de Membros</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTAINER PRINCIPAL -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- ================= VISTA 1: VITRINE DE NOTÍCIAS (SHOWCASE) ================= -->
+        <div id="view-showcase" class="space-y-10">
+            <!-- Hero Editorial -->
+            <div class="bg-gradient-to-r from-amber-950/50 via-slate-900 to-indigo-950/60 rounded-3xl p-6 sm:p-10 border border-amber-500/20 shadow-2xl relative overflow-hidden">
+                <div class="absolute -right-16 -bottom-16 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="max-w-3xl space-y-4 relative z-10">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        <span>Jornalismo Científico & Extensão Universitária</span>
+                    </div>
+                    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+                        Notícias, Análises & Produção das Ciências Criminais
+                    </h1>
+                    <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+                        Acompanhe análises dogmáticas, decisões dos tribunais superiores, investigações periciais e comunicados oficiais elaborados com fundamentação e fontes verificáveis.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Barra de Busca e Filtros de Categorias -->
+            <div class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="relative flex-1 max-w-md">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="public-search-input" oninput="handleSearchDebounce()" placeholder="Buscar por tema, jurisprudência, autor..." class="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+                    </div>
+                    <div id="articles-count-badge" class="text-xs text-slate-400 font-medium">
+                        Carregando matérias...
+                    </div>
+                </div>
+
+                <!-- Pílulas de Categorias -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none" id="categories-pills">
+                    <button onclick="filterCategory(null)" id="cat-pill-all" class="cat-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-amber-500 text-slate-950 shadow-sm shrink-0">
+                        Todas
+                    </button>
+                    <!-- Injetado dinamicamente -->
+                </div>
+            </div>
+
+            <!-- Matéria em Destaque Principal -->
+            <div id="featured-article-container" class="hidden">
+                <!-- Injetado dinamicamente -->
+            </div>
+
+            <!-- Grade de Matérias Recentes -->
+            <div class="space-y-4">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i data-lucide="newspaper" class="w-5 h-5 text-amber-500"></i>
+                    <span>Publicações Recentes</span>
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="news-grid">
+                    <div class="col-span-full text-center py-16 text-slate-400 text-sm">
+                        <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto text-amber-500 mb-2"></i>
+                        Carregando matérias publicadas...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card de Captura para a Newsletter Oficial -->
+            <div class="bg-gradient-to-br from-slate-900 via-indigo-950/60 to-slate-900 rounded-3xl p-8 border border-indigo-500/30 text-center max-w-3xl mx-auto space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto">
+                    <i data-lucide="mail-check" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-2xl font-extrabold text-white">Receba o Boletim «LACC em Foco»</h3>
+                <p class="text-slate-300 text-xs sm:text-sm max-w-lg mx-auto">
+                    Inscreva-se gratuitamente para receber nossa seleção periódica de julgados, artigos forenses e editais científicos diretamente no seu e-mail.
+                </p>
+                <form id="newsletter-form" onsubmit="handleNewsletterSubmit(event)" class="max-w-md mx-auto space-y-2.5">
+                    <div class="flex gap-2">
+                        <input type="email" id="nl-email-input" required placeholder="Seu melhor e-mail institucional ou pessoal" class="flex-1 px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button type="submit" id="btn-nl-submit" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm transition shrink-0">
+                            Assinar
+                        </button>
+                    </div>
+                    <label class="flex items-center justify-center gap-2 text-[11px] text-slate-400 cursor-pointer">
+                        <input type="checkbox" id="nl-consent-checkbox" required checked class="rounded text-amber-500 bg-slate-950 border-slate-800 focus:ring-amber-500">
+                        <span>Concordo em receber atualizações acadêmicas da LACC (LGPD).</span>
+                    </label>
+                </form>
+            </div>
+        </div>
+
+        <!-- ================= VISTA 2: LEITOR DA MATÉRIA COMPLETA (READER) ================= -->
+        <article id="view-reader" class="max-w-4xl mx-auto space-y-8 hidden">
+            <!-- Botão Voltar -->
+            <div>
+                <button onclick="backToShowcase()" class="inline-flex items-center gap-2 text-xs font-bold text-amber-400 hover:text-amber-300 transition py-1.5">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span>Voltar para todas as notícias</span>
+                </button>
+            </div>
+
+            <!-- Cabeçalho da Matéria -->
+            <header class="space-y-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <span id="read-category" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                        Categoria
+                    </span>
+                    <span class="text-xs text-slate-400" id="read-date">
+                        Publicado em 00/00/0000
+                    </span>
+                    <span class="text-xs text-slate-500">•</span>
+                    <span class="text-xs text-slate-400 flex items-center gap-1">
+                        <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                        <span id="read-reading-time">4 min de leitura</span>
+                    </span>
+                </div>
+
+                <h1 id="read-title" class="text-2xl sm:text-4xl font-black text-white leading-tight tracking-tight">
+                    Título da Matéria
+                </h1>
+
+                <p id="read-subtitle" class="text-base sm:text-lg text-slate-300 leading-relaxed font-medium">
+                    Linha fina / Subtítulo explicativo
+                </p>
+
+                <!-- Autor e Higienização de Privacidade -->
+                <div class="flex items-center gap-3 pt-3 border-t border-slate-800">
+                    <div class="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-amber-400 font-bold text-sm">
+                        <i data-lucide="feather" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold text-white" id="read-author">Por Integrante da Liga</div>
+                        <div class="text-xs text-slate-400" id="read-author-role">Marketing e Comunicação — LACC</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Nota de Correção / Retificação Transparente (se houver) -->
+            <div id="read-correction-box" class="p-4 rounded-xl bg-amber-500/10 border-l-4 border-amber-500 text-amber-200 text-xs leading-relaxed hidden">
+                <!-- Preenchido via JS -->
+            </div>
+
+            <!-- Imagem de Capa -->
+            <figure id="read-cover-container" class="space-y-2 hidden">
+                <div class="rounded-2xl overflow-hidden border border-slate-800 max-h-[440px]">
+                    <img id="read-cover-img" src="" alt="" class="w-full h-full object-cover">
+                </div>
+                <figcaption id="read-cover-caption" class="text-right text-[11px] text-slate-400"></figcaption>
+            </figure>
+
+            <!-- Corpo do Artigo -->
+            <div id="read-body" class="news-prose">
+                <!-- Conteúdo renderizado -->
+            </div>
+
+            <!-- SEÇÃO OFICIAL: FONTES E REFERÊNCIAS VERIFICADAS -->
+            <section class="bg-slate-900/90 rounded-2xl p-6 border border-slate-800 space-y-4">
+                <div class="border-b border-slate-800 pb-3">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <i data-lucide="library" class="w-5 h-5 text-amber-400"></i>
+                        <span>Fontes e Referências Verificadas</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1">
+                        A LACC incentiva a produção editorial baseada em evidências, precedentes judiciais e literatura científica rigorosa.
+                    </p>
+                </div>
+                <div id="read-sources-list" class="space-y-3">
+                    <!-- Preenchido dinamicamente -->
+                </div>
+            </section>
+
+            <!-- Matérias Relacionadas -->
+            <section id="read-related-section" class="space-y-4 pt-6 border-t border-slate-800 hidden">
+                <h3 class="text-lg font-bold text-white">Matérias Relacionadas</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="read-related-grid">
+                    <!-- Preenchido via JS -->
+                </div>
+            </section>
+
+            <!-- Botão Retorno Rodapé -->
+            <div class="pt-6 text-center">
+                <button onclick="backToShowcase()" class="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs border border-slate-800 transition inline-flex items-center gap-2">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span>Voltar para todas as notícias</span>
+                </button>
+            </div>
+        </article>
+
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="bg-slate-950 border-t border-slate-800 py-10 mt-16 text-xs text-slate-400">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <span class="font-bold text-slate-200">LACC</span>
+                <span>•</span>
+                <span>Liga Acadêmica de Ciências Criminais</span>
+                <span>•</span>
+                <span>Faculdade Serra Dourada</span>
+            </div>
+            <div class="flex items-center gap-4 text-slate-400">
+                <a href="/" class="hover:text-amber-400 transition">Início</a>
+                <a href="/noticias" class="hover:text-amber-400 transition">Notícias</a>
+                <a href="/?open=community" class="hover:text-cyan-400 transition">Comunidade</a>
+                <a href="/?open=members" class="hover:text-amber-400 transition">Área de Membros</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts do Portal Público -->
+    <script src="/js/api.js"></script>
+    <script>
+        let currentCategorySlug = null;
+        let searchDebounceTimer = null;
+        let allArticlesCache = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            initIcons();
+            await loadPublicCategories();
+            
+            // Verificar parâmetro na URL para abrir matéria direta
+            const urlParams = new URLSearchParams(window.location.search);
+            const articleSlug = urlParams.get('art');
+            if (articleSlug) {
+                openArticleReader(articleSlug);
+            } else {
+                await loadShowcaseNews();
+            }
+        });
+
+        function initIcons() {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        }
+
+        async function loadPublicCategories() {
+            try {
+                const cats = await api.getPublicCategories();
+                const container = document.getElementById('categories-pills');
+                if (!container) return;
+
+                cats.forEach(c => {
+                    const btn = document.createElement('button');
+                    btn.id = `cat-pill-${c.slug}`;
+                    btn.className = 'cat-pill px-3.5 py-1.5 rounded-xl text-xs font-medium transition bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800 shrink-0';
+                    btn.innerHTML = `${c.name} <span class="text-[10px] text-slate-500 font-bold ml-1">${c.published_count}</span>`;
+                    btn.onclick = () => filterCategory(c.slug);
+                    container.appendChild(btn);
+                });
+            } catch (e) {
+                console.warn('Erro ao carregar categorias públicas:', e);
+            }
+        }
+
+        function filterCategory(slug) {
+            currentCategorySlug = slug;
+            document.querySelectorAll('.cat-pill').forEach(p => {
+                p.className = 'cat-pill px-3.5 py-1.5 rounded-xl text-xs font-medium transition bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800 shrink-0';
+            });
+            const activePill = document.getElementById(slug ? `cat-pill-${slug}` : 'cat-pill-all');
+            if (activePill) {
+                activePill.className = 'cat-pill px-3.5 py-1.5 rounded-xl text-xs font-bold transition bg-amber-500 text-slate-950 shadow-sm shrink-0';
+            }
+            loadShowcaseNews();
+        }
+
+        function handleSearchDebounce() {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                loadShowcaseNews();
+            }, 300);
+        }
+
+        async function loadShowcaseNews() {
+            const grid = document.getElementById('news-grid');
+            const search = document.getElementById('public-search-input')?.value.trim();
+            const countBadge = document.getElementById('articles-count-badge');
+
+            try {
+                const articles = await api.getPublicNews({
+                    category_slug: currentCategorySlug,
+                    search: search
+                });
+                allArticlesCache = articles;
+
+                if (countBadge) {
+                    countBadge.innerText = `${articles.length} matéria${articles.length === 1 ? '' : 's'} encontrada${articles.length === 1 ? '' : 's'}`;
+                }
+
+                if (!articles || articles.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full text-center py-16 text-slate-400 text-xs">
+                            <i data-lucide="newspaper" class="w-8 h-8 mx-auto text-slate-600 mb-2"></i>
+                            Nenhuma matéria encontrada com os termos selecionados.
+                        </div>
+                    `;
+                    initIcons();
+                    return;
+                }
+
+                // Destaque (primeiro que tiver is_featured se não houver busca ativa)
+                const featContainer = document.getElementById('featured-article-container');
+                let regularArticles = articles;
+
+                if (!search && !currentCategorySlug) {
+                    const feat = articles.find(a => a.is_featured) || articles[0];
+                    if (feat) {
+                        featContainer.classList.remove('hidden');
+                        featContainer.innerHTML = `
+                            <div class="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden group hover:border-amber-500/40 transition shadow-xl grid grid-cols-1 lg:grid-cols-12 cursor-pointer" onclick="openArticleReader('${feat.slug}')">
+                                <div class="lg:col-span-7 h-64 sm:h-80 lg:h-auto overflow-hidden bg-slate-950 relative">
+                                    ${feat.cover_image_url 
+                                        ? `<img src="${feat.cover_image_url}" alt="${feat.cover_image_alt || feat.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">`
+                                        : `<div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-amber-950/40 text-amber-400/40"><i data-lucide="newspaper" class="w-16 h-16"></i></div>`
+                                    }
+                                    <div class="absolute top-4 left-4">
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500 text-slate-950 shadow-md">
+                                            Destaque Editorial
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between space-y-4">
+                                    <div class="space-y-2.5">
+                                        <span class="text-xs font-bold uppercase tracking-wider text-amber-400">${feat.category_name}</span>
+                                        <h3 class="text-xl sm:text-2xl font-bold text-white group-hover:text-amber-400 transition leading-snug">
+                                            ${feat.title}
+                                        </h3>
+                                        <p class="text-xs sm:text-sm text-slate-300 line-clamp-3 leading-relaxed">
+                                            ${feat.summary}
+                                        </p>
+                                    </div>
+                                    <div class="pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                                        <span>Por ${feat.author_name}</span>
+                                        <span class="text-amber-400 font-bold group-hover:translate-x-1 transition inline-flex items-center gap-1">
+                                            Ler Matéria →
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        regularArticles = articles.filter(a => a.id !== feat.id);
+                    }
+                } else {
+                    featContainer.classList.add('hidden');
+                }
+
+                // Cards regulares
+                grid.innerHTML = regularArticles.map(art => `
+                    <div class="bg-slate-900 rounded-2xl border border-slate-800/90 overflow-hidden hover:border-slate-700 hover:shadow-xl transition flex flex-col justify-between group cursor-pointer" onclick="openArticleReader('${art.slug}')">
+                        <div>
+                            <div class="h-48 bg-slate-950 overflow-hidden relative">
+                                ${art.cover_image_url 
+                                    ? `<img src="${art.cover_image_url}" alt="${art.cover_image_alt || art.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">`
+                                    : `<div class="w-full h-full flex items-center justify-center bg-slate-900 text-slate-700"><i data-lucide="newspaper" class="w-10 h-10"></i></div>`
+                                }
+                                <div class="absolute top-3 left-3">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" style="background-color: ${art.category_color}25; color: ${art.category_color}; border: 1px solid ${art.category_color}40;">
+                                        ${art.category_name}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="p-5 space-y-2">
+                                <h4 class="text-base font-bold text-white group-hover:text-amber-400 transition line-clamp-2 leading-snug">
+                                    ${art.title}
+                                </h4>
+                                <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">
+                                    ${art.summary}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="px-5 pb-5 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+                            <span>${art.published_at ? art.published_at.substring(0, 10) : ''}</span>
+                            <span class="text-slate-500 flex items-center gap-1">
+                                <i data-lucide="library" class="w-3 h-3"></i> ${art.sources_count} fontes
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+
+                initIcons();
+            } catch (err) {
+                console.error('Erro ao carregar matérias:', err);
+                grid.innerHTML = '<div class="col-span-full text-center py-16 text-rose-400 text-xs">Falha ao comunicar com o servidor.</div>';
+            }
+        }
+
+        async function openArticleReader(slug) {
+            try {
+                const art = await api.getPublicArticle(slug);
+
+                // Alternar vistas
+                document.getElementById('view-showcase').classList.add('hidden');
+                document.getElementById('view-reader').classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                // Atualizar URL sem reload
+                window.history.pushState({}, '', `/noticias?art=${encodeURIComponent(slug)}`);
+
+                // Preencher campos
+                document.getElementById('read-category').innerText = art.category_name;
+                document.getElementById('read-category').style.borderColor = art.category_color || '#f59e0b';
+                document.getElementById('read-category').style.color = art.category_color || '#f59e0b';
+                document.getElementById('read-title').innerText = art.title;
+                document.getElementById('read-subtitle').innerText = art.subtitle || art.summary;
+                document.getElementById('read-date').innerText = `Publicado em ${art.published_at ? art.published_at.substring(0, 10) : 'Data indisponível'}`;
+                document.getElementById('read-author').innerText = `Por ${art.author_name}${art.coauthors_text ? ' & ' + art.coauthors_text : ''}`;
+                document.getElementById('read-author-role').innerText = art.author_display_role || 'Marketing e Comunicação — LACC';
+
+                // Tempo estimado
+                const wordCount = (art.content_markdown || '').split(/\s+/).length;
+                const readingMin = Math.max(1, Math.ceil(wordCount / 200));
+                document.getElementById('read-reading-time').innerText = `${readingMin} min de leitura`;
+
+                // Retificação
+                const corrBox = document.getElementById('read-correction-box');
+                if (art.correction_notice) {
+                    corrBox.classList.remove('hidden');
+                    corrBox.innerHTML = `<strong>⚠️ Retificação Editorial:</strong> ${art.correction_notice}`;
+                } else {
+                    corrBox.classList.add('hidden');
+                }
+
+                // Imagem de capa
+                const coverCont = document.getElementById('read-cover-container');
+                const coverImg = document.getElementById('read-cover-img');
+                const coverCap = document.getElementById('read-cover-caption');
+                if (art.cover_image_url) {
+                    coverCont.classList.remove('hidden');
+                    coverImg.src = art.cover_image_url;
+                    coverImg.alt = art.cover_image_alt || art.title;
+                    coverCap.innerText = art.cover_image_caption || '';
+                } else {
+                    coverCont.classList.add('hidden');
+                }
+
+                // Corpo formatado em HTML seguro a partir do markdown
+                document.getElementById('read-body').innerHTML = parseSimpleMarkdown(art.content_markdown);
+
+                // Fontes e Referências
+                const sourcesList = document.getElementById('read-sources-list');
+                if (!art.sources || art.sources.length === 0) {
+                    sourcesList.innerHTML = '<div class="text-xs text-slate-400 italic">Nenhuma fonte externa associada diretamente a este artigo.</div>';
+                } else {
+                    sourcesList.innerHTML = art.sources.map(src => {
+                        const iconType = getSourceIcon(src.source_type);
+                        const labelType = getSourceLabel(src.source_type);
+                        return `
+                            <div class="p-3.5 bg-slate-950/80 rounded-xl border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-800 text-amber-400 flex items-center gap-1">
+                                            <span>${iconType}</span> ${labelType}
+                                        </span>
+                                        ${src.author_or_institution ? `<span class="text-xs text-slate-400">• ${src.author_or_institution}</span>` : ''}
+                                    </div>
+                                    <h5 class="text-xs font-bold text-white">${src.title}</h5>
+                                    ${src.notes ? `<p class="text-[11px] text-slate-400">${src.notes}</p>` : ''}
+                                </div>
+                                ${src.url ? `
+                                    <a href="${src.url}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1.5 transition shrink-0 self-start sm:self-auto">
+                                        <span>Acessar Fonte</span>
+                                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                                    </a>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                // Relacionadas
+                const relSection = document.getElementById('read-related-section');
+                const relGrid = document.getElementById('read-related-grid');
+                if (art.related && art.related.length > 0) {
+                    relSection.classList.remove('hidden');
+                    relGrid.innerHTML = art.related.map(r => `
+                        <div class="p-3.5 bg-slate-900 rounded-xl border border-slate-800 hover:border-amber-500/40 transition cursor-pointer" onclick="openArticleReader('${r.slug}')">
+                            <h5 class="text-xs font-bold text-white line-clamp-2">${r.title}</h5>
+                            <span class="text-[10px] text-amber-400 font-semibold mt-2 block">Ler matéria →</span>
+                        </div>
+                    `).join('');
+                } else {
+                    relSection.classList.add('hidden');
+                }
+
+                initIcons();
+            } catch (err) {
+                alert('Não foi possível carregar a matéria solicitada.');
+                backToShowcase();
+            }
+        }
+
+        function backToShowcase() {
+            document.getElementById('view-reader').classList.add('hidden');
+            document.getElementById('view-showcase').classList.remove('hidden');
+            window.history.pushState({}, '', '/noticias');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function getSourceIcon(type) {
+            const map = {
+                'legislacao': '⚖️',
+                'decisao_judicial': '🏛️',
+                'artigo_cientifico': '🔬',
+                'livro': '📚',
+                'documento_oficial': '📑',
+                'relatorio': '🔍',
+                'noticia_externa': '🌐',
+                'base_dados': '💾',
+                'outra': '📌'
+            };
+            return map[type] || '📌';
+        }
+
+        function getSourceLabel(type) {
+            const map = {
+                'legislacao': 'Legislação',
+                'decisao_judicial': 'Decisão Judicial',
+                'artigo_cientifico': 'Artigo Científico',
+                'livro': 'Doutrina / Livro',
+                'documento_oficial': 'Documento Oficial',
+                'relatorio': 'Relatório Técnico',
+                'noticia_externa': 'Notícia Externa',
+                'base_dados': 'Base de Dados',
+                'outra': 'Referência'
+            };
+            return map[type] || 'Fonte';
+        }
+
+        function parseSimpleMarkdown(md) {
+            if (!md) return '';
+            let html = md
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^# (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>')
+                .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+                .replace(/\*(.*)\*/gim, '<em>$1</em>')
+                .replace(/\n\n+/g, '</p><p>');
+            return `<p>${html}</p>`;
+        }
+
+        async function handleNewsletterSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('nl-email-input')?.value.trim();
+            const consent = document.getElementById('nl-consent-checkbox')?.checked;
+            const btn = document.getElementById('btn-nl-submit');
+
+            if (!email) return;
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Enviando...';
+            }
+
+            try {
+                const res = await api.subscribeNewsletter(email, consent);
+                alert(res.message);
+                document.getElementById('newsletter-form').reset();
+            } catch (err) {
+                alert(err.message || 'Falha ao assinar newsletter.');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Assinar';
+                }
+            }
+        }
+    </script>
+</body>
+</html>

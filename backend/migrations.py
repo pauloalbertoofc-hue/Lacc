@@ -663,8 +663,239 @@ def run_migrations():
                         VALUES (?, ?)
                     """, (role_map["community_moderator"], perm_map[p_slug]))
 
-        print("[+] Migrações concluídas com sucesso!")
+        # 15. MÓDULO DE COMUNICAÇÃO, NOTÍCIAS E NEWSLETTER
+        # 15.1 Categorias de Notícias
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS news_categories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                slug TEXT UNIQUE NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT,
+                color_hex TEXT DEFAULT '#38bdf8',
+                order_index INTEGER DEFAULT 0,
+                is_active INTEGER DEFAULT 1
+            )
+        """)
+
+        # 15.2 Matérias e Notícias Estruturadas
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS news_articles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                slug TEXT UNIQUE NOT NULL,
+                title TEXT NOT NULL,
+                subtitle TEXT,
+                summary TEXT NOT NULL,
+                cover_image_url TEXT,
+                cover_image_caption TEXT,
+                cover_image_alt TEXT,
+                content_markdown TEXT NOT NULL,
+                author_id INTEGER NOT NULL REFERENCES members(id),
+                author_display_role TEXT DEFAULT 'Marketing e Comunicação — LACC',
+                coauthors_text TEXT,
+                category_id INTEGER NOT NULL REFERENCES news_categories(id),
+                tags_json TEXT DEFAULT '[]',
+                editorial_status TEXT DEFAULT 'draft',
+                visibility TEXT DEFAULT 'public',
+                is_featured INTEGER DEFAULT 0,
+                reviewer_id INTEGER REFERENCES members(id),
+                review_status TEXT DEFAULT 'none',
+                review_notes TEXT,
+                correction_notice TEXT,
+                scheduled_at TIMESTAMP,
+                published_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 15.3 Fontes e Referências
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS news_sources (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                article_id INTEGER NOT NULL REFERENCES news_articles(id) ON DELETE CASCADE,
+                title TEXT NOT NULL,
+                author_or_institution TEXT,
+                source_type TEXT NOT NULL,
+                url TEXT,
+                publication_date TEXT,
+                access_date TEXT,
+                notes TEXT,
+                order_index INTEGER DEFAULT 0
+            )
+        """)
+
+        # 15.4 Histórico Editorial de Revisões e Auditoria
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS news_revisions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                article_id INTEGER NOT NULL REFERENCES news_articles(id) ON DELETE CASCADE,
+                action TEXT NOT NULL,
+                performed_by INTEGER NOT NULL REFERENCES members(id),
+                change_summary TEXT,
+                snapshot_content TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 15.5 Pautas Editoriais
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS editorial_pitches (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                description TEXT,
+                category_id INTEGER REFERENCES news_categories(id),
+                assignee_id INTEGER REFERENCES members(id),
+                priority TEXT DEFAULT 'media',
+                deadline TEXT,
+                status TEXT DEFAULT 'idea',
+                initial_sources TEXT,
+                converted_article_id INTEGER REFERENCES news_articles(id),
+                created_by INTEGER NOT NULL REFERENCES members(id),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 15.6 Edições da Newsletter (LACC em Foco)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS newsletter_editions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                edition_number INTEGER UNIQUE NOT NULL,
+                title TEXT NOT NULL,
+                email_subject TEXT NOT NULL,
+                preheader_text TEXT,
+                editorial_text TEXT,
+                status TEXT DEFAULT 'draft',
+                scheduled_for TIMESTAMP,
+                sent_at TIMESTAMP,
+                sent_by INTEGER REFERENCES members(id),
+                total_recipients INTEGER DEFAULT 0,
+                created_by INTEGER NOT NULL REFERENCES members(id),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 15.7 Blocos Estruturados da Newsletter
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS newsletter_blocks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                edition_id INTEGER NOT NULL REFERENCES newsletter_editions(id) ON DELETE CASCADE,
+                block_type TEXT NOT NULL,
+                order_index INTEGER NOT NULL DEFAULT 0,
+                content_json TEXT NOT NULL
+            )
+        """)
+
+        # 15.8 Assinantes da Newsletter (LGPD Compliant)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                email TEXT UNIQUE NOT NULL,
+                status TEXT DEFAULT 'pending_confirmation',
+                confirmation_token TEXT UNIQUE NOT NULL,
+                unsubscribe_token TEXT UNIQUE NOT NULL,
+                consent_source TEXT DEFAULT 'landing_page',
+                ip_hash TEXT,
+                confirmed_at TIMESTAMP,
+                unsubscribed_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 15.9 Biblioteca de Mídia
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS media_assets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                filename TEXT NOT NULL,
+                original_name TEXT NOT NULL,
+                file_path TEXT NOT NULL,
+                mime_type TEXT NOT NULL,
+                file_size INTEGER NOT NULL,
+                alt_text TEXT,
+                credit TEXT,
+                description TEXT,
+                uploaded_by INTEGER REFERENCES members(id),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # 15.10 Categorias Iniciais Padrão
+        initial_categories = [
+            ("direito-penal", "Direito Penal", "Teoria do crime, dogmática penal e sanções punitivas.", "#f59e0b", 1),
+            ("processo-penal", "Processo Penal", "Garantismo processual, standard probatório e nulidades.", "#38bdf8", 2),
+            ("criminologia", "Criminologia", "Criminologia crítica, sociologia criminal e controle social.", "#a855f7", 3),
+            ("politica-criminal", "Política Criminal", "Sistemas penitenciários, segurança pública e reformas legislativas.", "#ec4899", 4),
+            ("ciencias-forenses", "Ciências Forenses", "Investigação técnico-científica e interdisciplinaridade.", "#10b981", 5),
+            ("psicologia-forense", "Psicologia Forense", "Avaliação psicológica pericial, testemunho e comportamento criminal.", "#6366f1", 6),
+            ("farmacia-toxicologia", "Farmácia & Toxicologia", "Drogas de abuso, venenos e análises laboratoriais forenses.", "#14b8a6", 7),
+            ("pericia-criminal", "Perícia Criminal", "Cadeia de custódia, local de crime e evidências digitais.", "#f97316", 8),
+            ("jurisprudencia", "Jurisprudência Comentada", "Decisões do STF, STJ e tribunais estaduais.", "#0ea5e9", 9),
+            ("pesquisa", "Pesquisa & Ciência", "Projetos científicos, artigos acadêmicos e grupos de estudo.", "#8b5cf6", 10),
+            ("eventos", "Eventos & Simpósios", "Cobertura de congressos, palestras e encontros acadêmicos.", "#eab308", 11),
+            ("institucional", "Institucional LACC", "Editais, gestão interna e comunicados oficiais da Liga.", "#64748b", 12),
+            ("oportunidades", "Oportunidades", "Chamadas de artigos, estágios e editais científicos abertos.", "#06b6d4", 13)
+        ]
+        for cat_slug, cat_name, cat_desc, cat_color, cat_order in initial_categories:
+            cursor.execute("""
+                INSERT OR IGNORE INTO news_categories (slug, name, description, color_hex, order_index, is_active)
+                VALUES (?, ?, ?, ?, ?, 1)
+            """, (cat_slug, cat_name, cat_desc, cat_color, cat_order))
+
+        # 15.11 Permissões RBAC da Central de Comunicação
+        comm_perms = [
+            ("communication.view", "Acessar Central de Comunicação", "Comunicação"),
+            ("news.create", "Criar Pautas e Notícias", "Comunicação"),
+            ("news.edit_own", "Editar Próprias Notícias", "Comunicação"),
+            ("news.edit_all", "Editar Notícias de Outros Autores", "Comunicação"),
+            ("news.submit_review", "Submeter Notícia para Revisão", "Comunicação"),
+            ("news.review", "Revisar Notícias e Matérias Científicas", "Comunicação"),
+            ("news.approve", "Aprovar Notícias para Publicação", "Comunicação"),
+            ("news.publish", "Publicar Notícias Imediatamente", "Comunicação"),
+            ("news.schedule", "Agendar Publicação de Notícias", "Comunicação"),
+            ("news.archive", "Arquivar Notícias", "Comunicação"),
+            ("newsletter.create", "Criar Edição de Newsletter", "Comunicação"),
+            ("newsletter.edit", "Editar Blocos de Newsletter", "Comunicação"),
+            ("newsletter.review", "Revisar Edição de Newsletter", "Comunicação"),
+            ("newsletter.publish", "Publicar e Despachar Newsletter", "Comunicação"),
+            ("media.upload", "Fazer Upload na Biblioteca de Mídia", "Comunicação"),
+            ("media.manage", "Gerenciar Biblioteca de Mídia", "Comunicação"),
+            ("subscribers.view", "Visualizar Assinantes da Newsletter", "Comunicação"),
+            ("subscribers.manage", "Gerenciar Lista de Assinantes", "Comunicação"),
+            ("communication.analytics.view", "Visualizar Métricas da Comunicação", "Comunicação")
+        ]
+        for p_slug, p_name, p_module in comm_perms:
+            cursor.execute("""
+                INSERT OR IGNORE INTO permissions (slug, name, module)
+                VALUES (?, ?, ?)
+            """, (p_slug, p_name, p_module))
+
+        # 15.12 Atualizar mapeamentos de papéis com as permissões de comunicação
+        perm_map = {p["slug"]: p["id"] for p in cursor.execute("SELECT id, slug FROM permissions").fetchall()}
+        role_map = {r["slug"]: r["id"] for r in cursor.execute("SELECT id, slug FROM roles").fetchall()}
+
+        comm_role_slugs = [p[0] for p in comm_perms]
+        # Role 'comunicacao'
+        if "comunicacao" in role_map:
+            for p_slug in comm_role_slugs:
+                if p_slug in perm_map:
+                    cursor.execute("INSERT OR IGNORE INTO role_permissions (role_id, permission_id) VALUES (?, ?)", (role_map["comunicacao"], perm_map[p_slug]))
+
+        # Role 'super_admin' e 'superadmin'
+        for s_role in ["super_admin", "superadmin", "admin"]:
+            if s_role in role_map:
+                for p_slug in comm_role_slugs:
+                    if p_slug in perm_map:
+                        cursor.execute("INSERT OR IGNORE INTO role_permissions (role_id, permission_id) VALUES (?, ?)", (role_map[s_role], perm_map[p_slug]))
+
+        # Role 'cientifico' e 'director' recebem permissão de revisão técnica
+        for rev_role in ["cientifico", "director"]:
+            if rev_role in role_map and "news.review" in perm_map:
+                cursor.execute("INSERT OR IGNORE INTO role_permissions (role_id, permission_id) VALUES (?, ?)", (role_map[rev_role], perm_map["news.review"]))
+
+        print("[+] Migrações do Módulo de Comunicação concluídas com sucesso!")
 
 if __name__ == "__main__":
     run_migrations()
+
 

@@ -33,6 +33,7 @@ from backend.content_router import router as content_router
 from backend.auth_router import router as auth_router, community_router
 from backend.admin_users_router import router as admin_users_router
 from backend.rbac_router import router as rbac_router
+from backend.communication_router import router as communication_router
 
 app = FastAPI(title="LigaHub - Gestão de Liga Acadêmica", version="1.0.0")
 
@@ -61,6 +62,7 @@ app.include_router(auth_router)
 app.include_router(community_router)
 app.include_router(admin_users_router)
 app.include_router(rbac_router)
+app.include_router(communication_router)
 
 # Inicializar banco, migrações de segurança e dados de exemplo ao iniciar
 @app.on_event("startup")
@@ -971,6 +973,13 @@ def serve_admin():
     admin_path = os.path.join(PROJECT_ROOT, "frontend", "admin.html")
     if os.path.exists(admin_path):
         return FileResponse(admin_path)
+    return FileResponse(os.path.join(PROJECT_ROOT, "frontend", "index.html"))
+
+@app.get("/noticias")
+def serve_noticias():
+    noticias_path = os.path.join(PROJECT_ROOT, "frontend", "noticias.html")
+    if os.path.exists(noticias_path):
+        return FileResponse(noticias_path)
     return FileResponse(os.path.join(PROJECT_ROOT, "frontend", "index.html"))
 
 os.makedirs(os.path.join(PROJECT_ROOT, "frontend"), exist_ok=True)

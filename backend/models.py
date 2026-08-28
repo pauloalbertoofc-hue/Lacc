@@ -197,3 +197,136 @@ class CommunityStatusUpdate(BaseModel):
 
 class ContentVisibilityUpdate(BaseModel):
     visibility: str # 'public', 'community', 'members', 'department', 'private'
+
+# ==========================================
+# MODELOS DA CENTRAL DE COMUNICAÇÃO
+# ==========================================
+
+class CategoryCreate(BaseModel):
+    name: str
+    slug: Optional[str] = None
+    description: Optional[str] = None
+    color_hex: Optional[str] = "#38bdf8"
+    order_index: Optional[int] = 0
+
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    color_hex: Optional[str] = None
+    order_index: Optional[int] = None
+    is_active: Optional[bool] = None
+
+class NewsSourceIn(BaseModel):
+    title: str
+    author_or_institution: Optional[str] = None
+    source_type: str = "outra"
+    url: Optional[str] = None
+    publication_date: Optional[str] = None
+    access_date: Optional[str] = None
+    notes: Optional[str] = None
+    order_index: Optional[int] = 0
+
+class NewsArticleCreate(BaseModel):
+    title: str
+    subtitle: Optional[str] = None
+    summary: str
+    cover_image_url: Optional[str] = None
+    cover_image_caption: Optional[str] = None
+    cover_image_alt: Optional[str] = None
+    content_markdown: str
+    category_id: int
+    tags: Optional[List[str]] = []
+    author_display_role: Optional[str] = "Marketing e Comunicação — LACC"
+    coauthors_text: Optional[str] = None
+    visibility: Optional[str] = "public"
+    is_featured: Optional[bool] = False
+    sources: Optional[List[NewsSourceIn]] = []
+    pitch_id: Optional[int] = None
+
+class NewsArticleUpdate(BaseModel):
+    title: Optional[str] = None
+    subtitle: Optional[str] = None
+    summary: Optional[str] = None
+    cover_image_url: Optional[str] = None
+    cover_image_caption: Optional[str] = None
+    cover_image_alt: Optional[str] = None
+    content_markdown: Optional[str] = None
+    category_id: Optional[int] = None
+    tags: Optional[List[str]] = None
+    author_display_role: Optional[str] = None
+    coauthors_text: Optional[str] = None
+    visibility: Optional[str] = None
+    is_featured: Optional[bool] = None
+    sources: Optional[List[NewsSourceIn]] = None
+    change_summary: Optional[str] = None
+
+class NewsReviewAction(BaseModel):
+    review_status: str # 'approved', 'changes_requested'
+    review_notes: Optional[str] = None
+
+class NewsSubmitReview(BaseModel):
+    reviewer_id: Optional[int] = None
+    notes: Optional[str] = None
+
+class NewsPublishAction(BaseModel):
+    publish_now: bool = True
+    scheduled_at: Optional[str] = None
+
+class NewsCorrectionRequest(BaseModel):
+    correction_notice: str
+
+class PitchCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    category_id: Optional[int] = None
+    assignee_id: Optional[int] = None
+    priority: Optional[str] = "media"
+    deadline: Optional[str] = None
+    initial_sources: Optional[str] = None
+
+class PitchUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    category_id: Optional[int] = None
+    assignee_id: Optional[int] = None
+    priority: Optional[str] = None
+    deadline: Optional[str] = None
+    status: Optional[str] = None
+    initial_sources: Optional[str] = None
+
+class NewsletterBlockIn(BaseModel):
+    block_type: str # 'header', 'editorial', 'text', 'news_ref', 'research_ref', 'event_ref', 'image', 'button', 'divider', 'footer'
+    order_index: int = 0
+    content: dict
+
+class NewsletterCreate(BaseModel):
+    edition_number: int
+    title: str
+    email_subject: str
+    preheader_text: Optional[str] = None
+    editorial_text: Optional[str] = None
+    blocks: List[NewsletterBlockIn] = []
+
+class NewsletterUpdate(BaseModel):
+    title: Optional[str] = None
+    email_subject: Optional[str] = None
+    preheader_text: Optional[str] = None
+    editorial_text: Optional[str] = None
+    blocks: Optional[List[NewsletterBlockIn]] = None
+    status: Optional[str] = None
+
+class NewsletterTestSend(BaseModel):
+    target_email: str
+
+class SubscribeNewsletterRequest(BaseModel):
+    email: str
+    consent: bool = True
+
+class SubscriberStatusUpdate(BaseModel):
+    status: str # 'active', 'unsubscribed'
+
+class MediaAssetCreate(BaseModel):
+    alt_text: Optional[str] = None
+    credit: Optional[str] = None
+    description: Optional[str] = None
+

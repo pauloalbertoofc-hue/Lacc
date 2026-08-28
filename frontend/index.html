@@ -71,6 +71,7 @@
                     <span>Áreas</span>
                 </a>
                 <a href="#landing-about" data-nav="landing-about" class="nav-item-desktop py-1 text-slate-300 hover:text-amber-400 border-b-2 border-transparent transition">Sobre</a>
+                <a href="#landing-news" data-nav="landing-news" class="nav-item-desktop py-1 text-slate-300 hover:text-amber-400 border-b-2 border-transparent transition">Notícias</a>
                 <a href="#landing-events" data-nav="landing-events" class="nav-item-desktop py-1 text-slate-300 hover:text-amber-400 border-b-2 border-transparent transition">Eventos</a>
             </nav>
 
@@ -310,6 +311,27 @@
                         <h3 class="font-bold text-lg text-white">Prática & Extensão</h3>
                         <p class="text-xs text-slate-400 leading-relaxed">Simulação de Tribunal do Júri, oficinas de peças processuais, visitas técnicas e debates abertos com a comunidade jurídica.</p>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção Últimas Notícias & Análises -->
+        <section id="landing-news" class="py-16 md:py-20 px-4 md:px-8 border-t border-slate-900 bg-slate-950/80 relative">
+            <div class="max-w-5xl mx-auto space-y-8">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-widest text-amber-400">Jornalismo Científico</span>
+                        <h2 class="text-2xl md:text-3xl font-extrabold text-white">Últimas Notícias & Análises</h2>
+                    </div>
+                    <a href="/noticias" class="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 transition">
+                        <span>Acessar Portal de Notícias Completo</span>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </a>
+                </div>
+
+                <div id="landing-news-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Injetado dinamicamente via JS a partir de /api/public/news/featured -->
+                    <div class="col-span-full text-center py-8 text-slate-500 text-xs">Carregando notícias da Liga...</div>
                 </div>
             </div>
         </section>
@@ -920,6 +942,11 @@
                 <button onclick="navigateTo('finances')" data-nav="finances" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
                     <i data-lucide="wallet" class="w-5 h-5"></i>
                     <span>Caixa & Finanças</span>
+                </button>
+                <button id="nav-btn-communication" onclick="navigateTo('communication')" data-nav="communication" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
+                    <i data-lucide="newspaper" class="w-5 h-5 text-amber-400"></i>
+                    <span class="flex-1 text-left">Comunicação</span>
+                    <span class="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-mono">NEWS</span>
                 </button>
                 <button onclick="navigateTo('settings')" data-nav="settings" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-300 hover:bg-slate-800 hover:text-white">
                     <i data-lucide="settings" class="w-5 h-5"></i>
@@ -1700,6 +1727,356 @@
                     </div>
                 </section>
 
+                <!-- ================= 2.4 CENTRAL DE COMUNICAÇÃO & GESTÃO EDITORIAL ================= -->
+                <section id="view-communication" class="space-y-6 hidden">
+                    <!-- Banner da Central de Comunicação -->
+                    <div class="bg-gradient-to-r from-amber-950 via-slate-900 to-indigo-950 rounded-2xl p-6 md:p-8 text-white shadow-xl border border-amber-500/20 relative overflow-hidden">
+                        <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+                            <div class="space-y-2">
+                                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                    <i data-lucide="newspaper" class="w-3.5 h-3.5"></i>
+                                    <span>Marketing, Notícias & Extensão Científica</span>
+                                </div>
+                                <h2 class="text-2xl md:text-3xl font-black tracking-tight text-white">Central de Comunicação</h2>
+                                <p class="text-slate-300 text-sm max-w-xl leading-relaxed">
+                                    Gestão da produção editorial, pautas, notícias com fontes verificáveis, newsletter oficial da LACC e acompanhamento de assinantes.
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2.5">
+                                <button onclick="openNewsEditorModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20 transition">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                    <span>Nova Notícia</span>
+                                </button>
+                                <button onclick="openPitchModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 transition">
+                                    <i data-lucide="lightbulb" class="w-4 h-4 text-amber-400"></i>
+                                    <span>Nova Pauta</span>
+                                </button>
+                                <button onclick="openNewsletterBuilderModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition">
+                                    <i data-lucide="mail" class="w-4 h-4"></i>
+                                    <span>Criar Newsletter</span>
+                                </button>
+                                <a href="/noticias" target="_blank" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 text-xs font-semibold border border-white/20 transition backdrop-blur-sm">
+                                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                                    <span>Portal Público</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sub-abas da Central de Comunicação (Pills) -->
+                    <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200" id="comm-subnav">
+                        <button onclick="switchCommTab('overview')" id="comm-tab-overview" class="comm-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition bg-brand-600 text-white shadow-sm flex items-center gap-2">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                            <span>Visão Geral</span>
+                        </button>
+                        <button onclick="switchCommTab('news')" id="comm-tab-news" class="comm-tab-btn px-4 py-2 rounded-xl text-xs font-medium transition text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+                            <i data-lucide="newspaper" class="w-4 h-4"></i>
+                            <span>Notícias & Matérias</span>
+                        </button>
+                        <button onclick="switchCommTab('pitches')" id="comm-tab-pitches" class="comm-tab-btn px-4 py-2 rounded-xl text-xs font-medium transition text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+                            <i data-lucide="lightbulb" class="w-4 h-4"></i>
+                            <span>Pautas</span>
+                        </button>
+                        <button onclick="switchCommTab('newsletter')" id="comm-tab-newsletter" class="comm-tab-btn px-4 py-2 rounded-xl text-xs font-medium transition text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+                            <i data-lucide="mail" class="w-4 h-4"></i>
+                            <span>Newsletter</span>
+                        </button>
+                        <button onclick="switchCommTab('calendar')" id="comm-tab-calendar" class="comm-tab-btn px-4 py-2 rounded-xl text-xs font-medium transition text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+                            <i data-lucide="calendar" class="w-4 h-4"></i>
+                            <span>Calendário</span>
+                        </button>
+                        <button onclick="switchCommTab('media')" id="comm-tab-media" class="comm-tab-btn px-4 py-2 rounded-xl text-xs font-medium transition text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+                            <i data-lucide="image" class="w-4 h-4"></i>
+                            <span>Mídia</span>
+                        </button>
+                        <button onclick="switchCommTab('subscribers')" id="comm-tab-subscribers" class="comm-tab-btn px-4 py-2 rounded-xl text-xs font-medium transition text-slate-600 hover:bg-slate-100 flex items-center gap-2">
+                            <i data-lucide="users" class="w-4 h-4"></i>
+                            <span>Assinantes</span>
+                        </button>
+                    </div>
+
+                    <!-- ================= SUB-PAINEL 1: VISÃO GERAL ================= -->
+                    <div id="comm-panel-overview" class="comm-subpanel space-y-6">
+                        <!-- Cards de Métricas -->
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/80 shadow-sm">
+                                <div class="flex items-center justify-between text-slate-500 mb-2">
+                                    <span class="text-xs font-semibold uppercase tracking-wider">Publicadas</span>
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                                    </div>
+                                </div>
+                                <div class="text-2xl md:text-3xl font-black text-slate-800" id="comm-kpi-published">0</div>
+                                <div class="text-xs text-slate-400 mt-1">No portal e na Home</div>
+                            </div>
+                            <div class="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/80 shadow-sm">
+                                <div class="flex items-center justify-between text-slate-500 mb-2">
+                                    <span class="text-xs font-semibold uppercase tracking-wider">Em Produção</span>
+                                    <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                                        <i data-lucide="file-edit" class="w-4 h-4"></i>
+                                    </div>
+                                </div>
+                                <div class="text-2xl md:text-3xl font-black text-slate-800" id="comm-kpi-drafts">0</div>
+                                <div class="text-xs text-slate-400 mt-1">Rascunhos & em revisão</div>
+                            </div>
+                            <div class="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/80 shadow-sm">
+                                <div class="flex items-center justify-between text-slate-500 mb-2">
+                                    <span class="text-xs font-semibold uppercase tracking-wider">Pautas Ativas</span>
+                                    <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                                        <i data-lucide="lightbulb" class="w-4 h-4"></i>
+                                    </div>
+                                </div>
+                                <div class="text-2xl md:text-3xl font-black text-slate-800" id="comm-kpi-pitches">0</div>
+                                <div class="text-xs text-slate-400 mt-1">Ideias & em andamento</div>
+                            </div>
+                            <div class="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/80 shadow-sm">
+                                <div class="flex items-center justify-between text-slate-500 mb-2">
+                                    <span class="text-xs font-semibold uppercase tracking-wider">Assinantes Ativos</span>
+                                    <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                                        <i data-lucide="mail-check" class="w-4 h-4"></i>
+                                    </div>
+                                </div>
+                                <div class="text-2xl md:text-3xl font-black text-slate-800" id="comm-kpi-subscribers">0</div>
+                                <div class="text-xs text-slate-400 mt-1">Base da Newsletter</div>
+                            </div>
+                        </div>
+
+                        <!-- Card de Próxima Newsletter -->
+                        <div class="bg-gradient-to-br from-slate-900 to-indigo-950 border border-indigo-500/30 rounded-2xl p-5 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div class="space-y-1">
+                                <span class="text-[10px] uppercase font-bold tracking-widest text-indigo-400">Newsletter • LACC em Foco</span>
+                                <h3 class="text-lg font-bold text-white" id="comm-overview-nl-title">Nenhuma edição em preparação</h3>
+                                <p class="text-xs text-slate-300" id="comm-overview-nl-desc">Crie a próxima edição referenciando notícias e eventos publicados na Liga.</p>
+                            </div>
+                            <button onclick="switchCommTab('newsletter'); openNewsletterBuilderModal();" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow transition shrink-0">
+                                Preparar Edição
+                            </button>
+                        </div>
+
+                        <!-- Grid de 2 Colunas: Matérias Recentes & Pautas Prioritárias -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                        <i data-lucide="newspaper" class="w-4 h-4 text-amber-500"></i>
+                                        <span>Matérias em Produção</span>
+                                    </h3>
+                                    <button onclick="switchCommTab('news')" class="text-xs text-brand-600 hover:underline font-semibold">Ver todas →</button>
+                                </div>
+                                <div class="space-y-2.5" id="comm-overview-recent-news">
+                                    <div class="text-center py-6 text-slate-400 text-xs">Carregando matérias...</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                        <i data-lucide="lightbulb" class="w-4 h-4 text-amber-500"></i>
+                                        <span>Pautas Prioritárias</span>
+                                    </h3>
+                                    <button onclick="switchCommTab('pitches')" class="text-xs text-brand-600 hover:underline font-semibold">Ver todas →</button>
+                                </div>
+                                <div class="space-y-2.5" id="comm-overview-priority-pitches">
+                                    <div class="text-center py-6 text-slate-400 text-xs">Carregando pautas...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= SUB-PAINEL 2: NOTÍCIAS & MATÉRIAS ================= -->
+                    <div id="comm-panel-news" class="comm-subpanel space-y-4 hidden">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="flex flex-wrap items-center gap-2.5 flex-1">
+                                <div class="relative flex-1 min-w-[200px]">
+                                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                                    <input type="text" id="comm-news-search" oninput="loadInternalNewsTable()" placeholder="Buscar por título ou resumo..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                </div>
+                                <select id="comm-news-filter-status" onchange="loadInternalNewsTable()" class="px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                    <option value="">Todos os Status</option>
+                                    <option value="draft">Rascunho</option>
+                                    <option value="review">Em Revisão</option>
+                                    <option value="approved">Aprovado</option>
+                                    <option value="scheduled">Agendado</option>
+                                    <option value="published">Publicado</option>
+                                    <option value="archived">Arquivado</option>
+                                </select>
+                                <select id="comm-news-filter-cat" onchange="loadInternalNewsTable()" class="px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                    <option value="">Todas as Categorias</option>
+                                </select>
+                            </div>
+                            <button onclick="openNewsEditorModal()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow transition flex items-center justify-center gap-2">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span>Nova Matéria</span>
+                            </button>
+                        </div>
+
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold uppercase tracking-wider">
+                                        <tr>
+                                            <th class="p-3.5">Matéria</th>
+                                            <th class="p-3.5">Categoria</th>
+                                            <th class="p-3.5">Autor</th>
+                                            <th class="p-3.5 text-center">Status</th>
+                                            <th class="p-3.5 text-center">Fontes</th>
+                                            <th class="p-3.5 text-center">Atualizado</th>
+                                            <th class="p-3.5 text-right">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="comm-news-table-body" class="divide-y divide-slate-100">
+                                        <tr><td colspan="7" class="text-center py-8 text-slate-400">Carregando notícias...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= SUB-PAINEL 3: PAUTAS ================= -->
+                    <div id="comm-panel-pitches" class="comm-subpanel space-y-4 hidden">
+                        <div class="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <div class="flex items-center gap-2.5">
+                                <select id="comm-pitches-filter-status" onchange="loadPitchesTable()" class="px-3 py-2 text-xs rounded-xl border border-slate-200">
+                                    <option value="">Todas as Pautas</option>
+                                    <option value="idea">Ideia</option>
+                                    <option value="assigned">Atribuída</option>
+                                    <option value="in_progress">Em Andamento</option>
+                                    <option value="completed">Concluída</option>
+                                </select>
+                            </div>
+                            <button onclick="openPitchModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow transition flex items-center gap-2">
+                                <i data-lucide="plus" class="w-4 h-4 text-amber-400"></i>
+                                <span>Nova Pauta</span>
+                            </button>
+                        </div>
+
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold uppercase tracking-wider">
+                                        <tr>
+                                            <th class="p-3.5">Pauta</th>
+                                            <th class="p-3.5">Categoria</th>
+                                            <th class="p-3.5 text-center">Prioridade</th>
+                                            <th class="p-3.5">Responsável</th>
+                                            <th class="p-3.5 text-center">Prazo</th>
+                                            <th class="p-3.5 text-center">Status</th>
+                                            <th class="p-3.5 text-right">Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="comm-pitches-table-body" class="divide-y divide-slate-100">
+                                        <tr><td colspan="7" class="text-center py-8 text-slate-400">Carregando pautas...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= SUB-PAINEL 4: NEWSLETTER ================= -->
+                    <div id="comm-panel-newsletter" class="comm-subpanel space-y-4 hidden">
+                        <div class="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-800">Edições da Newsletter • LACC em Foco</h3>
+                                <p class="text-xs text-slate-400">Boletins informativos periódicos baseados em blocos estruturados e conteúdos vivos da plataforma.</p>
+                            </div>
+                            <button onclick="openNewsletterBuilderModal()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow transition flex items-center gap-2">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span>Nova Edição</span>
+                            </button>
+                        </div>
+
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold uppercase tracking-wider">
+                                        <tr>
+                                            <th class="p-3.5">Edição</th>
+                                            <th class="p-3.5">Assunto de E-mail</th>
+                                            <th class="p-3.5 text-center">Blocos</th>
+                                            <th class="p-3.5 text-center">Status</th>
+                                            <th class="p-3.5 text-center">Data de Envio</th>
+                                            <th class="p-3.5 text-right">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="comm-newsletters-table-body" class="divide-y divide-slate-100">
+                                        <tr><td colspan="6" class="text-center py-8 text-slate-400">Carregando edições da newsletter...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= SUB-PAINEL 5: CALENDÁRIO ================= -->
+                    <div id="comm-panel-calendar" class="comm-subpanel space-y-4 hidden">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-800">Calendário Editorial Integrado</h3>
+                                <p class="text-xs text-slate-400">Linha do tempo consolidando pautas com prazos, matérias agendadas e eventos da LACC.</p>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                            <div class="space-y-3" id="comm-calendar-list">
+                                <div class="text-center py-8 text-slate-400 text-xs">Carregando calendário editorial...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= SUB-PAINEL 6: MÍDIA ================= -->
+                    <div id="comm-panel-media" class="comm-subpanel space-y-4 hidden">
+                        <div class="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-800">Biblioteca de Mídia da Comunicação</h3>
+                                <p class="text-xs text-slate-400">Imagens otimizadas com suporte a alt-text para acessibilidade e uso em matérias e capas.</p>
+                            </div>
+                            <button onclick="openMediaUploadModal()" class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow transition flex items-center gap-2">
+                                <i data-lucide="upload" class="w-4 h-4 text-emerald-400"></i>
+                                <span>Upload de Imagem</span>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4" id="comm-media-grid">
+                            <div class="col-span-full text-center py-8 text-slate-400 text-xs">Carregando biblioteca de mídia...</div>
+                        </div>
+                    </div>
+
+                    <!-- ================= SUB-PAINEL 7: ASSINANTES ================= -->
+                    <div id="comm-panel-subscribers" class="comm-subpanel space-y-4 hidden">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-800">Gestão de Assinantes da Newsletter (LGPD Compliant)</h3>
+                                <p class="text-xs text-slate-400">Lista com consentimento, confirmação por double opt-in e mecanismo de cancelamento imediato.</p>
+                            </div>
+                            <select id="comm-subscribers-filter-status" onchange="loadSubscribersTable()" class="px-3 py-2 text-xs rounded-xl border border-slate-200">
+                                <option value="">Todos os Assinantes</option>
+                                <option value="active">Ativos</option>
+                                <option value="pending_confirmation">Aguardando Confirmação</option>
+                                <option value="unsubscribed">Descadastrados</option>
+                            </select>
+                        </div>
+
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold uppercase tracking-wider">
+                                        <tr>
+                                            <th class="p-3.5">E-mail</th>
+                                            <th class="p-3.5 text-center">Status</th>
+                                            <th class="p-3.5">Origem do Consentimento</th>
+                                            <th class="p-3.5 text-center">Inscrição</th>
+                                            <th class="p-3.5 text-center">Confirmação</th>
+                                            <th class="p-3.5 text-right">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="comm-subscribers-table-body" class="divide-y divide-slate-100">
+                                        <tr><td colspan="6" class="text-center py-8 text-slate-400">Carregando assinantes...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+
             </main>
 
             <!-- Bottom Navigation Bar for Mobile -->
@@ -2249,6 +2626,437 @@
             </form>
         </div>
     </div>
+
+    <!-- ================= MODAIS DA CENTRAL DE COMUNICAÇÃO ================= -->
+
+    <!-- Modal 1: Editor de Matéria & Notícia com Fontes Verificadas -->
+    <div id="modal-news-editor" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-4xl p-6 shadow-2xl space-y-5 my-8 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                        <i data-lucide="newspaper" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white" id="modal-news-title">Nova Notícia / Matéria Científica</h3>
+                        <p class="text-xs text-slate-400">Produção editorial com rigor em fontes verificáveis e transparência científica.</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('modal-news-editor')" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="form-news-article" onsubmit="submitNewsArticle(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="news-edit-id">
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2 space-y-1">
+                        <label class="font-semibold text-slate-300">Título da Notícia *</label>
+                        <input type="text" id="news-input-title" required placeholder="Ex: Novo Standard Probatório no Processo Penal Brasileiro..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="font-semibold text-slate-300">Categoria *</label>
+                        <select id="news-input-category" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-semibold text-slate-300">Subtítulo / Linha Fina</label>
+                    <input type="text" id="news-input-subtitle" placeholder="Complemento explicativo do título para o leitor..." class="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-semibold text-slate-300">Resumo / Lead Jornalístico *</label>
+                    <textarea id="news-input-summary" required rows="2" placeholder="Resumo de 2 a 3 frases sintetizando a relevância jurídica ou científica..." class="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="space-y-1">
+                        <label class="font-semibold text-slate-300">URL da Imagem de Capa</label>
+                        <div class="flex gap-2">
+                            <input type="url" id="news-input-cover" placeholder="https://..." class="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <button type="button" onclick="openMediaUploadModal()" title="Upload de imagem" class="px-2.5 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 rounded-xl">
+                                <i data-lucide="upload" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="font-semibold text-slate-300">Crédito da Imagem</label>
+                        <input type="text" id="news-input-cover-credit" placeholder="Ex: Foto: Ascom/STJ ou Acervo LACC" class="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="font-semibold text-slate-300">Texto Alternativo (Acessibilidade)</label>
+                        <input type="text" id="news-input-cover-alt" placeholder="Descrição visual para leitores de tela..." class="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between">
+                        <label class="font-semibold text-slate-300">Corpo da Notícia (Markdown Seguro) *</label>
+                        <span class="text-[10px] text-slate-400">Suporta títulos #, negrito **, citações &gt;, listas -</span>
+                    </div>
+                    <textarea id="news-input-content" required rows="9" placeholder="Escreva a matéria em detalhes..." class="w-full p-3.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 font-mono text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+                </div>
+
+                <!-- SEÇÃO ESTRUTURADA DE FONTES E REFERÊNCIAS -->
+                <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-bold text-amber-400 text-xs flex items-center gap-1.5">
+                                <i data-lucide="library" class="w-3.5 h-3.5"></i>
+                                <span>Fontes e Referências Verificadas (Ciências Criminais)</span>
+                            </h4>
+                            <p class="text-[11px] text-slate-400">Incentive a produção editorial referenciando artigos, decisões judiciais, leis ou documentos oficiais.</p>
+                        </div>
+                        <button type="button" onclick="addSourceRow()" class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                            <span>Adicionar Fonte</span>
+                        </button>
+                    </div>
+
+                    <div id="news-sources-list" class="space-y-2.5">
+                        <!-- Linhas de fontes injetadas dinamicamente via JS -->
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                    <div class="space-y-1">
+                        <label class="font-semibold text-slate-300">Tags (Separadas por vírgula)</label>
+                        <input type="text" id="news-input-tags" placeholder="direito penal, júri, perícia" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="font-semibold text-slate-300">Coautores / Colaboradores</label>
+                        <input type="text" id="news-input-coauthors" placeholder="Ex: Gabriel Souza, Laura Mendes" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200">
+                    </div>
+                    <div class="flex items-center gap-4 pt-5">
+                        <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                            <input type="checkbox" id="news-input-featured" class="w-4 h-4 rounded text-amber-500 bg-slate-800 border-slate-700 focus:ring-amber-500">
+                            <span class="font-semibold">Destaque na Home</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                    <button type="button" onclick="closeModal('modal-news-editor')" class="px-4 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btn-save-news-draft" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold shadow-lg shadow-amber-500/20 transition">
+                        Salvar Rascunho
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Registro de Pauta Editorial -->
+    <div id="modal-pitch-editor" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <i data-lucide="lightbulb" class="w-5 h-5 text-amber-400"></i>
+                    <h3 class="text-base font-bold text-white" id="modal-pitch-title">Registrar Nova Pauta</h3>
+                </div>
+                <button onclick="closeModal('modal-pitch-editor')" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="form-pitch" onsubmit="submitPitch(event)" class="space-y-3.5 text-xs">
+                <input type="hidden" id="pitch-edit-id">
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Título da Pauta *</label>
+                    <input type="text" id="pitch-input-title" required placeholder="Ex: Análise das teses fixadas no Tema 1234 do STF..." class="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Categoria</label>
+                        <select id="pitch-input-category" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white"></select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Prioridade</label>
+                        <select id="pitch-input-priority" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white">
+                            <option value="alta">Alta</option>
+                            <option value="media" selected>Média</option>
+                            <option value="baixa">Baixa</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Responsável (Membro)</label>
+                        <select id="pitch-input-assignee" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white">
+                            <option value="">A Definir</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Prazo Editorial</label>
+                        <input type="date" id="pitch-input-deadline" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Descrição / Ângulo Editorial</label>
+                    <textarea id="pitch-input-desc" rows="3" placeholder="Qual a relevância do tema? Qual aspecto forense/jurídico deve ser enfatizado?" class="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white"></textarea>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Fontes Iniciais Sugeridas</label>
+                    <input type="text" id="pitch-input-sources" placeholder="Link do acórdão, lei ou artigo sugerido..." class="w-full px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white">
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeModal('modal-pitch-editor')" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white">Cancelar</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition">Salvar Pauta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 3: Construtor de Newsletter (Edição & Blocos Vivos) -->
+    <div id="modal-newsletter-builder" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-4xl p-6 shadow-2xl space-y-5 my-8 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                        <i data-lucide="mail" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Edição da Newsletter • LACC em Foco</h3>
+                        <p class="text-xs text-slate-400">Monte o boletim periódico referenciando notícias e pesquisas existentes sem duplicar dados.</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('modal-newsletter-builder')" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="form-newsletter-edition" onsubmit="submitNewsletterEdition(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="newsletter-edit-id">
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div class="space-y-1">
+                        <label class="font-semibold text-slate-300">Número da Edição *</label>
+                        <input type="number" id="nl-input-number" required min="1" placeholder="Ex: 7" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white font-bold">
+                    </div>
+                    <div class="md:col-span-3 space-y-1">
+                        <label class="font-semibold text-slate-300">Título Interno da Edição *</label>
+                        <input type="text" id="nl-input-title" required placeholder="Ex: LACC em Foco — Edição #07: Avanços na Perícia Digital" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="font-semibold text-slate-300">Assunto do E-mail (Subject Line) *</label>
+                        <input type="text" id="nl-input-subject" required placeholder="Ex: 🔍 [LACC em Foco] Novo standard probatório e agenda da semana" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="font-semibold text-slate-300">Texto de Prévia (Preheader)</label>
+                        <input type="text" id="nl-input-preheader" placeholder="Breve texto exibido na caixa de entrada antes de abrir o e-mail..." class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white">
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-semibold text-slate-300">Editorial de Abertura</label>
+                    <textarea id="nl-input-editorial" rows="3" placeholder="Mensagem da diretoria de comunicação aos leitores e comunidade criminalista..." class="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 text-white"></textarea>
+                </div>
+
+                <!-- BLOCOS DA NEWSLETTER -->
+                <div class="bg-slate-950/70 p-4 rounded-xl border border-slate-800 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+                        <div>
+                            <h4 class="font-bold text-indigo-300 text-xs">Blocos Estruturados da Edição</h4>
+                            <p class="text-[11px] text-slate-400">Adicione conteúdos referenciados ou textos livres.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" onclick="addNewsletterBlock('news_ref')" class="px-2.5 py-1 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 rounded-lg text-xs font-medium flex items-center gap-1">
+                                <i data-lucide="newspaper" class="w-3 h-3"></i> + Notícia
+                            </button>
+                            <button type="button" onclick="addNewsletterBlock('event_ref')" class="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-medium flex items-center gap-1">
+                                <i data-lucide="calendar" class="w-3 h-3"></i> + Evento
+                            </button>
+                            <button type="button" onclick="addNewsletterBlock('text')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-medium flex items-center gap-1">
+                                <i data-lucide="align-left" class="w-3 h-3"></i> + Texto
+                            </button>
+                            <button type="button" onclick="addNewsletterBlock('button')" class="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-medium flex items-center gap-1">
+                                <i data-lucide="link" class="w-3 h-3"></i> + Botão
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="newsletter-blocks-list" class="space-y-3">
+                        <!-- Blocos renderizados dinamicamente -->
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+                    <button type="button" onclick="previewCurrentNewsletter()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 font-semibold border border-slate-700 flex items-center gap-2">
+                        <i data-lucide="eye" class="w-4 h-4"></i>
+                        <span>Visualizar Preview Web/Mobile</span>
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="closeModal('modal-newsletter-builder')" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white">Cancelar</button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-600/25 transition">Salvar Edição</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 4: Preview da Newsletter (Desktop & Mobile 375px) -->
+    <div id="modal-newsletter-preview" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-3xl p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-3">
+                    <h3 class="text-base font-bold text-white">Pré-visualização da Newsletter</h3>
+                    <div class="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700 text-xs">
+                        <button onclick="setNlPreviewMode('desktop')" id="btn-nl-prev-desktop" class="px-3 py-1 rounded-md font-bold bg-indigo-600 text-white">Desktop</button>
+                        <button onclick="setNlPreviewMode('mobile')" id="btn-nl-prev-mobile" class="px-3 py-1 rounded-md font-medium text-slate-400 hover:text-white">Mobile (375px)</button>
+                    </div>
+                </div>
+                <button onclick="closeModal('modal-newsletter-preview')" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Frame Container -->
+            <div class="flex-1 overflow-y-auto bg-slate-950 rounded-xl p-4 flex justify-center items-start min-h-[350px]">
+                <iframe id="nl-preview-frame" class="w-full max-w-[600px] h-[480px] rounded-lg border border-slate-800 bg-white transition-all"></iframe>
+            </div>
+
+            <!-- Rodapé com Disparo de Teste -->
+            <div class="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-2 flex-1">
+                    <span class="text-slate-300 font-semibold shrink-0">Enviar Teste:</span>
+                    <input type="email" id="nl-test-email" placeholder="seu-email@exemplo.com" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white flex-1 max-w-xs">
+                    <button onclick="sendNlTestEmail()" id="btn-send-nl-test" class="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition">
+                        Disparar Teste
+                    </button>
+                </div>
+                <button onclick="closeModal('modal-newsletter-preview')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white self-end sm:self-auto">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 5: Upload de Imagem na Biblioteca de Mídia -->
+    <div id="modal-media-upload" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="image" class="w-5 h-5 text-emerald-400"></i>
+                    <h3 class="text-base font-bold text-white">Upload de Mídia</h3>
+                </div>
+                <button onclick="closeModal('modal-media-upload')" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="form-media-upload" onsubmit="submitMediaUpload(event)" class="space-y-3.5 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Arquivo de Imagem (JPG, PNG, WEBP) *</label>
+                    <input type="file" id="media-upload-file" required accept="image/jpeg,image/png,image/webp,image/gif" class="w-full text-slate-300 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-amber-400 hover:file:bg-slate-700 cursor-pointer">
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Texto Alternativo (Acessibilidade) *</label>
+                    <input type="text" id="media-upload-alt" required placeholder="Descreva a imagem para pessoas com deficiência visual..." class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white">
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Crédito / Direitos Autorais</label>
+                    <input type="text" id="media-upload-credit" placeholder="Ex: Comunicação LACC / Banco Livre Unsplash" class="w-full px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white">
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeModal('modal-media-upload')" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white">Cancelar</button>
+                    <button type="submit" id="btn-submit-media" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition">Enviar Imagem</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 6: Revisão Especializada de Notícia -->
+    <div id="modal-news-review" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="file-check" class="w-5 h-5 text-indigo-400"></i>
+                    <h3 class="text-base font-bold text-white">Parecer de Revisão Especializada</h3>
+                </div>
+                <button onclick="closeModal('modal-news-review')" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="form-news-review" onsubmit="submitReviewAction(event)" class="space-y-3.5 text-xs">
+                <input type="hidden" id="review-news-id">
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Matéria sob Avaliação</label>
+                    <div id="review-news-title" class="p-3 bg-slate-800 rounded-xl text-white font-bold">Título da Matéria</div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Decisão Editorial / Científica *</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center gap-2 p-3 bg-slate-800/80 border border-slate-700 rounded-xl cursor-pointer hover:border-emerald-500">
+                            <input type="radio" name="review_decision" value="approved" checked class="text-emerald-500">
+                            <span class="font-bold text-emerald-400">Aprovar Matéria</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-3 bg-slate-800/80 border border-slate-700 rounded-xl cursor-pointer hover:border-amber-500">
+                            <input type="radio" name="review_decision" value="changes_requested" class="text-amber-500">
+                            <span class="font-bold text-amber-400">Pedir Ajustes</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Notas do Revisor / Apontamentos Científicos</label>
+                    <textarea id="review-news-notes" rows="4" placeholder="Indique eventuais correções conceituais, terminologia ou ajustes de formatação..." class="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 text-white"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeModal('modal-news-review')" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white">Cancelar</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition">Gravar Parecer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 7: Retificação Editorial (Correção Transparente) -->
+    <div id="modal-news-correction" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="edit-3" class="w-5 h-5 text-amber-400"></i>
+                    <h3 class="text-base font-bold text-white">Registrar Nota de Retificação</h3>
+                </div>
+                <button onclick="closeModal('modal-news-correction')" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="form-news-correction" onsubmit="submitNewsCorrection(event)" class="space-y-3.5 text-xs">
+                <input type="hidden" id="correction-news-id">
+                <p class="text-slate-300">
+                    A nota de correção será inserida no topo da matéria publicada, informando a data, hora e a informação que foi retificada com total transparência jornalística.
+                </p>
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Texto da Retificação *</label>
+                    <textarea id="correction-notice-text" required rows="3" placeholder="Ex: O número do processo citado no terceiro parágrafo foi corrigido de 1234 para 5678." class="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 text-white"></textarea>
+                </div>
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeModal('modal-news-correction')" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white">Cancelar</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition">Publicar Retificação</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 
     <!-- Scripts da Aplicação & Scrollytelling -->
     <script src="/js/api.js"></script>

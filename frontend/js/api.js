@@ -387,6 +387,186 @@ const api = {
             method: 'PUT',
             body: JSON.stringify({ status, reason })
         });
+    },
+
+    // Central de Comunicação (Interna)
+    getCommunicationOverview() {
+        return this.request('/communication/overview');
+    },
+    getNewsCategories() {
+        return this.request('/communication/categories');
+    },
+    createNewsCategory(data) {
+        return this.request('/communication/categories', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+    updateNewsCategory(id, data) {
+        return this.request(`/communication/categories/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    },
+    getPitches(statusFilter = '') {
+        const q = statusFilter ? `?status_filter=${encodeURIComponent(statusFilter)}` : '';
+        return this.request(`/communication/pitches${q}`);
+    },
+    createPitch(data) {
+        return this.request('/communication/pitches', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+    updatePitch(id, data) {
+        return this.request(`/communication/pitches/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    },
+    convertPitch(id) {
+        return this.request(`/communication/pitches/${id}/convert`, {
+            method: 'POST'
+        });
+    },
+    getInternalNews(params = {}) {
+        const searchParams = new URLSearchParams();
+        if (params.status) searchParams.append('status_filter', params.status);
+        if (params.category_id) searchParams.append('category_id', params.category_id);
+        if (params.search) searchParams.append('search', params.search);
+        const q = searchParams.toString() ? `?${searchParams.toString()}` : '';
+        return this.request(`/communication/news${q}`);
+    },
+    createNewsArticle(data) {
+        return this.request('/communication/news', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+    getNewsArticleDetail(id) {
+        return this.request(`/communication/news/${id}`);
+    },
+    updateNewsArticle(id, data) {
+        return this.request(`/communication/news/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    },
+    submitNewsReview(id, data) {
+        return this.request(`/communication/news/${id}/submit-review`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+    reviewNewsArticle(id, data) {
+        return this.request(`/communication/news/${id}/review`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+    publishNewsArticle(id, data) {
+        return this.request(`/communication/news/${id}/publish`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+    archiveNewsArticle(id) {
+        return this.request(`/communication/news/${id}/archive`, {
+            method: 'POST'
+        });
+    },
+    addNewsCorrection(id, correction_notice) {
+        return this.request(`/communication/news/${id}/correction`, {
+            method: 'POST',
+            body: JSON.stringify({ correction_notice })
+        });
+    },
+    getNewsletters() {
+        return this.request('/communication/newsletters');
+    },
+    createNewsletter(data) {
+        return this.request('/communication/newsletters', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+    getNewsletterDetail(id) {
+        return this.request(`/communication/newsletters/${id}`);
+    },
+    updateNewsletter(id, data) {
+        return this.request(`/communication/newsletters/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    },
+    getNewsletterPreviewHtml(id) {
+        return this.request(`/communication/newsletters/${id}/preview-html`, {
+            method: 'POST'
+        });
+    },
+    sendNewsletterTest(id, target_email) {
+        return this.request(`/communication/newsletters/${id}/send-test`, {
+            method: 'POST',
+            body: JSON.stringify({ target_email })
+        });
+    },
+    getEditorialCalendar() {
+        return this.request('/communication/calendar');
+    },
+    getMediaAssets() {
+        return this.request('/communication/media');
+    },
+    uploadMediaAsset(formData) {
+        return this.request('/communication/media/upload', {
+            method: 'POST',
+            body: formData
+        });
+    },
+    deleteMediaAsset(id) {
+        return this.request(`/communication/media/${id}`, {
+            method: 'DELETE'
+        });
+    },
+    getSubscribers(statusFilter = '') {
+        const q = statusFilter ? `?status_filter=${encodeURIComponent(statusFilter)}` : '';
+        return this.request(`/communication/subscribers${q}`);
+    },
+    updateSubscriberStatus(id, status) {
+        return this.request(`/communication/subscribers/${id}/status`, {
+            method: 'PUT',
+            body: JSON.stringify({ status })
+        });
+    },
+    deleteSubscriber(id) {
+        return this.request(`/communication/subscribers/${id}`, {
+            method: 'DELETE'
+        });
+    },
+
+    // Notícias e Newsletter (Público)
+    getPublicNews(params = {}) {
+        const sp = new URLSearchParams();
+        if (params.category_slug) sp.append('category_slug', params.category_slug);
+        if (params.search) sp.append('search', params.search);
+        if (params.limit) sp.append('limit', params.limit);
+        if (params.offset) sp.append('offset', params.offset);
+        const q = sp.toString() ? `?${sp.toString()}` : '';
+        return this.request(`/public/news${q}`);
+    },
+    getFeaturedNews() {
+        return this.request('/public/news/featured');
+    },
+    getPublicCategories() {
+        return this.request('/public/news/categories');
+    },
+    getPublicArticle(slug) {
+        return this.request(`/public/news/${slug}`);
+    },
+    subscribeNewsletter(email, consent = true) {
+        return this.request('/public/newsletter/subscribe', {
+            method: 'POST',
+            body: JSON.stringify({ email, consent })
+        });
     }
 };
 

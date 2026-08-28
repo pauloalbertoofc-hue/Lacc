@@ -20,11 +20,17 @@ def send_email(to_email: str, subject: str, html_content: str, text_content: Opt
     Se o SMTP não estiver configurado, registra no log do servidor e permite fluxo de desenvolvimento.
     """
     if not is_smtp_configured():
-        print(f"\n[MAILER DEV] ================================")
-        print(f"[MAILER DEV] Para: {to_email}")
-        print(f"[MAILER DEV] Assunto: {subject}")
-        print(f"[MAILER DEV] Conteúdo de Texto:\n{text_content or html_content}")
-        print(f"[MAILER DEV] ================================\n")
+        def _safe_log(msg: str):
+            try:
+                print(msg)
+            except Exception:
+                print(msg.encode("ascii", "replace").decode("ascii"))
+
+        _safe_log("\n[MAILER DEV] ================================")
+        _safe_log(f"[MAILER DEV] Para: {to_email}")
+        _safe_log(f"[MAILER DEV] Assunto: {subject}")
+        _safe_log(f"[MAILER DEV] Conteúdo de Texto:\n{text_content or html_content}")
+        _safe_log("[MAILER DEV] ================================\n")
         return True
 
     try:

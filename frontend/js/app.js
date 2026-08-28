@@ -37,6 +37,7 @@ function checkAuthState() {
         if (landing) landing.classList.remove('hidden');
         if (dashboard) dashboard.classList.add('hidden');
         loadLandingEvents();
+        loadLandingFeaturedNews();
     }
 
     // Tratamento de redirecionamentos da rota /admin
@@ -621,19 +622,35 @@ async function submitMyPassword(e) {
 
 function updateAdminVisibility() {
     const adminEntry = document.getElementById('admin-platform-entry');
-    if (!adminEntry) return;
+    const commBtn = document.getElementById('nav-btn-communication');
 
     try {
         const userStr = localStorage.getItem('lacc_user');
         if (userStr) {
             const user = JSON.parse(userStr);
-            if (user.is_admin) {
-                adminEntry.classList.remove('hidden');
-                return;
+            if (adminEntry) {
+                if (user.is_admin || user.is_superadmin) {
+                    adminEntry.classList.remove('hidden');
+                } else {
+                    adminEntry.classList.add('hidden');
+                }
             }
+            if (commBtn) {
+                const perms = Array.isArray(user.permissions) ? user.permissions : [];
+                const roles = Array.isArray(user.roles) ? user.roles.map(r => String(r).toLowerCase()) : [];
+                const roleStr = String(user.role || '').toLowerCase();
+                const canComm = user.is_admin || user.is_superadmin || perms.includes('communication.view') || roles.includes('comunicacao') || roleStr === 'comunicacao';
+                if (canComm) {
+                    commBtn.classList.remove('hidden');
+                } else {
+                    commBtn.classList.add('hidden');
+                }
+            }
+            return;
         }
     } catch (e) {}
-    adminEntry.classList.add('hidden');
+    if (adminEntry) adminEntry.classList.add('hidden');
+    if (commBtn) commBtn.classList.add('hidden');
 }
 
 function handleLogout() {
@@ -649,6 +666,7 @@ function handleLogout() {
     if (landing) landing.classList.remove('hidden');
     showToast('Você saiu da Área de Membros.');
     loadLandingEvents();
+    loadLandingFeaturedNews();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -824,6 +842,63 @@ async function loadLandingEvents() {
         initIcons();
     } catch (err) {
         console.error('Erro ao carregar eventos da landing:', err);
+    }
+}
+
+async function loadLandingFeaturedNews() {
+    const container = document.getElementById('landing-news-container');
+    if (!container) return;
+
+    try {
+        const news = await api.getFeaturedNews();
+        if (!news || news.length === 0) {
+            container.innerHTML = `
+                <div class="col-span-full p-8 text-center bg-slate-900/60 rounded-3xl border border-slate-800/80 text-slate-400 space-y-2">
+                    <div class="w-10 h-10 rounded-2xl bg-slate-800/80 text-amber-400/80 mx-auto flex items-center justify-center border border-slate-700/50">
+                        <i data-lucide="newspaper" class="w-5 h-5"></i>
+                    </div>
+                    <p class="text-sm font-semibold text-slate-300">Nenhuma matéria publicada no momento.</p>
+                    <p class="text-xs text-slate-500 max-w-md mx-auto">Em breve novas análises, precedentes criminais e publicações científicas estarão disponíveis aqui.</p>
+                </div>
+            `;
+            initIcons();
+            return;
+        }
+
+        container.innerHTML = news.map(art => `
+            <a href="/noticias?art=${encodeURIComponent(art.slug)}" class="bg-slate-900/80 hover:bg-slate-900 rounded-2xl border border-slate-800 hover:border-amber-500/40 transition group flex flex-col justify-between overflow-hidden shadow-lg">
+                <div>
+                    <div class="h-44 bg-slate-950 overflow-hidden relative">
+                        ${art.cover_image_url 
+                            ? `<img src="${art.cover_image_url}" alt="${art.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">`
+                            : `<div class="w-full h-full flex items-center justify-center bg-slate-900 text-slate-700"><i data-lucide="newspaper" class="w-10 h-10"></i></div>`
+                        }
+                        <div class="absolute top-3 left-3">
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" style="background-color: ${art.category_color}25; color: ${art.category_color}; border: 1px solid ${art.category_color}40;">
+                                ${art.category_name}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-5 space-y-2">
+                        <h4 class="text-base font-bold text-white group-hover:text-amber-400 transition line-clamp-2 leading-snug">
+                            ${art.title}
+                        </h4>
+                        <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                            ${art.summary}
+                        </p>
+                    </div>
+                </div>
+                <div class="px-5 pb-4 pt-2 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
+                    <span>${art.published_at ? art.published_at.substring(0, 10) : ''}</span>
+                    <span class="text-amber-400 font-bold group-hover:translate-x-1 transition inline-flex items-center gap-1">
+                        Ler Artigo →
+                    </span>
+                </div>
+            </a>
+        `).join('');
+        initIcons();
+    } catch (err) {
+        console.warn('Erro ao carregar notícias na landing:', err);
     }
 }
 
@@ -1132,6 +1207,7 @@ function navigateTo(viewId) {
     else if (viewId === 'finances') loadFinances();
     else if (viewId === 'settings') fillSettingsForm();
     else if (viewId === 'profile') loadMyProfile();
+    else if (viewId === 'communication') loadCommunicationView();
 
     initIcons();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2351,4 +2427,1099 @@ async function triggerNativeShare() {
         copySiteLink();
     }
 }
+
+// ==========================================
+// CENTRAL DE COMUNICAÇÃO & GESTÃO EDITORIAL
+// ==========================================
+let currentCommTab = 'overview';
+let cachedNewsCategories = [];
+let cachedPublishedArticles = [];
+let cachedEventsForNl = [];
+let nlPreviewCurrentEditionId = null;
+
+function switchCommTab(tabId) {
+    currentCommTab = tabId;
+
+    // Atualizar botões de sub-abas
+    document.querySelectorAll('#comm-subnav .comm-tab-btn').forEach(btn => {
+        btn.className = 'comm-tab-btn px-4 py-2 rounded-xl text-xs font-medium transition text-slate-600 hover:bg-slate-100 flex items-center gap-2';
+    });
+    const activeBtn = document.getElementById(`comm-tab-${tabId}`);
+    if (activeBtn) {
+        activeBtn.className = 'comm-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition bg-brand-600 text-white shadow-sm flex items-center gap-2';
+    }
+
+    // Ocultar todos os sub-painéis
+    document.querySelectorAll('.comm-subpanel').forEach(p => p.classList.add('hidden'));
+
+    // Mostrar sub-painel selecionado
+    const activePanel = document.getElementById(`comm-panel-${tabId}`);
+    if (activePanel) {
+        activePanel.classList.remove('hidden');
+    }
+
+    // Carregar dados específicos da aba
+    if (tabId === 'overview') loadCommunicationOverview();
+    else if (tabId === 'news') loadInternalNewsTable();
+    else if (tabId === 'pitches') loadPitchesTable();
+    else if (tabId === 'newsletter') loadNewslettersTable();
+    else if (tabId === 'calendar') loadCalendarView();
+    else if (tabId === 'media') loadMediaAssetsView();
+    else if (tabId === 'subscribers') loadSubscribersTable();
+
+    initIcons();
+}
+
+async function loadCommunicationView() {
+    try {
+        await loadCategoriesCache();
+        switchCommTab(currentCommTab || 'overview');
+    } catch (err) {
+        console.error('Erro ao inicializar Central de Comunicação:', err);
+    }
+}
+
+async function loadCategoriesCache() {
+    try {
+        cachedNewsCategories = await api.getNewsCategories();
+        // Popular selects
+        const catSelects = ['news-input-category', 'pitch-input-category', 'comm-news-filter-cat'];
+        catSelects.forEach(selId => {
+            const el = document.getElementById(selId);
+            if (!el) return;
+            const currentVal = el.value;
+            const isFilter = selId.includes('filter');
+            el.innerHTML = isFilter ? '<option value="">Todas as Categorias</option>' : '';
+            cachedNewsCategories.forEach(c => {
+                if (c.is_active || !isFilter) {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.name;
+                    el.appendChild(opt);
+                }
+            });
+            if (currentVal) el.value = currentVal;
+        });
+    } catch (e) {
+        console.warn('Erro ao carregar categorias:', e);
+    }
+}
+
+// 1. Visão Geral
+async function loadCommunicationOverview() {
+    try {
+        const data = await api.getCommunicationOverview();
+        const k = data.kpis || {};
+
+        const elPub = document.getElementById('comm-kpi-published');
+        if (elPub) elPub.innerText = k.published_articles || 0;
+        const elDraft = document.getElementById('comm-kpi-drafts');
+        if (elDraft) elDraft.innerText = (k.drafts || 0) + (k.pending_review || 0);
+        const elPitches = document.getElementById('comm-kpi-pitches');
+        if (elPitches) elPitches.innerText = k.active_pitches || 0;
+        const elSubs = document.getElementById('comm-kpi-subscribers');
+        if (elSubs) elSubs.innerText = k.active_subscribers || 0;
+
+        // Próxima Newsletter
+        const nl = data.next_newsletter;
+        const elNlTitle = document.getElementById('comm-overview-nl-title');
+        const elNlDesc = document.getElementById('comm-overview-nl-desc');
+        if (elNlTitle && elNlDesc) {
+            if (nl) {
+                elNlTitle.innerText = `Edição #${nl.edition_number}: ${nl.title}`;
+                elNlDesc.innerText = `Status: ${nl.status.toUpperCase()} ${nl.scheduled_for ? '• Agendada para ' + nl.scheduled_for : ''}`;
+            } else {
+                elNlTitle.innerText = 'Nenhuma edição em preparação';
+                elNlDesc.innerText = 'Crie a próxima edição referenciando notícias e eventos publicados na Liga.';
+            }
+        }
+
+        // Matérias recentes
+        const elRecentNews = document.getElementById('comm-overview-recent-news');
+        if (elRecentNews) {
+            if (!data.recent_articles || data.recent_articles.length === 0) {
+                elRecentNews.innerHTML = '<div class="text-center py-6 text-slate-400 text-xs">Nenhuma matéria registrada ainda.</div>';
+            } else {
+                elRecentNews.innerHTML = data.recent_articles.map(art => {
+                    const statusBadge = getStatusBadge(art.editorial_status);
+                    return `
+                        <div class="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-100 transition">
+                            <div class="space-y-1 truncate pr-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background-color: ${art.category_color}15; color: ${art.category_color};">${art.category_name}</span>
+                                    ${statusBadge}
+                                </div>
+                                <h4 class="text-xs font-bold text-slate-800 truncate">${art.title}</h4>
+                                <span class="text-[10px] text-slate-400 block">Por ${art.author_name}</span>
+                            </div>
+                            <button onclick="openNewsEditorModal(${art.id})" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition shrink-0">
+                                Abrir
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Pautas prioritárias
+        const elPitchesList = document.getElementById('comm-overview-priority-pitches');
+        if (elPitchesList) {
+            if (!data.priority_pitches || data.priority_pitches.length === 0) {
+                elPitchesList.innerHTML = '<div class="text-center py-6 text-slate-400 text-xs">Nenhuma pauta pendente registrada.</div>';
+            } else {
+                elPitchesList.innerHTML = data.priority_pitches.map(p => `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-100 transition">
+                        <div class="space-y-1 truncate pr-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${p.priority === 'alta' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-700'}">${p.priority}</span>
+                                <span class="text-[10px] text-slate-500">${p.category_name || 'Geral'}</span>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-800 truncate">${p.title}</h4>
+                            <span class="text-[10px] text-slate-400 block">Responsável: ${p.assignee_name || 'A definir'}</span>
+                        </div>
+                        <button onclick="convertPitchToNews(${p.id})" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 transition shrink-0">
+                            Escrever →
+                        </button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        initIcons();
+    } catch (err) {
+        console.error('Erro ao carregar Visão Geral da Comunicação:', err);
+    }
+}
+
+function getStatusBadge(st) {
+    const map = {
+        'draft': '<span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">Rascunho</span>',
+        'review': '<span class="text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">Em Revisão</span>',
+        'approved': '<span class="text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">Aprovado</span>',
+        'scheduled': '<span class="text-[10px] font-bold bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">Agendado</span>',
+        'published': '<span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">Publicado</span>',
+        'archived': '<span class="text-[10px] font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">Arquivado</span>'
+    };
+    return map[st] || `<span class="text-[10px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">${st}</span>`;
+}
+
+// 2. Notícias & Matérias
+async function loadInternalNewsTable() {
+    const tableBody = document.getElementById('comm-news-table-body');
+    if (!tableBody) return;
+
+    const statusFilter = document.getElementById('comm-news-filter-status')?.value || '';
+    const catFilter = document.getElementById('comm-news-filter-cat')?.value || '';
+    const search = document.getElementById('comm-news-search')?.value || '';
+
+    try {
+        const rows = await api.getInternalNews({ status: statusFilter, category_id: catFilter, search });
+        if (!rows || rows.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400 text-xs">Nenhuma matéria encontrada com os filtros selecionados.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = rows.map(art => `
+            <tr class="hover:bg-slate-50 transition">
+                <td class="p-3.5 max-w-xs">
+                    <div class="font-bold text-slate-800 line-clamp-1">${art.title}</div>
+                    <div class="text-[11px] text-slate-400 line-clamp-1 mt-0.5">${art.summary}</div>
+                    ${art.is_featured ? '<span class="inline-block mt-1 text-[9px] bg-amber-50 text-amber-700 font-bold px-1.5 py-0.2 rounded">★ Destaque Home</span>' : ''}
+                </td>
+                <td class="p-3.5 whitespace-nowrap">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background-color: ${art.category_color}15; color: ${art.category_color};">
+                        ${art.category_name}
+                    </span>
+                </td>
+                <td class="p-3.5 whitespace-nowrap text-slate-700 font-medium">
+                    ${art.author_name}
+                </td>
+                <td class="p-3.5 text-center whitespace-nowrap">
+                    ${getStatusBadge(art.editorial_status)}
+                </td>
+                <td class="p-3.5 text-center whitespace-nowrap">
+                    <span class="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+                        ${art.sources_count} fontes
+                    </span>
+                </td>
+                <td class="p-3.5 text-center whitespace-nowrap text-slate-400 text-[11px]">
+                    ${art.updated_at ? art.updated_at.substring(0, 10) : ''}
+                </td>
+                <td class="p-3.5 text-right whitespace-nowrap space-x-1">
+                    <button onclick="openNewsEditorModal(${art.id})" title="Editar" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">
+                        <i data-lucide="edit" class="w-3.5 h-3.5"></i>
+                    </button>
+                    ${art.editorial_status === 'draft' ? `
+                        <button onclick="submitNewsForReviewAction(${art.id})" title="Submeter p/ Revisão" class="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700">
+                            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                        </button>
+                    ` : ''}
+                    ${art.editorial_status === 'review' ? `
+                        <button onclick="openNewsReviewModal(${art.id}, '${escapeQuote(art.title)}')" title="Avaliar Revisão" class="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700">
+                            <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
+                        </button>
+                    ` : ''}
+                    ${(art.editorial_status === 'approved' || art.editorial_status === 'draft') ? `
+                        <button onclick="openNewsPublishPrompt(${art.id})" title="Publicar Notícia" class="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700">
+                            <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+                        </button>
+                    ` : ''}
+                    ${art.editorial_status === 'published' ? `
+                        <button onclick="openNewsCorrectionModal(${art.id})" title="Adicionar Nota de Retificação" class="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                        </button>
+                    ` : ''}
+                    ${art.editorial_status !== 'archived' ? `
+                        <button onclick="archiveNewsAction(${art.id})" title="Arquivar" class="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600">
+                            <i data-lucide="archive" class="w-3.5 h-3.5"></i>
+                        </button>
+                    ` : ''}
+                </td>
+            </tr>
+        `).join('');
+
+        initIcons();
+    } catch (err) {
+        console.error('Erro ao carregar notícias internas:', err);
+    }
+}
+
+function escapeQuote(str) {
+    return String(str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+// 3. Editor de Notícia & Fontes
+async function openNewsEditorModal(articleId = null) {
+    await loadCategoriesCache();
+    const form = document.getElementById('form-news-article');
+    if (!form) return;
+    form.reset();
+
+    const elId = document.getElementById('news-edit-id');
+    const elTitleModal = document.getElementById('modal-news-title');
+    const sourcesList = document.getElementById('news-sources-list');
+    sourcesList.innerHTML = '';
+
+    if (!articleId) {
+        elId.value = '';
+        elTitleModal.innerText = 'Nova Notícia / Matéria Científica';
+        addSourceRow(); // Adiciona 1 linha vazia
+        openModal('modal-news-editor');
+        return;
+    }
+
+    try {
+        const art = await api.getNewsArticleDetail(articleId);
+        elId.value = art.id;
+        elTitleModal.innerText = `Editar Matéria #${art.id}`;
+
+        document.getElementById('news-input-title').value = art.title || '';
+        document.getElementById('news-input-subtitle').value = art.subtitle || '';
+        document.getElementById('news-input-summary').value = art.summary || '';
+        document.getElementById('news-input-cover').value = art.cover_image_url || '';
+        document.getElementById('news-input-cover-credit').value = art.cover_image_caption || '';
+        document.getElementById('news-input-cover-alt').value = art.cover_image_alt || '';
+        document.getElementById('news-input-content').value = art.content_markdown || '';
+        document.getElementById('news-input-category').value = art.category_id;
+        document.getElementById('news-input-tags').value = (art.tags || []).join(', ');
+        document.getElementById('news-input-coauthors').value = art.coauthors_text || '';
+        document.getElementById('news-input-featured').checked = !!art.is_featured;
+
+        // Popular fontes
+        if (art.sources && art.sources.length > 0) {
+            art.sources.forEach(src => addSourceRow(src));
+        } else {
+            addSourceRow();
+        }
+
+        openModal('modal-news-editor');
+    } catch (err) {
+        showToast('Erro ao carregar detalhes da matéria: ' + err.message, 'error');
+    }
+}
+
+function addSourceRow(src = null) {
+    const list = document.getElementById('news-sources-list');
+    if (!list) return;
+
+    const row = document.createElement('div');
+    row.className = 'news-source-row grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-900/90 p-2.5 rounded-lg border border-slate-800 items-center';
+    row.innerHTML = `
+        <div class="sm:col-span-4">
+            <input type="text" placeholder="Título da Fonte / Decisão / Lei *" required class="src-title w-full px-2.5 py-1.5 text-xs rounded bg-slate-800 border border-slate-700 text-white" value="${src ? (src.title || '') : ''}">
+        </div>
+        <div class="sm:col-span-3">
+            <select class="src-type w-full px-2 py-1.5 text-xs rounded bg-slate-800 border border-slate-700 text-white">
+                <option value="legislacao" ${src && src.source_type === 'legislacao' ? 'selected' : ''}>Legislação / Código</option>
+                <option value="decisao_judicial" ${src && src.source_type === 'decisao_judicial' ? 'selected' : ''}>Decisão Judicial / Acórdão</option>
+                <option value="artigo_cientifico" ${src && src.source_type === 'artigo_cientifico' ? 'selected' : ''}>Artigo Científico</option>
+                <option value="livro" ${src && src.source_type === 'livro' ? 'selected' : ''}>Livro / Doutrina</option>
+                <option value="documento_oficial" ${src && src.source_type === 'documento_oficial' ? 'selected' : ''}>Documento Oficial</option>
+                <option value="relatorio" ${src && src.source_type === 'relatorio' ? 'selected' : ''}>Relatório Técnico / Pericial</option>
+                <option value="noticia_externa" ${src && src.source_type === 'noticia_externa' ? 'selected' : ''}>Notícia Externa</option>
+                <option value="base_dados" ${src && src.source_type === 'base_dados' ? 'selected' : ''}>Base de Dados</option>
+                <option value="outra" ${!src || src.source_type === 'outra' ? 'selected' : ''}>Outra Referência</option>
+            </select>
+        </div>
+        <div class="sm:col-span-4">
+            <input type="url" placeholder="URL da Fonte (se houver)" class="src-url w-full px-2.5 py-1.5 text-xs rounded bg-slate-800 border border-slate-700 text-slate-200" value="${src ? (src.url || '') : ''}">
+        </div>
+        <div class="sm:col-span-1 flex justify-end">
+            <button type="button" onclick="this.closest('.news-source-row').remove()" class="p-1 text-slate-400 hover:text-rose-400">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+        </div>
+    `;
+    list.appendChild(row);
+    initIcons();
+}
+
+async function submitNewsArticle(e) {
+    e.preventDefault();
+    const id = document.getElementById('news-edit-id').value;
+
+    const sources = [];
+    document.querySelectorAll('.news-source-row').forEach(row => {
+        const title = row.querySelector('.src-title')?.value.trim();
+        const type = row.querySelector('.src-type')?.value;
+        const url = row.querySelector('.src-url')?.value.trim();
+        if (title) {
+            sources.push({
+                title,
+                source_type: type || 'outra',
+                url: url || null
+            });
+        }
+    });
+
+    const tagsStr = document.getElementById('news-input-tags').value;
+    const tags = tagsStr.split(',').map(t => t.trim()).filter(Boolean);
+
+    const payload = {
+        title: document.getElementById('news-input-title').value.trim(),
+        subtitle: document.getElementById('news-input-subtitle').value.trim() || null,
+        summary: document.getElementById('news-input-summary').value.trim(),
+        cover_image_url: document.getElementById('news-input-cover').value.trim() || null,
+        cover_image_caption: document.getElementById('news-input-cover-credit').value.trim() || null,
+        cover_image_alt: document.getElementById('news-input-cover-alt').value.trim() || null,
+        content_markdown: document.getElementById('news-input-content').value.trim(),
+        category_id: parseInt(document.getElementById('news-input-category').value),
+        tags: tags,
+        coauthors_text: document.getElementById('news-input-coauthors').value.trim() || null,
+        is_featured: document.getElementById('news-input-featured').checked,
+        sources: sources
+    };
+
+    try {
+        if (id) {
+            await api.updateNewsArticle(id, payload);
+            showToast('Matéria atualizada com sucesso!');
+        } else {
+            await api.createNewsArticle(payload);
+            showToast('Matéria salva como rascunho com sucesso!');
+        }
+        closeModal('modal-news-editor');
+        loadInternalNewsTable();
+        loadCommunicationOverview();
+    } catch (err) {
+        showToast(err.message || 'Falha ao salvar matéria.', 'error');
+    }
+}
+
+async function submitNewsForReviewAction(articleId) {
+    if (!confirm('Deseja submeter esta matéria para revisão editorial/científica?')) return;
+    try {
+        await api.submitNewsReview(articleId, { notes: 'Submetido para revisão geral.' });
+        showToast('Matéria encaminhada para revisão com sucesso!');
+        loadInternalNewsTable();
+        loadCommunicationOverview();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+function openNewsReviewModal(articleId, title) {
+    document.getElementById('review-news-id').value = articleId;
+    document.getElementById('review-news-title').innerText = title;
+    document.getElementById('review-news-notes').value = '';
+    openModal('modal-news-review');
+}
+
+async function submitReviewAction(e) {
+    e.preventDefault();
+    const id = document.getElementById('review-news-id').value;
+    const decision = document.querySelector('input[name="review_decision"]:checked')?.value || 'approved';
+    const notes = document.getElementById('review-news-notes').value.trim();
+
+    try {
+        await api.reviewNewsArticle(id, { review_status: decision, review_notes: notes });
+        showToast(decision === 'approved' ? 'Matéria aprovada com sucesso!' : 'Ajustes solicitados ao autor.');
+        closeModal('modal-news-review');
+        loadInternalNewsTable();
+        loadCommunicationOverview();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function openNewsPublishPrompt(articleId) {
+    if (confirm('Deseja publicar esta matéria imediatamente no portal público e na Home?')) {
+        try {
+            await api.publishNewsArticle(articleId, { publish_now: true });
+            showToast('Matéria publicada com sucesso!');
+            loadInternalNewsTable();
+            loadCommunicationOverview();
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    }
+}
+
+function openNewsCorrectionModal(articleId) {
+    document.getElementById('correction-news-id').value = articleId;
+    document.getElementById('correction-notice-text').value = '';
+    openModal('modal-news-correction');
+}
+
+async function submitNewsCorrection(e) {
+    e.preventDefault();
+    const id = document.getElementById('correction-news-id').value;
+    const notice = document.getElementById('correction-notice-text').value.trim();
+    try {
+        await api.addNewsCorrection(id, notice);
+        showToast('Nota de retificação registrada com sucesso!');
+        closeModal('modal-news-correction');
+        loadInternalNewsTable();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function archiveNewsAction(articleId) {
+    if (!confirm('Tem certeza de que deseja arquivar esta matéria? Ela não será mais exibida no portal público.')) return;
+    try {
+        await api.archiveNewsArticle(articleId);
+        showToast('Matéria arquivada com sucesso.');
+        loadInternalNewsTable();
+        loadCommunicationOverview();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+// 4. Pautas
+async function loadPitchesTable() {
+    const tableBody = document.getElementById('comm-pitches-table-body');
+    if (!tableBody) return;
+
+    const statusFilter = document.getElementById('comm-pitches-filter-status')?.value || '';
+    try {
+        const rows = await api.getPitches(statusFilter);
+        if (!rows || rows.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-slate-400 text-xs">Nenhuma pauta cadastrada.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = rows.map(p => `
+            <tr class="hover:bg-slate-50 transition">
+                <td class="p-3.5 max-w-xs">
+                    <div class="font-bold text-slate-800">${p.title}</div>
+                    <div class="text-[11px] text-slate-400 line-clamp-1 mt-0.5">${p.description || ''}</div>
+                </td>
+                <td class="p-3.5 whitespace-nowrap">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background-color: ${p.category_color || '#38bdf8'}15; color: ${p.category_color || '#38bdf8'};">
+                        ${p.category_name || 'Geral'}
+                    </span>
+                </td>
+                <td class="p-3.5 text-center whitespace-nowrap">
+                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${p.priority === 'alta' ? 'bg-rose-50 text-rose-600' : (p.priority === 'media' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600')}">
+                        ${p.priority}
+                    </span>
+                </td>
+                <td class="p-3.5 whitespace-nowrap text-slate-700 font-medium">${p.assignee_name || 'A definir'}</td>
+                <td class="p-3.5 text-center whitespace-nowrap text-slate-500">${p.deadline || '-'}</td>
+                <td class="p-3.5 text-center whitespace-nowrap">
+                    <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${p.status}</span>
+                </td>
+                <td class="p-3.5 text-right whitespace-nowrap">
+                    <button onclick="convertPitchToNews(${p.id})" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 transition">
+                        ${p.converted_article_id ? 'Ver Matéria' : 'Escrever Matéria →'}
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+        initIcons();
+    } catch (err) {
+        console.error('Erro ao carregar pautas:', err);
+    }
+}
+
+async function openPitchModal(pitchId = null) {
+    await loadCategoriesCache();
+    const form = document.getElementById('form-pitch');
+    if (!form) return;
+    form.reset();
+    document.getElementById('pitch-edit-id').value = '';
+
+    // Carregar membros no select
+    try {
+        const members = await api.getMembers();
+        const assigneeSelect = document.getElementById('pitch-input-assignee');
+        if (assigneeSelect) {
+            assigneeSelect.innerHTML = '<option value="">A Definir</option>';
+            members.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.name;
+                assigneeSelect.appendChild(opt);
+            });
+        }
+    } catch (e) {}
+
+    openModal('modal-pitch-editor');
+}
+
+async function submitPitch(e) {
+    e.preventDefault();
+    const payload = {
+        title: document.getElementById('pitch-input-title').value.trim(),
+        category_id: parseInt(document.getElementById('pitch-input-category').value) || null,
+        priority: document.getElementById('pitch-input-priority').value,
+        assignee_id: parseInt(document.getElementById('pitch-input-assignee').value) || null,
+        deadline: document.getElementById('pitch-input-deadline').value || null,
+        description: document.getElementById('pitch-input-desc').value.trim() || null,
+        initial_sources: document.getElementById('pitch-input-sources').value.trim() || null
+    };
+
+    try {
+        await api.createPitch(payload);
+        showToast('Pauta registrada com sucesso!');
+        closeModal('modal-pitch-editor');
+        loadPitchesTable();
+        loadCommunicationOverview();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function convertPitchToNews(pitchId) {
+    try {
+        const res = await api.convertPitch(pitchId);
+        showToast('Pauta convertida em matéria!');
+        switchCommTab('news');
+        openNewsEditorModal(res.article_id);
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+// 5. Newsletter
+async function loadNewslettersTable() {
+    const tableBody = document.getElementById('comm-newsletters-table-body');
+    if (!tableBody) return;
+
+    try {
+        const list = await api.getNewsletters();
+        if (!list || list.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400 text-xs">Nenhuma edição de Newsletter cadastrada.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = list.map(n => `
+            <tr class="hover:bg-slate-50 transition">
+                <td class="p-3.5 font-bold text-slate-800">#${n.edition_number} • ${n.title}</td>
+                <td class="p-3.5 text-slate-600">${n.email_subject}</td>
+                <td class="p-3.5 text-center font-semibold text-indigo-600">${n.blocks_count} blocos</td>
+                <td class="p-3.5 text-center">${getStatusBadge(n.status)}</td>
+                <td class="p-3.5 text-center text-slate-400 text-xs">${n.sent_at ? n.sent_at.substring(0, 10) : '-'}</td>
+                <td class="p-3.5 text-right whitespace-nowrap space-x-1">
+                    <button onclick="openNewsletterBuilderModal(${n.id})" title="Editar Blocos" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">
+                        <i data-lucide="edit" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="openNewsletterPreview(${n.id})" title="Preview" class="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700">
+                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+        initIcons();
+    } catch (err) {
+        console.error('Erro ao carregar newsletters:', err);
+    }
+}
+
+async function openNewsletterBuilderModal(editionId = null) {
+    const form = document.getElementById('form-newsletter-edition');
+    if (!form) return;
+    form.reset();
+    document.getElementById('newsletter-edit-id').value = '';
+    const blocksList = document.getElementById('newsletter-blocks-list');
+    blocksList.innerHTML = '';
+
+    // Carregar matérias publicadas para os selects de referência
+    try {
+        cachedPublishedArticles = await api.getPublicNews({ limit: 50 });
+        const dashStats = await api.getDashboardStats();
+        cachedEventsForNl = dashStats.upcoming_events || [];
+    } catch (e) {}
+
+    if (!editionId) {
+        // Sugerir próximo número de edição
+        try {
+            const list = await api.getNewsletters();
+            const nextNum = list.length > 0 ? (Math.max(...list.map(n => n.edition_number)) + 1) : 1;
+            document.getElementById('nl-input-number').value = nextNum;
+            document.getElementById('nl-input-title').value = `LACC em Foco — Edição #${nextNum < 10 ? '0' + nextNum : nextNum}`;
+            document.getElementById('nl-input-subject').value = `🔍 [LACC em Foco #${nextNum}] Destaques em Ciências Criminais`;
+        } catch (e) {}
+
+        // Blocos padrão iniciais
+        addNewsletterBlock('header');
+        addNewsletterBlock('editorial');
+        if (cachedPublishedArticles.length > 0) {
+            addNewsletterBlock('news_ref', { article_id: cachedPublishedArticles[0].id });
+        }
+        openModal('modal-newsletter-builder');
+        return;
+    }
+
+    try {
+        const ed = await api.getNewsletterDetail(editionId);
+        document.getElementById('newsletter-edit-id').value = ed.id;
+        document.getElementById('nl-input-number').value = ed.edition_number;
+        document.getElementById('nl-input-title').value = ed.title;
+        document.getElementById('nl-input-subject').value = ed.email_subject;
+        document.getElementById('nl-input-preheader').value = ed.preheader_text || '';
+        document.getElementById('nl-input-editorial').value = ed.editorial_text || '';
+
+        if (ed.blocks && ed.blocks.length > 0) {
+            ed.blocks.forEach(b => addNewsletterBlock(b.block_type, b.content));
+        }
+        openModal('modal-newsletter-builder');
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+function addNewsletterBlock(type, content = {}) {
+    const container = document.getElementById('newsletter-blocks-list');
+    if (!container) return;
+
+    const blockCard = document.createElement('div');
+    blockCard.className = 'nl-block-item p-3.5 bg-slate-900 rounded-xl border border-slate-800 space-y-2';
+    blockCard.setAttribute('data-type', type);
+
+    let innerHtml = `
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="text-[11px] font-bold uppercase text-indigo-400 flex items-center gap-1.5">
+                <i data-lucide="layers" class="w-3 h-3"></i> Bloco: ${type}
+            </span>
+            <button type="button" onclick="this.closest('.nl-block-item').remove()" class="text-slate-500 hover:text-rose-400 p-1">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+        </div>
+    `;
+
+    if (type === 'header') {
+        innerHtml += `
+            <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Subtítulo / Tagline do Cabeçalho</label>
+                <input type="text" class="blk-tagline w-full px-2.5 py-1.5 text-xs rounded bg-slate-800 border border-slate-700 text-white" value="${content.tagline || 'Boletim Semanal de Ciências Criminais da LACC'}">
+            </div>
+        `;
+    } else if (type === 'editorial') {
+        innerHtml += `
+            <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Texto da Carta Editorial</label>
+                <textarea rows="2" class="blk-editorial-text w-full p-2 text-xs rounded bg-slate-800 border border-slate-700 text-white">${content.text || ''}</textarea>
+            </div>
+        `;
+    } else if (type === 'news_ref') {
+        const options = cachedPublishedArticles.map(a => `<option value="${a.id}" ${content.article_id === a.id ? 'selected' : ''}>[${a.category_name}] ${a.title}</option>`).join('');
+        innerHtml += `
+            <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Selecionar Matéria Publicada (Referência Dinâmica)</label>
+                <select class="blk-news-id w-full px-2.5 py-1.5 text-xs rounded bg-slate-800 border border-slate-700 text-white">
+                    ${options || '<option value="">Nenhuma matéria publicada disponível</option>'}
+                </select>
+            </div>
+        `;
+    } else if (type === 'event_ref') {
+        const evOptions = cachedEventsForNl.map(e => `<option value="${e.id}" ${content.event_id === e.id ? 'selected' : ''}>${e.title} (${e.date})</option>`).join('');
+        innerHtml += `
+            <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Selecionar Evento da Liga (Referência)</label>
+                <select class="blk-event-id w-full px-2.5 py-1.5 text-xs rounded bg-slate-800 border border-slate-700 text-white">
+                    ${evOptions || '<option value="">Nenhum evento futuro cadastrado</option>'}
+                </select>
+            </div>
+        `;
+    } else if (type === 'text') {
+        innerHtml += `
+            <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Texto do Bloco</label>
+                <textarea rows="2" class="blk-text w-full p-2 text-xs rounded bg-slate-800 border border-slate-700 text-white">${content.text || ''}</textarea>
+            </div>
+        `;
+    } else if (type === 'button') {
+        innerHtml += `
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Texto do Botão</label>
+                    <input type="text" class="blk-btn-label w-full px-2.5 py-1.5 text-xs rounded bg-slate-800 border border-slate-700 text-white" value="${content.label || 'Acessar Artigo Completo'}">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">URL de Destino</label>
+                    <input type="url" class="blk-btn-url w-full px-2.5 py-1.5 text-xs rounded bg-slate-800 border border-slate-700 text-white" value="${content.url || 'https://lacc.edu.br'}">
+                </div>
+            </div>
+        `;
+    }
+
+    blockCard.innerHTML = innerHtml;
+    container.appendChild(blockCard);
+    initIcons();
+}
+
+async function submitNewsletterEdition(e) {
+    e.preventDefault();
+    const id = document.getElementById('newsletter-edit-id').value;
+
+    const blocks = [];
+    document.querySelectorAll('.nl-block-item').forEach((bEl, idx) => {
+        const bType = bEl.getAttribute('data-type');
+        const bContent = {};
+        if (bType === 'header') bContent.tagline = bEl.querySelector('.blk-tagline')?.value;
+        else if (bType === 'editorial') bContent.text = bEl.querySelector('.blk-editorial-text')?.value;
+        else if (bType === 'news_ref') bContent.article_id = parseInt(bEl.querySelector('.blk-news-id')?.value);
+        else if (bType === 'event_ref') bContent.event_id = parseInt(bEl.querySelector('.blk-event-id')?.value);
+        else if (bType === 'text') bContent.text = bEl.querySelector('.blk-text')?.value;
+        else if (bType === 'button') {
+            bContent.label = bEl.querySelector('.blk-btn-label')?.value;
+            bContent.url = bEl.querySelector('.blk-btn-url')?.value;
+        }
+
+        blocks.push({
+            block_type: bType,
+            order_index: idx,
+            content: bContent
+        });
+    });
+
+    const payload = {
+        edition_number: parseInt(document.getElementById('nl-input-number').value),
+        title: document.getElementById('nl-input-title').value.trim(),
+        email_subject: document.getElementById('nl-input-subject').value.trim(),
+        preheader_text: document.getElementById('nl-input-preheader').value.trim() || null,
+        editorial_text: document.getElementById('nl-input-editorial').value.trim() || null,
+        blocks: blocks
+    };
+
+    try {
+        if (id) {
+            await api.updateNewsletter(id, payload);
+            showToast('Edição da Newsletter atualizada com sucesso!');
+        } else {
+            const res = await api.createNewsletter(payload);
+            showToast('Edição criada com sucesso!');
+            nlPreviewCurrentEditionId = res.id;
+        }
+        closeModal('modal-newsletter-builder');
+        loadNewslettersTable();
+        loadCommunicationOverview();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function previewCurrentNewsletter() {
+    const id = document.getElementById('newsletter-edit-id').value;
+    if (!id) {
+        showToast('Salve a edição antes de gerar o preview com dados referenciados.', 'warning');
+        return;
+    }
+    openNewsletterPreview(id);
+}
+
+async function openNewsletterPreview(editionId) {
+    nlPreviewCurrentEditionId = editionId;
+    try {
+        const res = await api.getNewsletterPreviewHtml(editionId);
+        const frame = document.getElementById('nl-preview-frame');
+        if (frame) {
+            frame.srcdoc = res.html;
+        }
+        openModal('modal-newsletter-preview');
+    } catch (err) {
+        showToast('Erro ao carregar preview: ' + err.message, 'error');
+    }
+}
+
+function setNlPreviewMode(mode) {
+    const frame = document.getElementById('nl-preview-frame');
+    const btnDesk = document.getElementById('btn-nl-prev-desktop');
+    const btnMob = document.getElementById('btn-nl-prev-mobile');
+    if (!frame) return;
+
+    if (mode === 'mobile') {
+        frame.style.maxWidth = '375px';
+        btnMob.className = 'px-3 py-1 rounded-md font-bold bg-indigo-600 text-white';
+        btnDesk.className = 'px-3 py-1 rounded-md font-medium text-slate-400 hover:text-white';
+    } else {
+        frame.style.maxWidth = '600px';
+        btnDesk.className = 'px-3 py-1 rounded-md font-bold bg-indigo-600 text-white';
+        btnMob.className = 'px-3 py-1 rounded-md font-medium text-slate-400 hover:text-white';
+    }
+}
+
+async function sendNlTestEmail() {
+    if (!nlPreviewCurrentEditionId) return;
+    const email = document.getElementById('nl-test-email')?.value.trim();
+    if (!email) {
+        showToast('Por favor, digite um e-mail para o teste.', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('btn-send-nl-test');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Enviando...';
+    }
+
+    try {
+        const res = await api.sendNewsletterTest(nlPreviewCurrentEditionId, email);
+        showToast(res.message);
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = 'Disparar Teste';
+        }
+    }
+}
+
+// 6. Calendário
+async function loadCalendarView() {
+    const listEl = document.getElementById('comm-calendar-list');
+    if (!listEl) return;
+
+    try {
+        const items = await api.getEditorialCalendar();
+        if (!items || items.length === 0) {
+            listEl.innerHTML = '<div class="text-center py-8 text-slate-400 text-xs">Nenhum evento ou prazo agendado no calendário.</div>';
+            return;
+        }
+
+        // Ordenar por data
+        items.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+        listEl.innerHTML = items.map(it => {
+            const badgeType = it.item_type === 'pitch'
+                ? '<span class="text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-full">Pauta (Prazo)</span>'
+                : (it.item_type === 'event'
+                    ? '<span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full">Evento LACC</span>'
+                    : '<span class="text-[10px] bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-full">Notícia</span>');
+
+            return `
+                <div class="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-100 transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-10 rounded-lg bg-slate-200 text-slate-700 flex flex-col items-center justify-center font-bold text-xs">
+                            <span>${(it.date || '').substring(8, 10)}</span>
+                            <span class="text-[9px] uppercase text-slate-400">${(it.date || '').substring(5, 7)}</span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                ${badgeType}
+                                <span class="text-xs text-slate-400">${it.date || 'Sem data'}</span>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-800 mt-0.5">${it.title}</h4>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        initIcons();
+    } catch (err) {
+        console.error('Erro ao carregar calendário:', err);
+    }
+}
+
+// 7. Biblioteca de Mídia
+async function loadMediaAssetsView() {
+    const grid = document.getElementById('comm-media-grid');
+    if (!grid) return;
+
+    try {
+        const assets = await api.getMediaAssets();
+        if (!assets || assets.length === 0) {
+            grid.innerHTML = '<div class="col-span-full text-center py-8 text-slate-400 text-xs">Nenhum arquivo na biblioteca de mídia.</div>';
+            return;
+        }
+
+        grid.innerHTML = assets.map(m => `
+            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden group shadow-sm flex flex-col justify-between">
+                <div class="h-28 bg-slate-100 overflow-hidden relative">
+                    <img src="${m.file_path}" alt="${m.alt_text || ''}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                </div>
+                <div class="p-2.5 space-y-1">
+                    <h5 class="text-[11px] font-bold text-slate-800 truncate" title="${m.original_name}">${m.original_name}</h5>
+                    <p class="text-[10px] text-slate-400 truncate">${m.alt_text || 'Sem texto alternativo'}</p>
+                    <div class="flex items-center justify-between pt-1 border-t border-slate-100">
+                        <button onclick="copyMediaUrl('${m.file_path}')" class="text-[10px] text-brand-600 font-bold hover:underline">
+                            Copiar URL
+                        </button>
+                        <button onclick="deleteMediaItem(${m.id})" class="text-slate-400 hover:text-rose-600 p-1">
+                            <i data-lucide="trash" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        initIcons();
+    } catch (err) {
+        console.error('Erro ao carregar mídia:', err);
+    }
+}
+
+function openMediaUploadModal() {
+    const form = document.getElementById('form-media-upload');
+    if (form) form.reset();
+    openModal('modal-media-upload');
+}
+
+async function submitMediaUpload(e) {
+    e.preventDefault();
+    const fileInput = document.getElementById('media-upload-file');
+    if (!fileInput.files || fileInput.files.length === 0) {
+        showToast('Por favor, selecione um arquivo de imagem.', 'warning');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('alt_text', document.getElementById('media-upload-alt').value.trim());
+    formData.append('credit', document.getElementById('media-upload-credit').value.trim());
+
+    const btn = document.getElementById('btn-submit-media');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Enviando...';
+    }
+
+    try {
+        const res = await api.uploadMediaAsset(formData);
+        showToast(res.message);
+        closeModal('modal-media-upload');
+        loadMediaAssetsView();
+
+        // Se estiver com o editor de matéria aberto, preenche o campo de imagem automaticamente!
+        const coverInput = document.getElementById('news-input-cover');
+        if (coverInput && !coverInput.value) {
+            coverInput.value = res.url;
+            document.getElementById('news-input-cover-alt').value = res.alt_text || '';
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = 'Enviar Imagem';
+        }
+    }
+}
+
+async function deleteMediaItem(id) {
+    if (!confirm('Deseja excluir esta imagem da biblioteca de mídia?')) return;
+    try {
+        await api.deleteMediaAsset(id);
+        showToast('Imagem removida com sucesso.');
+        loadMediaAssetsView();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+function copyMediaUrl(url) {
+    const fullUrl = url.startsWith('http') ? url : (window.location.origin + url);
+    navigator.clipboard.writeText(fullUrl).then(() => {
+        showToast('URL da imagem copiada para a área de transferência!');
+    }).catch(() => {
+        showToast('URL: ' + fullUrl);
+    });
+}
+
+// 8. Assinantes (LGPD)
+async function loadSubscribersTable() {
+    const tableBody = document.getElementById('comm-subscribers-table-body');
+    if (!tableBody) return;
+
+    const statusFilter = document.getElementById('comm-subscribers-filter-status')?.value || '';
+    try {
+        const rows = await api.getSubscribers(statusFilter);
+        if (!rows || rows.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400 text-xs">Nenhum assinante encontrado.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = rows.map(s => {
+            const stBadge = s.status === 'active'
+                ? '<span class="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">Ativo</span>'
+                : (s.status === 'unsubscribed'
+                    ? '<span class="text-[10px] font-bold bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full">Cancelado</span>'
+                    : '<span class="text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">Aguardando Confirmação</span>');
+
+            return `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3.5 font-semibold text-slate-800">${s.email}</td>
+                    <td class="p-3.5 text-center">${stBadge}</td>
+                    <td class="p-3.5 text-slate-500">${s.consent_source || 'landing_page'}</td>
+                    <td class="p-3.5 text-center text-slate-400 text-xs">${s.created_at ? s.created_at.substring(0, 10) : '-'}</td>
+                    <td class="p-3.5 text-center text-slate-400 text-xs">${s.confirmed_at ? s.confirmed_at.substring(0, 10) : '-'}</td>
+                    <td class="p-3.5 text-right whitespace-nowrap space-x-1">
+                        ${s.status === 'active' ? `
+                            <button onclick="updateSubscriberStatusAction(${s.id}, 'unsubscribed')" title="Descadastrar" class="px-2 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-600">
+                                Cancelar
+                            </button>
+                        ` : `
+                            <button onclick="updateSubscriberStatusAction(${s.id}, 'active')" title="Reativar" class="px-2 py-1 text-xs rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold">
+                                Reativar
+                            </button>
+                        `}
+                        <button onclick="deleteSubscriberAction(${s.id})" title="Exclusão LGPD" class="p-1 rounded text-slate-400 hover:text-rose-600">
+                            <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        initIcons();
+    } catch (err) {
+        console.error('Erro ao carregar assinantes:', err);
+    }
+}
+
+async function updateSubscriberStatusAction(id, newStatus) {
+    try {
+        await api.updateSubscriberStatus(id, newStatus);
+        showToast('Status do assinante atualizado.');
+        loadSubscribersTable();
+        loadCommunicationOverview();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+async function deleteSubscriberAction(id) {
+    if (!confirm('ATENÇÃO (LGPD): Deseja excluir definitivamente este assinante e todo o registro associado da base de dados?')) return;
+    try {
+        await api.deleteSubscriber(id);
+        showToast('Assinante excluído conforme conformidade LGPD.');
+        loadSubscribersTable();
+        loadCommunicationOverview();
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
 
